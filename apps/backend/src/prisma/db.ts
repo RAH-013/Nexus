@@ -20,12 +20,16 @@ export const db =
     ? postgres<Contract>({ contractJson, url: process.env.DATABASE_URL })
     : postgres<Contract>({ contractJson }));
 
-let connection: Promise<void> | undefined;
+let connection: ReturnType<typeof db.connect> | undefined;
+
+export function getDatabaseRuntime() {
+  connection ??= db.connect();
+  return connection;
+}
 
 export function connectDatabase(): Promise<void> {
-  connection ??= db.connect().then(() => undefined).catch((error: unknown) => {
+  return getDatabaseRuntime().then(() => undefined).catch((error: unknown) => {
     connection = undefined;
     throw error;
   });
-  return connection;
 }

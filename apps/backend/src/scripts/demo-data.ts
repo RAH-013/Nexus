@@ -1,0 +1,85 @@
+export const DEMO_USER = {
+  id: "nexus-demo-user",
+  name: "Alex",
+  lastname: "Demo",
+  username: "alex-demo",
+  email: "alex.demo@nexus.local",
+} as const;
+
+export const DEMO_CATEGORIES = [
+  "Acción",
+  "Aventura",
+  "Ciencia ficción",
+  "Comedia",
+  "Drama",
+  "Fantasía",
+  "Misterio",
+  "Thriller",
+] as const;
+
+export const DEMO_ITEMS = [
+  {
+    key: "nexus-demo-arrival",
+    title: "La llegada",
+    description: "Una lingüista intenta comunicarse con visitantes extraterrestres antes de que el miedo cambie el destino del planeta.",
+    type: "MOVIE" as const,
+    releaseYear: 2016,
+    categories: ["Ciencia ficción", "Drama", "Misterio"],
+  },
+  {
+    key: "nexus-demo-dune",
+    title: "Duna",
+    description: "Un heredero descubre su papel en el futuro de un mundo desértico y sus recursos más valiosos.",
+    type: "MOVIE" as const,
+    releaseYear: 2021,
+    categories: ["Ciencia ficción", "Aventura", "Drama"],
+  },
+  {
+    key: "nexus-demo-everything",
+    title: "Todo en todas partes al mismo tiempo",
+    description: "Una mujer agotada se convierte en la única persona capaz de conectar realidades paralelas.",
+    type: "MOVIE" as const,
+    releaseYear: 2022,
+    categories: ["Ciencia ficción", "Aventura", "Comedia"],
+  },
+  {
+    key: "nexus-demo-knives-out",
+    title: "Entre navajas y secretos",
+    description: "Un detective investiga a una familia excéntrica después de la muerte de su famoso patriarca.",
+    type: "MOVIE" as const,
+    releaseYear: 2019,
+    categories: ["Misterio", "Comedia", "Drama"],
+  },
+  {
+    key: "nexus-demo-spiderverse",
+    title: "Spider-Man: Un nuevo universo",
+    description: "Miles Morales aprende a ser héroe junto a versiones inesperadas de Spider-Man.",
+    type: "MOVIE" as const,
+    releaseYear: 2018,
+    categories: ["Acción", "Aventura", "Comedia"],
+  },
+  {
+    key: "nexus-demo-dark",
+    title: "Dark",
+    description: "La desaparición de un niño revela secretos familiares y un ciclo temporal que conecta generaciones.",
+    type: "SERIES" as const,
+    releaseYear: 2017,
+    categories: ["Ciencia ficción", "Misterio", "Thriller"],
+  },
+  {
+    key: "nexus-demo-good-place",
+    title: "The Good Place",
+    description: "Una mujer llega por error a un vecindario perfecto y decide aprender a ser una mejor persona.",
+    type: "SERIES" as const,
+    releaseYear: 2016,
+    categories: ["Comedia", "Fantasía"],
+  },
+  {
+    key: "nexus-demo-mandalorian",
+    title: "The Mandalorian",
+    description: "Un cazarrecompensas protege a un misterioso niño mientras recorre los límites de la galaxia.",
+    type: "SERIES" as const,
+    releaseYear: 2019,
+    categories: ["Acción", "Aventura", "Ciencia ficción"],
+  },
+] as const;

@@ -38,6 +38,7 @@ services:
       NODE_ENV: development
       PORT: 3000
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      SEED_DEMO: ${SEED_DEMO:-}
     volumes:
       - ./apps/backend:/app
       - /app/node_modules
