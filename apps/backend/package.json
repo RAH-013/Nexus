@@ -21,9 +21,6 @@
     "migration:plan": "prisma migration plan",
     "migration:show": "prisma migration show",
     "migration:status": "prisma migration status",
-    "seed": "tsx src/scripts/seed.ts",
-    "seed:reset": "tsx src/scripts/reset-demo.ts",
-    "seed:refresh": "npm run seed:reset && npm run seed",
     "start": "node dist/server.mjs"
   },
   "dependencies": {
