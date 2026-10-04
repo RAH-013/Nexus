@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+html {
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+.nexus-swal-confirm,
+.nexus-swal-cancel {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 110px !important;
+  border: 0 !important;
+  border-radius: 0.5rem !important;
+  padding: 0.625rem 1rem !important;
+  font-family: inherit !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  line-height: 1.25rem !important;
+  cursor: pointer !important;
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease !important;
+}
+
+.nexus-swal-confirm {
+  background: #2dd4bf !important;
+  color: #0f172a !important;
+}
+
+.nexus-swal-confirm:hover {
+  background: #5eead4 !important;
+}
+
+.nexus-swal-confirm:active {
+  transform: scale(0.97) !important;
+}
+
+.nexus-swal-cancel {
+  margin-right: 0.5rem !important;
+  background: #334155 !important;
+  color: #f8fafc !important;
+}
+
+.nexus-swal-cancel:hover {
+  background: #475569 !important;
+}
+
+.nexus-swal-cancel:active {
+  transform: scale(0.97) !important;
+}
+
+.nexus-toast .swal2-timer-progress-bar,
+.nexus-swal-popup .swal2-timer-progress-bar {
+  background: #2dd4bf !important;
+}
+
+.nexus-toast .swal2-timer-progress-bar,
+.nexus-swal-popup .swal2-timer-progress-bar {
+  background: #2dd4bf !important;
+}
+
+.nexus-toast .swal2-timer-progress-bar {
+  height: 3px !important;
+}

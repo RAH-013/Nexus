@@ -1,0 +1,198 @@
+generator client {
+    provider = "prisma-client"
+    output   = "../src/generated/prisma"
+}
+
+datasource db {
+    provider = "postgresql"
+}
+
+model User {
+    id            String   @id
+    name          String
+    lastname      String?
+    username      String?  @unique
+    email         String   @unique
+    emailVerified Boolean  @default(false)
+    image         String?
+    type          UserType @default(CUSTOMER)
+    createdAt     DateTime @default(now()) @db.Timestamptz(3)
+    updatedAt     DateTime @updatedAt @db.Timestamptz(3)
+
+    sessions        Session[]
+    accounts        Account[]
+    preferences     UserPreference[]
+    actions         UserAction[]
+    recommendations Recommendation[]
+
+    @@map("user")
+}
+
+model Session {
+    id        String   @id
+    expiresAt DateTime @db.Timestamptz(3)
+    token     String   @unique
+    createdAt DateTime @default(now()) @db.Timestamptz(3)
+    updatedAt DateTime @updatedAt @db.Timestamptz(3)
+    ipAddress String?
+    userAgent String?
+    userId    String
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId])
+    @@map("session")
+}
+
+model Account {
+    id                    String    @id
+    accountId             String
+    providerId            String
+    userId                String
+    accessToken           String?
+    refreshToken          String?
+    idToken               String?
+    accessTokenExpiresAt  DateTime? @db.Timestamptz(3)
+    refreshTokenExpiresAt DateTime? @db.Timestamptz(3)
+    scope                 String?
+    password              String?
+    createdAt             DateTime  @default(now()) @db.Timestamptz(3)
+    updatedAt             DateTime  @updatedAt @db.Timestamptz(3)
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([providerId, accountId])
+    @@index([userId])
+    @@map("account")
+}
+
+model Verification {
+    id         String   @id
+    identifier String
+    value      String
+    expiresAt  DateTime @db.Timestamptz(3)
+    createdAt  DateTime @default(now()) @db.Timestamptz(3)
+    updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+
+    @@index([identifier])
+    @@map("verification")
+}
+
+enum UserType {
+    CUSTOMER
+}
+
+model Item {
+    id         Int      @id @default(autoincrement())
+    externalId String   @unique
+    type       ItemType
+
+    categories          ItemCategory[]
+    actions             UserAction[]
+    recommendationItems RecommendationItem[]
+
+    createdAt DateTime @default(now()) @db.Timestamptz(3)
+    updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+    @@index([type])
+}
+
+enum ItemType {
+    MOVIE
+    SERIES
+}
+
+model Category {
+    id   Int    @id @default(autoincrement())
+    name String @unique
+
+    items       ItemCategory[]
+    preferences UserPreference[]
+
+    createdAt DateTime @default(now()) @db.Timestamptz(3)
+    updatedAt DateTime @updatedAt @db.Timestamptz(3)
+}
+
+model ItemCategory {
+    item       Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+    itemId     Int
+    category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+    categoryId Int
+
+    @@id([itemId, categoryId])
+}
+
+model UserPreference {
+    id Int @id @default(autoincrement())
+
+    user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId     String
+    category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+    categoryId Int
+    weight     Float
+
+    createdAt DateTime @default(now()) @db.Timestamptz(3)
+    updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+    @@unique([userId, categoryId])
+    @@index([userId])
+    @@index([categoryId])
+}
+
+model UserAction {
+    id Int @id @default(autoincrement())
+
+    user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId      String
+    item        Item?      @relation(fields: [itemId], references: [id], onDelete: Cascade)
+    itemId      Int?
+    type        ActionType
+    value       Float?
+    searchQuery String?
+
+    createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+    @@index([userId])
+    @@index([itemId])
+    @@index([type])
+    @@index([createdAt])
+}
+
+model Recommendation {
+    id Int @id @default(autoincrement())
+
+    user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId    String
+    algorithm String
+
+    items RecommendationItem[]
+
+    createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+    @@index([userId])
+    @@index([createdAt])
+}
+
+model RecommendationItem {
+    id Int @id @default(autoincrement())
+
+    recommendation   Recommendation @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+    recommendationId Int
+    item             Item           @relation(fields: [itemId], references: [id])
+    itemId           Int
+    score            Float
+    position         Int
+
+    @@unique([recommendationId, itemId])
+    @@index([recommendationId, position])
+    @@index([itemId])
+}
+
+enum ActionType {
+    VIEW
+    LIKE
+    DISLIKE
+    RATING
+    FAVORITE
+    SEARCH
+}

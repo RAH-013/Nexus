@@ -1,52 +1,50 @@
 {
   "name": "backend",
+  "version": "1.0.0",
   "private": true,
-  "packageManager": "npm@11.6.0",
+  "description": "Eblank backend API",
   "type": "module",
   "engines": {
-    "node": "^22.18.0 || >=24.11.0"
+    "node": ">=22.18.0"
   },
   "scripts": {
-    "build": "tsdown",
-    "composer:deploy": "prisma deploy module.ts",
-    "composer:dev": "prisma dev module.ts",
-    "contract:emit": "prisma contract emit",
-    "db:init": "prisma db init",
-    "db:update": "prisma db update",
-    "db:verify": "prisma db verify",
-    "deploy": "npm run build && npm run composer:deploy",
-    "dev": "tsx watch src/index.ts",
-    "dev:composer": "npm run build && npm run composer:dev",
-    "migrate": "prisma db migrate",
-    "migration:plan": "prisma migration plan",
-    "migration:show": "prisma migration show",
-    "migration:status": "prisma migration status",
-    "start": "node dist/server.mjs"
+    "dev": "tsx watch src/server.ts",
+    "build": "tsdown src/server.ts --format esm --out-dir dist",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy",
+    "prisma:studio": "prisma studio",
+    "prisma:format": "prisma format"
   },
   "dependencies": {
-    "@prisma/composer": "0.24.0",
-    "@prisma/composer-prisma-cloud": "0.24.0",
-    "@prisma/orm-postgres": "8.0.0-rc.12",
-    "alchemy": "2.0.0-beta.78",
+    "@better-auth/prisma-adapter": "1.7.7",
+    "@dicebear/core": "^10.7.0",
+    "@dicebear/styles": "^10.6.0",
+    "@prisma/adapter-pg": "7.10.0",
+    "@prisma/client": "7.10.0",
+    "better-auth": "1.7.7",
+    "compression": "^1.8.2",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.5",
     "express": "^5.2.1",
-    "temporal-polyfill": "^1.0.4"
+    "express-rate-limit": "^8.7.0",
+    "helmet": "^8.3.0",
+    "pg": "^8.23.1",
+    "pino": "^10.4.0",
+    "pino-http": "^11.0.0",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@prisma/dev": "0.25.2",
+    "@types/compression": "^1.8.1",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
-    "@types/node": "^25.6.2",
-    "prisma": "8.0.0-rc.18",
-    "tsdown": "^0.22.14",
-    "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
-  },
-  "overrides": {
-    "effect": "4.0.0-rc.115",
-    "@effect/platform-bun": "4.0.0-rc.115",
-    "@effect/platform-node": "4.0.0-rc.115",
-    "@effect/platform-node-shared": "4.0.0-rc.115",
-    "@effect/sql-d1": "4.0.0-rc.115",
-    "@effect/sql-sqlite-do": "4.0.0-rc.115",
-    "@effect/vitest": "4.0.0-rc.115"
+    "@types/node": "^26.6.4",
+    "@types/pg": "^8.23.1",
+    "prisma": "7.10.0",
+    "tsdown": "^0.23.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
   }
 }
