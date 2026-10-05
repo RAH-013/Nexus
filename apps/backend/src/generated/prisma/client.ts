@@ -96,3 +96,8 @@ export type Recommendation = Prisma.RecommendationModel
  * 
  */
 export type RecommendationItem = Prisma.RecommendationItemModel
+/**
+ * Model Comment
+ * 
+ */
+export type Comment = Prisma.CommentModel

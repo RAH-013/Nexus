@@ -28,3 +28,15 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Archivos y carpetas de gobernanza del agente (no se commitean)
+/MEMORY.md
+/AGENTS.md
+/docs/
+/specs/
+
+# Configuración local de OpenCode (no se commitea)
+/opencode.json
+
+# Lockfile de la raíz: no hay package.json en la raíz (las apps son independientes)
+/package-lock.json

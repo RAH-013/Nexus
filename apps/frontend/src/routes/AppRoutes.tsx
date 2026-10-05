@@ -13,6 +13,7 @@ const NotFound = lazy(() => import("../pages/NotFound"));
 const Auth = lazy(() => import("../pages/Auth"));
 const Home = lazy(() => import("../pages/Home"));
 const Profile = lazy(() => import("../pages/private/Profile"));
+const TitleDetail = lazy(() => import("../pages/TitleDetail"));
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -22,6 +23,11 @@ const router = createBrowserRouter(
 
         <Route element={<Main />}>
           <Route path="/" element={<Home />} />
+        </Route>
+
+        {/* Ficha pública (spec 002, D7): sin menú lateral y con cabecera «Volver». */}
+        <Route element={<Main detail />}>
+          <Route path="/title/:type/:id" element={<TitleDetail />} />
         </Route>
 
         <Route element={<PrivateRoute />}>

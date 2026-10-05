@@ -219,6 +219,7 @@ export type ItemWhereInput = {
   categories?: Prisma.ItemCategoryListRelationFilter
   actions?: Prisma.UserActionListRelationFilter
   recommendationItems?: Prisma.RecommendationItemListRelationFilter
+  comments?: Prisma.CommentListRelationFilter
 }
 
 export type ItemOrderByWithRelationInput = {
@@ -230,6 +231,7 @@ export type ItemOrderByWithRelationInput = {
   categories?: Prisma.ItemCategoryOrderByRelationAggregateInput
   actions?: Prisma.UserActionOrderByRelationAggregateInput
   recommendationItems?: Prisma.RecommendationItemOrderByRelationAggregateInput
+  comments?: Prisma.CommentOrderByRelationAggregateInput
 }
 
 export type ItemWhereUniqueInput = Prisma.AtLeast<{
@@ -244,6 +246,7 @@ export type ItemWhereUniqueInput = Prisma.AtLeast<{
   categories?: Prisma.ItemCategoryListRelationFilter
   actions?: Prisma.UserActionListRelationFilter
   recommendationItems?: Prisma.RecommendationItemListRelationFilter
+  comments?: Prisma.CommentListRelationFilter
 }, "id" | "externalId">
 
 export type ItemOrderByWithAggregationInput = {
@@ -278,6 +281,7 @@ export type ItemCreateInput = {
   categories?: Prisma.ItemCategoryCreateNestedManyWithoutItemInput
   actions?: Prisma.UserActionCreateNestedManyWithoutItemInput
   recommendationItems?: Prisma.RecommendationItemCreateNestedManyWithoutItemInput
+  comments?: Prisma.CommentCreateNestedManyWithoutItemInput
 }
 
 export type ItemUncheckedCreateInput = {
@@ -289,6 +293,7 @@ export type ItemUncheckedCreateInput = {
   categories?: Prisma.ItemCategoryUncheckedCreateNestedManyWithoutItemInput
   actions?: Prisma.UserActionUncheckedCreateNestedManyWithoutItemInput
   recommendationItems?: Prisma.RecommendationItemUncheckedCreateNestedManyWithoutItemInput
+  comments?: Prisma.CommentUncheckedCreateNestedManyWithoutItemInput
 }
 
 export type ItemUpdateInput = {
@@ -299,6 +304,7 @@ export type ItemUpdateInput = {
   categories?: Prisma.ItemCategoryUpdateManyWithoutItemNestedInput
   actions?: Prisma.UserActionUpdateManyWithoutItemNestedInput
   recommendationItems?: Prisma.RecommendationItemUpdateManyWithoutItemNestedInput
+  comments?: Prisma.CommentUpdateManyWithoutItemNestedInput
 }
 
 export type ItemUncheckedUpdateInput = {
@@ -310,6 +316,7 @@ export type ItemUncheckedUpdateInput = {
   categories?: Prisma.ItemCategoryUncheckedUpdateManyWithoutItemNestedInput
   actions?: Prisma.UserActionUncheckedUpdateManyWithoutItemNestedInput
   recommendationItems?: Prisma.RecommendationItemUncheckedUpdateManyWithoutItemNestedInput
+  comments?: Prisma.CommentUncheckedUpdateManyWithoutItemNestedInput
 }
 
 export type ItemCreateManyInput = {
@@ -433,6 +440,20 @@ export type ItemUpdateOneRequiredWithoutRecommendationItemsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ItemUpdateToOneWithWhereWithoutRecommendationItemsInput, Prisma.ItemUpdateWithoutRecommendationItemsInput>, Prisma.ItemUncheckedUpdateWithoutRecommendationItemsInput>
 }
 
+export type ItemCreateNestedOneWithoutCommentsInput = {
+  create?: Prisma.XOR<Prisma.ItemCreateWithoutCommentsInput, Prisma.ItemUncheckedCreateWithoutCommentsInput>
+  connectOrCreate?: Prisma.ItemCreateOrConnectWithoutCommentsInput
+  connect?: Prisma.ItemWhereUniqueInput
+}
+
+export type ItemUpdateOneRequiredWithoutCommentsNestedInput = {
+  create?: Prisma.XOR<Prisma.ItemCreateWithoutCommentsInput, Prisma.ItemUncheckedCreateWithoutCommentsInput>
+  connectOrCreate?: Prisma.ItemCreateOrConnectWithoutCommentsInput
+  upsert?: Prisma.ItemUpsertWithoutCommentsInput
+  connect?: Prisma.ItemWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ItemUpdateToOneWithWhereWithoutCommentsInput, Prisma.ItemUpdateWithoutCommentsInput>, Prisma.ItemUncheckedUpdateWithoutCommentsInput>
+}
+
 export type ItemCreateWithoutCategoriesInput = {
   externalId: string
   type: $Enums.ItemType
@@ -440,6 +461,7 @@ export type ItemCreateWithoutCategoriesInput = {
   updatedAt?: Date | string
   actions?: Prisma.UserActionCreateNestedManyWithoutItemInput
   recommendationItems?: Prisma.RecommendationItemCreateNestedManyWithoutItemInput
+  comments?: Prisma.CommentCreateNestedManyWithoutItemInput
 }
 
 export type ItemUncheckedCreateWithoutCategoriesInput = {
@@ -450,6 +472,7 @@ export type ItemUncheckedCreateWithoutCategoriesInput = {
   updatedAt?: Date | string
   actions?: Prisma.UserActionUncheckedCreateNestedManyWithoutItemInput
   recommendationItems?: Prisma.RecommendationItemUncheckedCreateNestedManyWithoutItemInput
+  comments?: Prisma.CommentUncheckedCreateNestedManyWithoutItemInput
 }
 
 export type ItemCreateOrConnectWithoutCategoriesInput = {
@@ -475,6 +498,7 @@ export type ItemUpdateWithoutCategoriesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actions?: Prisma.UserActionUpdateManyWithoutItemNestedInput
   recommendationItems?: Prisma.RecommendationItemUpdateManyWithoutItemNestedInput
+  comments?: Prisma.CommentUpdateManyWithoutItemNestedInput
 }
 
 export type ItemUncheckedUpdateWithoutCategoriesInput = {
@@ -485,6 +509,7 @@ export type ItemUncheckedUpdateWithoutCategoriesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actions?: Prisma.UserActionUncheckedUpdateManyWithoutItemNestedInput
   recommendationItems?: Prisma.RecommendationItemUncheckedUpdateManyWithoutItemNestedInput
+  comments?: Prisma.CommentUncheckedUpdateManyWithoutItemNestedInput
 }
 
 export type ItemCreateWithoutActionsInput = {
@@ -494,6 +519,7 @@ export type ItemCreateWithoutActionsInput = {
   updatedAt?: Date | string
   categories?: Prisma.ItemCategoryCreateNestedManyWithoutItemInput
   recommendationItems?: Prisma.RecommendationItemCreateNestedManyWithoutItemInput
+  comments?: Prisma.CommentCreateNestedManyWithoutItemInput
 }
 
 export type ItemUncheckedCreateWithoutActionsInput = {
@@ -504,6 +530,7 @@ export type ItemUncheckedCreateWithoutActionsInput = {
   updatedAt?: Date | string
   categories?: Prisma.ItemCategoryUncheckedCreateNestedManyWithoutItemInput
   recommendationItems?: Prisma.RecommendationItemUncheckedCreateNestedManyWithoutItemInput
+  comments?: Prisma.CommentUncheckedCreateNestedManyWithoutItemInput
 }
 
 export type ItemCreateOrConnectWithoutActionsInput = {
@@ -529,6 +556,7 @@ export type ItemUpdateWithoutActionsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   categories?: Prisma.ItemCategoryUpdateManyWithoutItemNestedInput
   recommendationItems?: Prisma.RecommendationItemUpdateManyWithoutItemNestedInput
+  comments?: Prisma.CommentUpdateManyWithoutItemNestedInput
 }
 
 export type ItemUncheckedUpdateWithoutActionsInput = {
@@ -539,6 +567,7 @@ export type ItemUncheckedUpdateWithoutActionsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   categories?: Prisma.ItemCategoryUncheckedUpdateManyWithoutItemNestedInput
   recommendationItems?: Prisma.RecommendationItemUncheckedUpdateManyWithoutItemNestedInput
+  comments?: Prisma.CommentUncheckedUpdateManyWithoutItemNestedInput
 }
 
 export type ItemCreateWithoutRecommendationItemsInput = {
@@ -548,6 +577,7 @@ export type ItemCreateWithoutRecommendationItemsInput = {
   updatedAt?: Date | string
   categories?: Prisma.ItemCategoryCreateNestedManyWithoutItemInput
   actions?: Prisma.UserActionCreateNestedManyWithoutItemInput
+  comments?: Prisma.CommentCreateNestedManyWithoutItemInput
 }
 
 export type ItemUncheckedCreateWithoutRecommendationItemsInput = {
@@ -558,6 +588,7 @@ export type ItemUncheckedCreateWithoutRecommendationItemsInput = {
   updatedAt?: Date | string
   categories?: Prisma.ItemCategoryUncheckedCreateNestedManyWithoutItemInput
   actions?: Prisma.UserActionUncheckedCreateNestedManyWithoutItemInput
+  comments?: Prisma.CommentUncheckedCreateNestedManyWithoutItemInput
 }
 
 export type ItemCreateOrConnectWithoutRecommendationItemsInput = {
@@ -583,6 +614,7 @@ export type ItemUpdateWithoutRecommendationItemsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   categories?: Prisma.ItemCategoryUpdateManyWithoutItemNestedInput
   actions?: Prisma.UserActionUpdateManyWithoutItemNestedInput
+  comments?: Prisma.CommentUpdateManyWithoutItemNestedInput
 }
 
 export type ItemUncheckedUpdateWithoutRecommendationItemsInput = {
@@ -593,6 +625,65 @@ export type ItemUncheckedUpdateWithoutRecommendationItemsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   categories?: Prisma.ItemCategoryUncheckedUpdateManyWithoutItemNestedInput
   actions?: Prisma.UserActionUncheckedUpdateManyWithoutItemNestedInput
+  comments?: Prisma.CommentUncheckedUpdateManyWithoutItemNestedInput
+}
+
+export type ItemCreateWithoutCommentsInput = {
+  externalId: string
+  type: $Enums.ItemType
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  categories?: Prisma.ItemCategoryCreateNestedManyWithoutItemInput
+  actions?: Prisma.UserActionCreateNestedManyWithoutItemInput
+  recommendationItems?: Prisma.RecommendationItemCreateNestedManyWithoutItemInput
+}
+
+export type ItemUncheckedCreateWithoutCommentsInput = {
+  id?: number
+  externalId: string
+  type: $Enums.ItemType
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  categories?: Prisma.ItemCategoryUncheckedCreateNestedManyWithoutItemInput
+  actions?: Prisma.UserActionUncheckedCreateNestedManyWithoutItemInput
+  recommendationItems?: Prisma.RecommendationItemUncheckedCreateNestedManyWithoutItemInput
+}
+
+export type ItemCreateOrConnectWithoutCommentsInput = {
+  where: Prisma.ItemWhereUniqueInput
+  create: Prisma.XOR<Prisma.ItemCreateWithoutCommentsInput, Prisma.ItemUncheckedCreateWithoutCommentsInput>
+}
+
+export type ItemUpsertWithoutCommentsInput = {
+  update: Prisma.XOR<Prisma.ItemUpdateWithoutCommentsInput, Prisma.ItemUncheckedUpdateWithoutCommentsInput>
+  create: Prisma.XOR<Prisma.ItemCreateWithoutCommentsInput, Prisma.ItemUncheckedCreateWithoutCommentsInput>
+  where?: Prisma.ItemWhereInput
+}
+
+export type ItemUpdateToOneWithWhereWithoutCommentsInput = {
+  where?: Prisma.ItemWhereInput
+  data: Prisma.XOR<Prisma.ItemUpdateWithoutCommentsInput, Prisma.ItemUncheckedUpdateWithoutCommentsInput>
+}
+
+export type ItemUpdateWithoutCommentsInput = {
+  externalId?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumItemTypeFieldUpdateOperationsInput | $Enums.ItemType
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  categories?: Prisma.ItemCategoryUpdateManyWithoutItemNestedInput
+  actions?: Prisma.UserActionUpdateManyWithoutItemNestedInput
+  recommendationItems?: Prisma.RecommendationItemUpdateManyWithoutItemNestedInput
+}
+
+export type ItemUncheckedUpdateWithoutCommentsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  externalId?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumItemTypeFieldUpdateOperationsInput | $Enums.ItemType
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  categories?: Prisma.ItemCategoryUncheckedUpdateManyWithoutItemNestedInput
+  actions?: Prisma.UserActionUncheckedUpdateManyWithoutItemNestedInput
+  recommendationItems?: Prisma.RecommendationItemUncheckedUpdateManyWithoutItemNestedInput
 }
 
 
@@ -604,12 +695,14 @@ export type ItemCountOutputType = {
   categories: number
   actions: number
   recommendationItems: number
+  comments: number
 }
 
 export type ItemCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   categories?: boolean | ItemCountOutputTypeCountCategoriesArgs
   actions?: boolean | ItemCountOutputTypeCountActionsArgs
   recommendationItems?: boolean | ItemCountOutputTypeCountRecommendationItemsArgs
+  comments?: boolean | ItemCountOutputTypeCountCommentsArgs
 }
 
 /**
@@ -643,6 +736,13 @@ export type ItemCountOutputTypeCountRecommendationItemsArgs<ExtArgs extends runt
   where?: Prisma.RecommendationItemWhereInput
 }
 
+/**
+ * ItemCountOutputType without action
+ */
+export type ItemCountOutputTypeCountCommentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CommentWhereInput
+}
+
 
 export type ItemSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -653,6 +753,7 @@ export type ItemSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   categories?: boolean | Prisma.Item$categoriesArgs<ExtArgs>
   actions?: boolean | Prisma.Item$actionsArgs<ExtArgs>
   recommendationItems?: boolean | Prisma.Item$recommendationItemsArgs<ExtArgs>
+  comments?: boolean | Prisma.Item$commentsArgs<ExtArgs>
   _count?: boolean | Prisma.ItemCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["item"]>
 
@@ -685,6 +786,7 @@ export type ItemInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   categories?: boolean | Prisma.Item$categoriesArgs<ExtArgs>
   actions?: boolean | Prisma.Item$actionsArgs<ExtArgs>
   recommendationItems?: boolean | Prisma.Item$recommendationItemsArgs<ExtArgs>
+  comments?: boolean | Prisma.Item$commentsArgs<ExtArgs>
   _count?: boolean | Prisma.ItemCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ItemIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -696,6 +798,7 @@ export type $ItemPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     categories: Prisma.$ItemCategoryPayload<ExtArgs>[]
     actions: Prisma.$UserActionPayload<ExtArgs>[]
     recommendationItems: Prisma.$RecommendationItemPayload<ExtArgs>[]
+    comments: Prisma.$CommentPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -1100,6 +1203,7 @@ export interface Prisma__ItemClient<T, Null = never, ExtArgs extends runtime.Typ
   categories<T extends Prisma.Item$categoriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Item$categoriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ItemCategoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   actions<T extends Prisma.Item$actionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Item$actionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserActionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   recommendationItems<T extends Prisma.Item$recommendationItemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Item$recommendationItemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RecommendationItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  comments<T extends Prisma.Item$commentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Item$commentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CommentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1596,6 +1700,30 @@ export type Item$recommendationItemsArgs<ExtArgs extends runtime.Types.Extension
   take?: number
   skip?: number
   distinct?: Prisma.RecommendationItemScalarFieldEnum | Prisma.RecommendationItemScalarFieldEnum[]
+}
+
+/**
+ * Item.comments
+ */
+export type Item$commentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Comment
+   */
+  select?: Prisma.CommentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Comment
+   */
+  omit?: Prisma.CommentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CommentInclude<ExtArgs> | null
+  where?: Prisma.CommentWhereInput
+  orderBy?: Prisma.CommentOrderByWithRelationInput | Prisma.CommentOrderByWithRelationInput[]
+  cursor?: Prisma.CommentWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CommentScalarFieldEnum | Prisma.CommentScalarFieldEnum[]
 }
 
 /**

@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect, useCallback, type ReactNode } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import {
   apiGetSession,
@@ -59,7 +59,7 @@ export function UserProvider({ children }: UserProviderProps) {
     };
   }, []);
 
-  const refreshUser = async (): Promise<void> => {
+  const refreshUser = useCallback(async (): Promise<void> => {
     try {
       const { success, data, error } = await apiGetSession();
 
@@ -76,7 +76,25 @@ export function UserProvider({ children }: UserProviderProps) {
       setUser(null);
       console.error("Error al actualizar sesión:", error);
     }
-  };
+  }, []);
+
+  // Cambio «en vivo» al estado sin sesión (RF-10, plan D13): al volver a la
+  // pestaña y, como máximo, una vez por minuto mientras esté visible.
+  useEffect(() => {
+    const revalidate = () => {
+      if (document.visibilityState === "visible") {
+        void refreshUser();
+      }
+    };
+
+    document.addEventListener("visibilitychange", revalidate);
+    const intervalId = setInterval(revalidate, 60_000);
+
+    return () => {
+      document.removeEventListener("visibilitychange", revalidate);
+      clearInterval(intervalId);
+    };
+  }, [refreshUser]);
 
   const login = async (data: LoginData): Promise<boolean> => {
     setLoading(true);

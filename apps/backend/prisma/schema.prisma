@@ -24,6 +24,7 @@ model User {
     preferences     UserPreference[]
     actions         UserAction[]
     recommendations Recommendation[]
+    comments        Comment[]
 
     @@map("user")
 }
@@ -90,6 +91,7 @@ model Item {
     categories          ItemCategory[]
     actions             UserAction[]
     recommendationItems RecommendationItem[]
+    comments            Comment[]
 
     createdAt DateTime @default(now()) @db.Timestamptz(3)
     updatedAt DateTime @updatedAt @db.Timestamptz(3)
@@ -195,4 +197,17 @@ enum ActionType {
     RATING
     FAVORITE
     SEARCH
+}
+
+model Comment {
+    id        Int      @id @default(autoincrement())
+    text      String   @db.VarChar(500)
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId    String
+    item      Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+    itemId    Int
+    createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+    @@index([itemId, createdAt(sort: Desc)])
+    @@map("comment")
 }
