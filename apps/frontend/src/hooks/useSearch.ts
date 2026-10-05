@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiSearch, type MediaItem } from "../api/cinemeta";
 
 const MIN_QUERY_LENGTH = 3;
@@ -18,20 +18,30 @@ interface SearchState {
   hasMore: boolean;
   /** Texto recortado al que corresponden los datos guardados. */
   query: string;
+  /** Intento que produjo los datos guardados (el reintento los invalida). */
+  attempt: number;
 }
 
-function idleState(query: string): SearchState {
-  return { status: "idle", items: [], hasMore: false, query };
+type SearchReturn = SearchState & {
+  /** Repite la petición del texto actual (vista de resultados, RF-7 enmienda). */
+  retry: () => void;
+};
+
+function idleState(query: string, attempt: number): SearchState {
+  return { status: "idle", items: [], hasMore: false, query, attempt };
 }
 
 /**
  * Máquina de estados de la búsqueda (plan §4.5): una petición por cambio de
  * texto que alcance el umbral, cancelando la anterior; lo que llegue tarde se
  * descarta y nunca se pinta una lista que no corresponda al texto actual.
+ * `limit` opcional: el panel no lo pasa (10 por defecto) y la vista de
+ * resultados pide más coincidencias.
  */
-export function useSearch(rawQuery: string): SearchState {
+export function useSearch(rawQuery: string, limit?: number): SearchReturn {
   const query = rawQuery.trim().slice(0, MAX_QUERY_LENGTH);
-  const [state, setState] = useState<SearchState>(() => idleState(""));
+  const [attempt, setAttempt] = useState(0);
+  const [state, setState] = useState<SearchState>(() => idleState("", 0));
 
   useEffect(() => {
     if (query.length < MIN_QUERY_LENGTH) {
@@ -41,7 +51,7 @@ export function useSearch(rawQuery: string): SearchState {
     const controller = new AbortController();
     let active = true;
 
-    void apiSearch(query, "all", controller.signal).then((result) => {
+    void apiSearch(query, "all", controller.signal, limit).then((result) => {
       if (!active) {
         return;
       }
@@ -56,6 +66,7 @@ export function useSearch(rawQuery: string): SearchState {
           items: [],
           hasMore: false,
           query,
+          attempt,
         });
 
         return;
@@ -66,6 +77,7 @@ export function useSearch(rawQuery: string): SearchState {
         items: result.data.results,
         hasMore: result.data.hasMore,
         query,
+        attempt,
       });
     });
 
@@ -73,15 +85,19 @@ export function useSearch(rawQuery: string): SearchState {
       active = false;
       controller.abort();
     };
-  }, [query]);
+  }, [query, limit, attempt]);
 
-  // Los datos guardados son de otro texto: se muestra como si cargara (o en
-  // reposo, si no se ha llegado al umbral de 3 caracteres).
-  if (state.query !== query) {
+  const retry = useCallback(() => {
+    setAttempt((current) => current + 1);
+  }, []);
+
+  // Los datos guardados son de otro texto (o de un intento anterior): se muestra
+  // como si cargara (o en reposo, si no se ha llegado al umbral de 3 caracteres).
+  if (state.query !== query || state.attempt !== attempt) {
     return query.length < MIN_QUERY_LENGTH
-      ? idleState(query)
-      : { status: "loading", items: [], hasMore: false, query };
+      ? { ...idleState(query, attempt), retry }
+      : { status: "loading", items: [], hasMore: false, query, attempt, retry };
   }
 
-  return state;
+  return { ...state, retry };
 }

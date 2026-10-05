@@ -98,7 +98,26 @@ function Header({ detail = false }: HeaderProps) {
           <form
             role="search"
             className="group flex min-w-0 items-center rounded-lg bg-slate-700 px-2 text-slate-300 transition-colors hover:bg-slate-600 hover:text-white focus-within:bg-slate-600 focus-within:text-white sm:px-3"
-            onSubmit={(event) => event.preventDefault()}
+            onSubmit={(event) => {
+              event.preventDefault();
+
+              const trimmed = query.trim();
+
+              // Intro abre la vista de resultados con el texto actual (enmienda 001).
+              if (trimmed.length < 3) {
+                return;
+              }
+
+              setDismissed(true);
+
+              const alreadyThere =
+                location.pathname === "/search" &&
+                new URLSearchParams(location.search).get("q") === trimmed;
+
+              if (!alreadyThere) {
+                navigate(`/search?q=${encodeURIComponent(trimmed)}`);
+              }
+            }}
             onMouseEnter={handleSearchEnter}
             onMouseLeave={handleSearchLeave}
           >
@@ -121,7 +140,20 @@ function Header({ detail = false }: HeaderProps) {
                 setQuery(event.target.value);
                 setDismissed(false);
               }}
-              onBlur={() => setDismissed(true)}
+              onBlur={(event) => {
+                // Foco dentro del panel (Tab a los resultados) → no cerrar;
+                // foco fuera → se cierra (RF-8, enmienda 05/10/2026).
+                const container = event.currentTarget.parentElement;
+
+                if (
+                  event.relatedTarget instanceof Node &&
+                  container?.contains(event.relatedTarget)
+                ) {
+                  return;
+                }
+
+                setDismissed(true);
+              }}
               onKeyDown={(event) => {
                 if (event.key === "Escape") {
                   setDismissed(true);

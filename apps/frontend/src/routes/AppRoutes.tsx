@@ -14,6 +14,7 @@ import Main from "../layouts/Main";
 const NotFound = lazy(() => import("../pages/NotFound"));
 const Auth = lazy(() => import("../pages/Auth"));
 const Home = lazy(() => import("../pages/Home"));
+const SearchResults = lazy(() => import("../pages/SearchResults"));
 const Profile = lazy(() => import("../pages/private/Profile"));
 const TitleDetail = lazy(() => import("../pages/TitleDetail"));
 const Movies = lazy(() => import("../pages/Movies"));
@@ -27,6 +28,8 @@ const router = createBrowserRouter(
 
         <Route element={<Main />}>
           <Route path="/" element={<Home />} />
+          {/* Vista de resultados de búsqueda (enmienda spec 001): pública. */}
+          <Route path="/search" element={<SearchResults />} />
         </Route>
 
         {/* Ficha pública (spec 002, D7): sin menú lateral y con cabecera «Volver». */}

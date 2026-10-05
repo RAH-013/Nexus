@@ -218,11 +218,17 @@ export function apiSearch(
   query: string,
   type: SearchType,
   signal?: AbortSignal,
+  limit?: number,
 ): Promise<ApiResult<SearchResults>> {
   const params = new URLSearchParams({
     q: query.trim(),
     type,
   });
+
+  // Sin limit el backend usa su tope por defecto (10, el del panel).
+  if (limit !== undefined) {
+    params.set("limit", String(limit));
+  }
 
   return request(
     `/api/cinemeta/search?${params.toString()}`,

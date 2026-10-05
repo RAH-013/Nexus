@@ -333,7 +333,12 @@ class CinemetaService {
     }
   }
 
-  async search(type: SearchType, query: string): Promise<SearchResult> {
+  /** `limit` opcional (1..50): el panel pide 10 y la vista de resultados, más. */
+  async search(
+    type: SearchType,
+    query: string,
+    limit: number = SEARCH_LIMIT,
+  ): Promise<SearchResult> {
     const normalizedQuery = normalizeQuery(query);
     const types: ("movie" | "series")[] =
       type === "all" ? ["movie", "series"] : [type];
@@ -344,7 +349,7 @@ class CinemetaService {
     const [movies, series = []] = lists;
 
     return {
-      ...limitResults(alternateTypes(movies, series).map(toCatalogItem)),
+      ...limitResults(alternateTypes(movies, series).map(toCatalogItem), limit),
       type,
     };
   }

@@ -31,7 +31,13 @@ cinemetaRouter.get("/search", async (req, res) => {
       });
     }
 
-    const results = await cinemetaService.search(type, query);
+    const limit = parseSearchLimit(req.query.limit);
+
+    if ("error" in limit) {
+      return res.status(400).json({ message: limit.error });
+    }
+
+    const results = await cinemetaService.search(type, query, limit.value);
 
     return res.json(results);
   } catch (error) {
@@ -121,3 +127,18 @@ cinemetaRouter.get("/:type/:id", async (req, res) => {
     });
   }
 });
+
+/** `limit` opcional de la búsqueda: entero entre 1 y 50; ausente → tope por defecto (10). */
+function parseSearchLimit(value: unknown): { value?: number } | { error: string } {
+  if (value === undefined) {
+    return {};
+  }
+
+  const parsed = Number(String(value));
+
+  if (!Number.isInteger(parsed) || parsed < 1 || parsed > 50) {
+    return { error: "El parámetro limit debe ser un número entre 1 y 50" };
+  }
+
+  return { value: parsed };
+}

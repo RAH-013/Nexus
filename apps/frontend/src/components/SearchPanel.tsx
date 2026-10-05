@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { useSearch } from "../hooks/useSearch";
 import PosterCard from "./home/PosterCard";
 
@@ -44,6 +45,9 @@ function SearchPanel({ query, onClose, onNavigate }: SearchPanelProps) {
     <div
       role="region"
       aria-label="Resultados de búsqueda"
+      // El foco se queda en el campo al pulsar dentro del panel: el clic llega
+      // al enlace y el panel solo se cierra cuando el foco sale (RF-8).
+      onMouseDown={(event) => event.preventDefault()}
       className="absolute right-0 top-full z-50 mt-2 w-[min(92vw,26rem)] overflow-hidden rounded-lg border border-slate-700 bg-slate-800 shadow-xl"
     >
       <div aria-live="polite">
@@ -90,20 +94,30 @@ function SearchPanel({ query, onClose, onNavigate }: SearchPanelProps) {
                       className="h-16 w-11 shrink-0"
                       onNavigate={onNavigate}
                     />
-                    <div className="min-w-0">
+                    {/* Título y año también navegan: toda la fila es cliqueable. */}
+                    <Link
+                      to={`/title/${item.type}/${item.id}`}
+                      onClick={onNavigate}
+                      className="min-w-0 flex-1 rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+                    >
                       <p className="truncate text-sm text-white">{item.name}</p>
                       <p className="text-xs text-slate-400">{item.year ?? ""}</p>
-                    </div>
+                    </Link>
                   </div>
                 </li>
               ))}
             </ul>
 
-            {hasMore && (
-              <p className="border-t border-slate-700 px-3 py-2 text-xs text-slate-400">
-                Hay más resultados para «{trimmed}».
-              </p>
-            )}
+            <div className="border-t border-slate-700 px-3 py-2 text-xs text-slate-400">
+              {hasMore && <p>Hay más resultados para «{trimmed}».</p>}
+              <Link
+                to={`/search?q=${encodeURIComponent(trimmed)}`}
+                onClick={onNavigate}
+                className="mt-1 inline-block font-medium text-teal-400 underline hover:text-teal-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-400"
+              >
+                Ver todos los resultados
+              </Link>
+            </div>
           </>
         )}
       </div>

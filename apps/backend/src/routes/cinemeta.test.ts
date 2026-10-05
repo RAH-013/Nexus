@@ -286,6 +286,42 @@ test("una lista válida responde 200 con el array de películas y sus géneros",
   assert.deepEqual(items[0].genres, ["Action"]);
 });
 
+test("un limit fuera de rango responde 400 con message", async () => {
+  const response = await get("/api/cinemeta/search?q=matrix&limit=0");
+
+  assert.equal(response.status, 400);
+
+  const body = (await response.json()) as { message?: unknown };
+  assert.match(String(body.message), /limit/i);
+});
+
+test("con limit la respuesta respeta el tope pedido", async (t) => {
+  mockSource(t, (url) => {
+    if (url.includes("/search=")) {
+      const metas = Array.from({ length: 12 }, (_, index) => ({
+        id: `tt-limit${index}`,
+        type: "movie",
+        name: `Resultado ${index}`,
+        poster: `https://img.example/${index}.jpg`,
+        releaseInfo: `${2001 + index}`,
+        genres: ["Action"],
+      }));
+
+      return Response.json({ metas });
+    }
+
+    return Response.json({ metas: [] });
+  });
+
+  const response = await get("/api/cinemeta/search?q=matrix&limit=5");
+
+  assert.equal(response.status, 200);
+
+  const body = (await response.json()) as { results?: unknown; hasMore?: unknown };
+  assert.equal((body.results as unknown[]).length, 5);
+  assert.equal(body.hasMore, true);
+});
+
 test("al superar el límite de peticiones la respuesta es 429", async () => {
   let limited = false;
 
