@@ -3,10 +3,13 @@ import { test, type TestContext } from "node:test";
 
 import {
   alternateTypes,
+  calendarYears,
   cinemetaService,
   extractYear,
   filterByGenre,
+  isMovieList,
   limitResults,
+  movieListEndpoint,
   normalizeQuery,
   toCatalogItem,
   toTitleDetail,
@@ -216,6 +219,66 @@ test("la colección de género solo devuelve títulos de ese género", async (t)
   assert.deepEqual(
     items.map((item) => item.id),
     ["m-accion", "s-accion"],
+  );
+});
+
+test("calendarYears devuelve el año en curso y el siguiente", () => {
+  assert.deepEqual(calendarYears(new Date(2026, 4, 10)), { current: 2026, next: 2027 });
+  assert.deepEqual(calendarYears(new Date(2027, 11, 31)), { current: 2027, next: 2028 });
+});
+
+test("isMovieList solo acepta las cuatro listas de la vista Películas", () => {
+  for (const list of ["trending", "playing", "upcoming", "rated"]) {
+    assert.equal(isMovieList(list), true);
+  }
+
+  assert.equal(isMovieList("top"), false);
+  assert.equal(isMovieList("movie"), false);
+  assert.equal(isMovieList(""), false);
+});
+
+test("movieListEndpoint apunta cada pestaña a su catálogo con los años del calendario", () => {
+  const now = new Date(2026, 4, 10);
+
+  assert.equal(movieListEndpoint("trending", now), "/catalog/movie/trending.json");
+  assert.equal(movieListEndpoint("playing", now), "/catalog/movie/year/genre=2026.json");
+  assert.equal(movieListEndpoint("upcoming", now), "/catalog/movie/year/genre=2027.json");
+  assert.equal(movieListEndpoint("rated", now), "/catalog/movie/imdbRating.json");
+});
+
+test("getMovieList devuelve la lista de la pestaña con sus géneros", async (t) => {
+  const requested: string[] = [];
+
+  mockSource(t, (url) => {
+    requested.push(url);
+    return Response.json({ metas: buildList("movie", 3, ["Action"]) });
+  });
+
+  const items = await cinemetaService.getMovieList("trending");
+
+  assert.equal(items.length, 3);
+  assert.ok(requested.every((url) => url.includes("/catalog/movie/trending.json")));
+  assert.deepEqual(items[0].genres, ["Action"]);
+});
+
+test("upcoming con la fuente !ok devuelve lista vacía, no un fallo", async (t) => {
+  mockSource(
+    t,
+    () => new Response("not found", { status: 404, statusText: "Not Found" }),
+  );
+
+  assert.deepEqual(await cinemetaService.getMovieList("upcoming"), []);
+});
+
+test("si la fuente cae en playing el fallo se propaga", async (t) => {
+  mockSource(
+    t,
+    () => new Response("fallo", { status: 503, statusText: "Service Unavailable" }),
+  );
+
+  return assert.rejects(
+    () => cinemetaService.getMovieList("playing"),
+    /Cinemeta request failed/,
   );
 });
 

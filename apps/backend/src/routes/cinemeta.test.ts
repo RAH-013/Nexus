@@ -236,6 +236,56 @@ test("una ficha completa responde 200 con el objeto normalizado", async (t) => {
   assert.equal("releaseInfo" in body, false);
 });
 
+test("una lista de películas fuera de la blanca responde 400 con message", async () => {
+  const response = await get("/api/cinemeta/movies/no-existe");
+
+  assert.equal(response.status, 400);
+
+  const body = (await response.json()) as { message?: unknown };
+  assert.match(String(body.message), /lista/i);
+});
+
+test("si la fuente no responde la lista responde 502 con message", async () => {
+  // Sin mock: CINEMETA_BASE_URL apunta a un host inexistente (ver cabecera).
+  const response = await get("/api/cinemeta/movies/trending");
+
+  assert.equal(response.status, 502);
+
+  const body = (await response.json()) as { message?: unknown };
+  assert.ok(typeof body.message === "string" && body.message.length > 0);
+});
+
+test("una lista válida responde 200 con el array de películas y sus géneros", async (t) => {
+  mockSource(t, (url) => {
+    if (url.includes("/catalog/movie/trending.json")) {
+      return Response.json({
+        metas: [
+          {
+            id: "tt-movie",
+            type: "movie",
+            name: "Película de prueba",
+            poster: "https://img.example/movie.jpg",
+            releaseInfo: "2011",
+            genres: ["Action"],
+          },
+        ],
+      });
+    }
+
+    return Response.json({ metas: [] });
+  });
+
+  const response = await get("/api/cinemeta/movies/trending");
+
+  assert.equal(response.status, 200);
+
+  const items = (await response.json()) as Array<Record<string, unknown>>;
+  assert.ok(Array.isArray(items));
+  assert.equal(items.length, 1);
+  assert.equal(items[0].id, "tt-movie");
+  assert.deepEqual(items[0].genres, ["Action"]);
+});
+
 test("al superar el límite de peticiones la respuesta es 429", async () => {
   let limited = false;
 

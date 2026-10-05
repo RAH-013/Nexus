@@ -17,12 +17,17 @@ export type Collection =
   | "comedy"
   | "horror";
 
+/** Pestañas de la vista Películas (spec 003, §1.2). */
+export type MovieList = "trending" | "playing" | "upcoming" | "rated";
+
 export interface MediaItem {
   id: string;
   type: MediaType;
   name: string;
   poster?: string;
   year?: string;
+  /** Géneros en inglés de la fuente: los usa el filtro de Películas (spec 003, RF-7). */
+  genres?: string[];
 }
 
 export interface SearchResults {
@@ -72,6 +77,10 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((entry) => typeof entry === "string");
+}
+
 function isMediaItem(value: unknown): value is MediaItem {
   if (!isObject(value)) {
     return false;
@@ -84,7 +93,8 @@ function isMediaItem(value: unknown): value is MediaItem {
     typeof value.name === "string" &&
     (type === "movie" || type === "series") &&
     (value.poster === undefined || value.poster === null || typeof value.poster === "string") &&
-    (value.year === undefined || value.year === null || typeof value.year === "string")
+    (value.year === undefined || value.year === null || typeof value.year === "string") &&
+    (value.genres === undefined || value.genres === null || isStringArray(value.genres))
   );
 }
 
@@ -192,6 +202,18 @@ export function apiGetCollection(
   );
 }
 
+/** Lista de la vista Películas (spec 003, D1): una petición por pestaña. */
+export function apiGetMovieList(
+  list: MovieList,
+  signal?: AbortSignal,
+): Promise<ApiResult<MediaItem[]>> {
+  return request(
+    `/api/cinemeta/movies/${list}`,
+    { signal },
+    parseMediaItemList,
+  );
+}
+
 export function apiSearch(
   query: string,
   type: SearchType,
@@ -207,10 +229,6 @@ export function apiSearch(
     { signal },
     parseSearchResults,
   );
-}
-
-function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((entry) => typeof entry === "string");
 }
 
 function parseTitleDetail(payload: unknown): TitleDetail | null {

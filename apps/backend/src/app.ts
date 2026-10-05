@@ -5,6 +5,7 @@ import pinoHttp from "pino-http";
 import { authRouter } from "./routes/auth";
 import { cinemetaRouter } from "./routes/cinemeta";
 import { commentsRouter } from "./routes/comments";
+import { viewsRouter } from "./routes/views";
 
 import { healthRouter } from "./routes/health";
 import { errorHandler } from "./middleware/error";
@@ -28,6 +29,9 @@ app.use(compression());
 
 // Después de express.json: el POST de comentarios necesita el cuerpo parseado.
 app.use("/api/comments", commentsRouter);
+
+// Después de express.json (spec 003, D1), igual que comentarios.
+app.use("/api/views", viewsRouter);
 
 app.use("/health", healthRouter);
 

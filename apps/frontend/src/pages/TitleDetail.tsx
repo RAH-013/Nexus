@@ -6,6 +6,7 @@ import CommentsSection from "../components/detail/CommentsSection";
 import DetailSkeleton from "../components/detail/DetailSkeleton";
 import RatingCircle from "../components/detail/RatingCircle";
 import TitleCard from "../components/detail/TitleCard";
+import WatchButton from "../components/movies/WatchButton";
 import SectionError from "../components/home/SectionError";
 import { useTitleData } from "../hooks/useTitleData";
 import NotFound from "./NotFound";
@@ -86,6 +87,9 @@ function TitleView({ type, id }: TitleViewProps) {
     >
       <div className="min-w-0 space-y-6">
         <TitleCard title={data} />
+        {/* RF-10: mismo control que las cards, solo en películas y con sesión
+            (WatchButton se oculta solo); abrir la ficha no crea VIEW. */}
+        {type === "movie" && <WatchButton id={id} />}
         <CastSection director={data.director} cast={data.cast} />
       </div>
 

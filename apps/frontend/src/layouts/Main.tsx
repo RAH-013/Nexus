@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 
 import Header from "../components/Header";
 import Menu from "../components/Menu";
+import MoviesSidebar from "../components/movies/MoviesSidebar";
 import ScrollTopButton from "../components/ScrollTopButton";
 import Loader from "./Loader";
 
@@ -12,12 +13,18 @@ interface MainProps {
    * en su variante «Volver» + logotipo.
    */
   detail?: boolean;
+  /**
+   * Layout de `/movies` (spec 003, D8): sin menú de destinos; la columna
+   * izquierda es Ordenar + Filtros (`MoviesSidebar`). La cabecera es la de
+   * Home, sin rediseño (RF-2).
+   */
+  browse?: boolean;
 }
 
-export default function Main({ detail = false }: MainProps) {
+export default function Main({ detail = false, browse = false }: MainProps) {
   return (
     <div className="flex min-h-screen bg-slate-900 text-white">
-      {!detail && <Menu />}
+      {browse ? <MoviesSidebar /> : !detail && <Menu />}
 
       <div className="flex min-w-0 flex-1 flex-col">
         <Header detail={detail} />

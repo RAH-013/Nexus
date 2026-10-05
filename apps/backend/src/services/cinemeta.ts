@@ -66,6 +66,8 @@ export interface CatalogItem {
   name: string;
   poster?: string;
   year?: string;
+  /** Géneros de la fuente: los pide la vista Películas para filtrar (spec 003, RF-7). */
+  genres?: string[];
 }
 
 export interface SearchResult {
@@ -97,6 +99,43 @@ interface CinemetaResponse<T> {
 
 export function isCollection(value: string): value is Collection {
   return (COLLECTIONS as readonly string[]).includes(value);
+}
+
+export const MOVIE_LISTS = ["trending", "playing", "upcoming", "rated"] as const;
+
+export type MovieList = (typeof MOVIE_LISTS)[number];
+
+export function isMovieList(value: string): value is MovieList {
+  return (MOVIE_LISTS as readonly string[]).includes(value);
+}
+
+/**
+ * Años civiles de las pestañas «En cartelera» y «Próximos»: se calculan con el
+ * reloj del servidor para que un cambio de año no rompa la vista (spec 003, caso 3).
+ */
+export function calendarYears(now: Date = new Date()): { current: number; next: number } {
+  const current = now.getFullYear();
+
+  return { current, next: current + 1 };
+}
+
+/**
+ * Catálogo movie de cada pestaña (spec 003 §1.2). En `year` el extra `genre`
+ * es el **año**, no un género: por eso el filtro de género se aplica en cliente.
+ */
+export function movieListEndpoint(list: MovieList, now: Date = new Date()): string {
+  const { current, next } = calendarYears(now);
+
+  switch (list) {
+    case "playing":
+      return `/catalog/movie/year/genre=${current}.json`;
+    case "upcoming":
+      return `/catalog/movie/year/genre=${next}.json`;
+    case "rated":
+      return "/catalog/movie/imdbRating.json";
+    case "trending":
+      return "/catalog/movie/trending.json";
+  }
 }
 
 export function isSearchType(value: string): value is SearchType {
@@ -161,6 +200,7 @@ export function toCatalogItem(item: CinemetaCatalogItem): CatalogItem {
     name: item.name,
     ...(item.poster ? { poster: item.poster } : {}),
     ...(year ? { year } : {}),
+    ...(item.genres ? { genres: item.genres } : {}),
   };
 }
 
@@ -265,6 +305,32 @@ class CinemetaService {
     const filteredSeries = genre ? filterByGenre(series, genre) : series;
 
     return alternateTypes(filteredMovies, filteredSeries).map(toCatalogItem);
+  }
+
+  /**
+   * Lista movie de una pestaña (spec 003, D2): una petición al catálogo, sin
+   * `skip`. `upcoming` con la fuente !ok (el año siguiente aún no está
+   * publicado) devuelve lista vacía en vez de 502 (RF-4); un fallo de red o
+   * una respuesta ilegible siguen siendo error.
+   */
+  async getMovieList(list: MovieList): Promise<CatalogItem[]> {
+    try {
+      const response = await this.request<CinemetaResponse<CinemetaCatalogItem>>(
+        movieListEndpoint(list),
+      );
+
+      return (response.metas ?? []).map(toCatalogItem);
+    } catch (error) {
+      if (
+        list === "upcoming" &&
+        error instanceof Error &&
+        error.message.startsWith("Cinemeta request failed")
+      ) {
+        return [];
+      }
+
+      throw error;
+    }
   }
 
   async search(type: SearchType, query: string): Promise<SearchResult> {
