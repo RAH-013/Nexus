@@ -48,6 +48,16 @@ export interface ActorEntry {
   movies: ActorMovie[];
 }
 
+/**
+ * Actor con el enriquecimiento de TMDB (foto y biografía). Los campos
+ * opcionales vienen ausentes sin clave de API o si TMDB no tiene datos.
+ */
+export interface ActorDetail extends ActorEntry {
+  /** Foto de perfil completa del CDN de TMDB. */
+  imageUrl?: string;
+  biography?: string;
+}
+
 export interface SearchResults {
   results: MediaItem[];
   hasMore: boolean;
@@ -315,6 +325,41 @@ export function apiGetActors(
   signal?: AbortSignal,
 ): Promise<ApiResult<ActorEntry[]>> {
   return request(`/api/cinemeta/actors`, { signal }, parseActors);
+}
+
+function parseActorDetail(payload: unknown): ActorDetail | null {
+  if (!isObject(payload) || !isObject(payload.actor)) {
+    return null;
+  }
+
+  const actor = parseActorEntry(payload.actor);
+
+  if (actor === null) {
+    return null;
+  }
+
+  const imageUrl = payload.actor.imageUrl;
+  const biography = payload.actor.biography;
+
+  return {
+    ...actor,
+    ...(typeof imageUrl === "string" && imageUrl ? { imageUrl } : {}),
+    ...(typeof biography === "string" && biography ? { biography } : {}),
+  };
+}
+
+/** Datos de un actor (foto y biografía de TMDB): una petición por actor. */
+export function apiGetActor(
+  name: string,
+  signal?: AbortSignal,
+): Promise<ApiResult<ActorDetail>> {
+  const params = new URLSearchParams({ name: name.trim() });
+
+  return request(
+    `/api/cinemeta/actor?${params.toString()}`,
+    { signal },
+    parseActorDetail,
+  );
 }
 
 export function apiSearch(

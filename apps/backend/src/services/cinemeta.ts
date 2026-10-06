@@ -501,6 +501,24 @@ class CinemetaService {
     return actors;
   }
 
+  /**
+   * Actor de la agregación por nombre exacto (normalizado): la ficha de
+   * TMDB solo se pide para actores que Cinemeta ya entrega.
+   */
+  async findActorByName(name: string): Promise<ActorEntry | null> {
+    const target = normalizeQuery(name);
+
+    if (!target) {
+      return null;
+    }
+
+    const actors = await this.getActors();
+
+    return (
+      actors.find((actor) => normalizeQuery(actor.name) === target) ?? null
+    );
+  }
+
   /** `limit` opcional (1..50): el panel pide 10 y la vista de resultados, más. */
   async search(
     type: SearchType,

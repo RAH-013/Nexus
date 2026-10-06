@@ -6,6 +6,7 @@ import {
   isMovieList,
   isSearchType,
 } from "../services/cinemeta";
+import { profileImageUrl, tmdbService } from "../services/tmdb";
 
 export const cinemetaRouter = Router();
 
@@ -61,6 +62,52 @@ cinemetaRouter.get("/actors", async (_req, res) => {
 
     return res.status(502).json({
       message: "No se pudieron cargar los actores",
+    });
+  }
+});
+
+// Ficha de un actor (foto y biografía de TMDB), también de un solo tramo.
+cinemetaRouter.get("/actor", async (req, res) => {
+  try {
+    const name = String(req.query.name ?? "").trim();
+
+    if (!name) {
+      return res.status(400).json({
+        message: "El parámetro name es requerido",
+      });
+    }
+
+    if (name.length > 80) {
+      return res.status(400).json({
+        message: "El nombre no puede superar 80 caracteres",
+      });
+    }
+
+    // Solo actores de la agregación de Cinemeta: TMDB enriquece, no aporta actores.
+    const actor = await cinemetaService.findActorByName(name);
+
+    if (!actor) {
+      return res.status(404).json({
+        message: "No encontramos ese actor",
+      });
+    }
+
+    const person = await tmdbService.findPerson(actor.name);
+
+    return res.json({
+      actor: {
+        ...actor,
+        ...(person?.profilePath
+          ? { imageUrl: profileImageUrl(person.profilePath) }
+          : {}),
+        ...(person?.biography ? { biography: person.biography } : {}),
+      },
+    });
+  } catch (error) {
+    console.error("Error al obtener datos del actor en TMDB:", error);
+
+    return res.status(502).json({
+      message: "No se pudieron obtener los datos del actor",
     });
   }
 });

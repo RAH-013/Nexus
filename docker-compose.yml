@@ -38,6 +38,7 @@ services:
       NODE_ENV: production
       PORT: 3000
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      TMDB_API_KEY: ${TMDB_API_KEY:-}
     depends_on:
       postgres:
         condition: service_healthy

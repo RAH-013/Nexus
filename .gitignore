@@ -40,3 +40,7 @@ dist-ssr
 
 # Lockfile de la raíz: no hay package.json en la raíz (las apps son independientes)
 /package-lock.json
+
+# Tests
+/apps/backend/src/services/cinemeta.test.ts
+/apps/backend/src/services/comments.test.ts
