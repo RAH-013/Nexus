@@ -1,6 +1,7 @@
 const API_URL = "";
 
 export interface User {
+  createdAt: string | number | Date;
   id: string;
   name: string;
   email: string;

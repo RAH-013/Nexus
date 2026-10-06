@@ -5,12 +5,7 @@ import PosterCard from "./home/PosterCard";
 
 interface SearchPanelProps {
   query: string;
-  /** Escape cierra el panel (RF-8); el resto del cierre vive en `Header`. */
   onClose: () => void;
-  /**
-   * Navegar a una ficha también cierra el panel: `Header` no se desmonta al
-   * entrar en la ficha y sin esto el panel quedaría abierto (spec 002, D5).
-   */
   onNavigate?: () => void;
 }
 
@@ -18,11 +13,6 @@ function PanelMessage({ children }: { children: ReactNode }) {
   return <p className="px-4 py-5 text-sm text-slate-300">{children}</p>;
 }
 
-/**
- * Panel desplegado bajo el campo de búsqueda: hasta 10 resultados que llevan
- * a su ficha (clic o teclado, cerrando el panel), aviso de «hay más» y
- * mensajes de vacío y de error (RF-7, RF-8).
- */
 function SearchPanel({ query, onClose, onNavigate }: SearchPanelProps) {
   const { status, items, hasMore } = useSearch(query);
   const trimmed = query.trim();
@@ -45,10 +35,7 @@ function SearchPanel({ query, onClose, onNavigate }: SearchPanelProps) {
     <div
       role="region"
       aria-label="Resultados de búsqueda"
-      // El foco se queda en el campo al pulsar dentro del panel: el clic llega
-      // al enlace y el panel solo se cierra cuando el foco sale (RF-8).
       onMouseDown={(event) => event.preventDefault()}
-      className="absolute right-0 top-full z-50 mt-2 w-[min(92vw,26rem)] overflow-hidden rounded-lg border border-slate-700 bg-slate-800 shadow-xl"
     >
       <div aria-live="polite">
         {status === "loading" && (
@@ -80,7 +67,9 @@ function SearchPanel({ query, onClose, onNavigate }: SearchPanelProps) {
         )}
 
         {status === "empty" && (
-          <PanelMessage>No se encontraron resultados para «{trimmed}».</PanelMessage>
+          <PanelMessage>
+            No se encontraron resultados para «{trimmed}».
+          </PanelMessage>
         )}
 
         {status === "results" && (
@@ -94,14 +83,16 @@ function SearchPanel({ query, onClose, onNavigate }: SearchPanelProps) {
                       className="h-16 w-11 shrink-0"
                       onNavigate={onNavigate}
                     />
-                    {/* Título y año también navegan: toda la fila es cliqueable. */}
+
                     <Link
                       to={`/title/${item.type}/${item.id}`}
                       onClick={onNavigate}
                       className="min-w-0 flex-1 rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
                     >
                       <p className="truncate text-sm text-white">{item.name}</p>
-                      <p className="text-xs text-slate-400">{item.year ?? ""}</p>
+                      <p className="text-xs text-slate-400">
+                        {item.year ?? ""}
+                      </p>
                     </Link>
                   </div>
                 </li>
@@ -110,6 +101,7 @@ function SearchPanel({ query, onClose, onNavigate }: SearchPanelProps) {
 
             <div className="border-t border-slate-700 px-3 py-2 text-xs text-slate-400">
               {hasMore && <p>Hay más resultados para «{trimmed}».</p>}
+
               <Link
                 to={`/search?q=${encodeURIComponent(trimmed)}`}
                 onClick={onNavigate}

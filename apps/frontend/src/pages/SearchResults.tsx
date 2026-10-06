@@ -50,7 +50,7 @@ function SearchResults() {
   return (
     <div className="space-y-6">
       <h2 className="text-lg font-semibold sm:text-xl">
-        {trimmed ? `Resultados de búsqueda para «${trimmed}»` : "Búsqueda"}
+        {trimmed ? `«${trimmed}»` : "Búsqueda"}
       </h2>
 
       {status === "idle" && (
@@ -71,7 +71,10 @@ function SearchResults() {
         <>
           <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6">
             {items.map((item, position) => (
-              <li key={`${item.id}-${position}`} className="min-w-0 space-y-1.5">
+              <li
+                key={`${item.id}-${position}`}
+                className="min-w-0 space-y-1.5"
+              >
                 <PosterCard
                   item={item}
                   className="aspect-2/3 w-full"
@@ -84,14 +87,17 @@ function SearchResults() {
                 >
                   {item.name}
                 </Link>
-                {item.year && <p className="text-xs text-slate-500">{item.year}</p>}
+                {item.year && (
+                  <p className="text-xs text-slate-500">{item.year}</p>
+                )}
               </li>
             ))}
           </ul>
 
           {hasMore && (
             <p className="text-sm text-slate-400">
-              Hay más resultados para «{trimmed}». Refina la búsqueda para acotarlos.
+              Hay más resultados para «{trimmed}». Refina la búsqueda para
+              acotarlos.
             </p>
           )}
         </>

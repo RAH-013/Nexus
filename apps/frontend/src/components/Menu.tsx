@@ -152,7 +152,7 @@ function Menu() {
 
       <aside
         id="side-menu"
-        className={`fixed left-3 top-3 z-50 flex h-[calc(100vh-1.5rem)] w-64 shrink-0 flex-col rounded-2xl bg-slate-800 p-4 text-white shadow-lg transition-transform lg:static lg:m-3 lg:z-auto lg:translate-x-0 ${
+        className={`fixed left-3 top-3 z-50 flex h-full w-64 shrink-0 flex-col bg-slate-800 p-4 text-white shadow-lg transition-transform lg:static  lg:z-auto lg:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >

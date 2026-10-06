@@ -1,28 +1,11 @@
-import { useEffect, useState } from "react";
 import { ArrowUpIcon } from "lucide-animated";
 
-function ScrollTopButton() {
-  const [visible, setVisible] = useState(false);
+interface ScrollTopButtonProps {
+  visible: boolean;
+  onClick: () => void;
+}
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setVisible(window.scrollY > 300);
-    };
-
-    window.addEventListener("scroll", handleScroll);
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
-
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-  };
-
+function ScrollTopButton({ visible, onClick }: ScrollTopButtonProps) {
   if (!visible) {
     return null;
   }
@@ -31,7 +14,7 @@ function ScrollTopButton() {
     <button
       type="button"
       aria-label="Volver arriba"
-      onClick={scrollToTop}
+      onClick={onClick}
       className="fixed right-6 bottom-6 z-50 rounded-full bg-slate-700 p-3 text-white shadow-lg transition hover:bg-slate-600"
     >
       <ArrowUpIcon size={22} />

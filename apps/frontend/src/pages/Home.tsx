@@ -25,13 +25,25 @@ function HeroSkeleton() {
   ];
 
   return (
-    <div className="flex h-[392px] items-end justify-center pb-7" aria-hidden="true">
+    <div
+      className="relative flex h-[392px] items-center justify-center overflow-hidden"
+      aria-hidden="true"
+    >
       {boxes.map(({ w, h }, position) => (
         <div
           key={position}
-          className={`animate-pulse rounded-lg bg-slate-800 [@media(prefers-reduced-motion:reduce)]:animate-none ${position > 0 ? "-ml-4" : ""}`}
-          style={{ width: w, height: h }}
-        />
+          className={`flex shrink-0 flex-col items-center ${
+            position > 0 ? "-ml-4" : ""
+          }`}
+          style={{ width: w }}
+        >
+          <div
+            className="animate-pulse rounded-lg bg-slate-800 [@media(prefers-reduced-motion:reduce)]:animate-none"
+            style={{ width: w, height: h }}
+          />
+
+          <div className="mt-2 h-4 w-3/4 animate-pulse rounded bg-slate-800 [@media(prefers-reduced-motion:reduce)]:animate-none" />
+        </div>
       ))}
     </div>
   );

@@ -4,6 +4,8 @@ import { LogoutIcon, UserIcon } from "lucide-animated";
 import { useUser } from "../hooks/useUser";
 import { swal } from "../utils/swal";
 
+import ContextMenu from "./ContextMenu";
+
 function UserMenu() {
   const { user, logout } = useUser();
   const [open, setOpen] = useState(false);
@@ -76,7 +78,7 @@ function UserMenu() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-48 overflow-hidden rounded-xl border border-slate-700 bg-slate-800 p-1 shadow-xl">
+        <ContextMenu className="w-48">
           <Link
             to="/profile"
             onClick={() => setOpen(false)}
@@ -85,6 +87,7 @@ function UserMenu() {
             <UserIcon size={18} aria-hidden="true" />
             Perfil
           </Link>
+
           <button
             type="button"
             onClick={handleLogout}
@@ -93,7 +96,7 @@ function UserMenu() {
             <LogoutIcon size={18} aria-hidden="true" />
             Cerrar sesión
           </button>
-        </div>
+        </ContextMenu>
       )}
     </div>
   );

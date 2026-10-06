@@ -1,16 +1,15 @@
-import { useState } from "react";
-import { ClapIcon, PlayIcon } from "lucide-animated";
+import { useRef, useState } from "react";
+
+import { ClapIcon, PlayIcon, type PlayIconHandle } from "lucide-animated";
+
 import type { TitleDetail } from "../../api/cinemeta";
+
 import { translateGenre } from "../../utils/genres";
 
 interface TitleCardProps {
   title: TitleDetail;
 }
 
-/**
- * Duración cruda de la fuente (`126 min`) a texto de la maqueta:
- * `2h 6min`, `49min`, `2h` sin minutos sobrantes. No parseable → nada.
- */
 function formatRuntime(runtime?: string): string | undefined {
   const match = runtime?.match(/^\s*(\d+)\s*min\s*$/);
 
@@ -33,26 +32,29 @@ function formatRuntime(runtime?: string): string | undefined {
   return `${hours}h ${rest}min`;
 }
 
-/**
- * Tarjeta principal de la ficha: `<h1>` con el título original + año, póster
- * con marcador de reserva, «géneros · duración» y el ▶ del tráiler superpuesto
- * (RF-3; oculta lo ausente sin dejar «·» suelto).
- */
 function TitleCard({ title }: TitleCardProps) {
   const [broken, setBroken] = useState(false);
+  const playRef = useRef<PlayIconHandle>(null);
+
   const withImage = Boolean(title.poster) && !broken;
 
   const genres = title.genres?.length
     ? title.genres.map(translateGenre).join(", ")
     : undefined;
+
   const runtime = formatRuntime(title.runtime);
 
   return (
     <div className="space-y-4">
-      <h1 className="truncate text-2xl font-bold text-white sm:text-3xl" title={title.name}>
+      <h1
+        className="truncate text-2xl font-bold text-white sm:text-3xl"
+        title={title.name}
+      >
         {title.name}
         {title.year && (
-          <span className="ml-2 text-lg font-medium text-slate-400">{title.year}</span>
+          <span className="ml-2 text-lg font-medium text-slate-400">
+            {title.year}
+          </span>
         )}
       </h1>
 
@@ -80,9 +82,16 @@ function TitleCard({ title }: TitleCardProps) {
             target="_blank"
             rel="noopener noreferrer"
             aria-label={`Ver tráiler de ${title.name}`}
+            onMouseEnter={() => playRef.current?.startAnimation()}
+            onMouseLeave={() => playRef.current?.stopAnimation()}
             className="absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center rounded-full bg-teal-500 text-slate-900 shadow-lg transition-colors hover:bg-teal-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-300"
           >
-            <PlayIcon size={20} animateOnHover={false} aria-hidden="true" />
+            <PlayIcon
+              ref={playRef}
+              size={20}
+              animateOnHover={false}
+              aria-hidden="true"
+            />
           </a>
         )}
       </div>
