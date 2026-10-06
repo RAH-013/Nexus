@@ -5,6 +5,9 @@ const CINEMETA_BASE_URL = env.CINEMETA_BASE_URL;
 const FEATURED_LIMIT = 10;
 const SEARCH_LIMIT = 10;
 
+/** La agregación de actores se guarda 15 min: son varias llamadas a Cinemeta. */
+const ACTORS_CACHE_TTL_MS = 15 * 60 * 1000;
+
 export const COLLECTIONS = [
   "featured",
   "trending",
@@ -40,13 +43,14 @@ export interface CinemetaCatalogItem {
   releaseInfo?: string;
   imdbRating?: string;
   genres?: string[];
+  /** Reparto (top ~3 por título): lo usa la vista Actores. */
+  cast?: string[];
 }
 
 export interface CinemetaMeta extends CinemetaCatalogItem {
   year?: number;
   runtime?: string;
   director?: string[];
-  cast?: string[];
   background?: string;
   trailers?: { source?: string }[];
   /** Entregados por la fuente y descartados por la ficha (spec 002 §1.1). */
@@ -66,7 +70,7 @@ export interface CatalogItem {
   name: string;
   poster?: string;
   year?: string;
-  /** Géneros de la fuente: los pide la vista Películas para filtrar (spec 003, RF-7). */
+  /** Géneros de la fuente: los pide la vista Películas/Series para filtrar. */
   genres?: string[];
 }
 
@@ -92,6 +96,20 @@ export interface TitleDetail {
   trailerSource?: string;
 }
 
+/** Película referenciada por la card de un actor. */
+export interface ActorMovieRef {
+  id: string;
+  name: string;
+  poster?: string;
+}
+
+/** Actor agregado del reparto de todas las películas (vista Actores). */
+export interface ActorEntry {
+  name: string;
+  movieCount: number;
+  movies: ActorMovieRef[];
+}
+
 interface CinemetaResponse<T> {
   metas?: T[];
   meta?: T;
@@ -101,17 +119,29 @@ export function isCollection(value: string): value is Collection {
   return (COLLECTIONS as readonly string[]).includes(value);
 }
 
-export const MOVIE_LISTS = ["trending", "playing", "upcoming", "rated"] as const;
+export const CATALOG_LISTS = ["trending", "playing", "upcoming", "rated"] as const;
 
-export type MovieList = (typeof MOVIE_LISTS)[number];
+export type CatalogList = (typeof CATALOG_LISTS)[number];
+
+/** Alias por retrocompatibilidad con Películas */
+export const MOVIE_LISTS = CATALOG_LISTS;
+export type MovieList = CatalogList;
+
+export function isCatalogList(value: string): value is CatalogList {
+  return (CATALOG_LISTS as readonly string[]).includes(value);
+}
 
 export function isMovieList(value: string): value is MovieList {
-  return (MOVIE_LISTS as readonly string[]).includes(value);
+  return isCatalogList(value);
+}
+
+export function isSeriesList(value: string): value is CatalogList {
+  return isCatalogList(value);
 }
 
 /**
- * Años civiles de las pestañas «En cartelera» y «Próximos»: se calculan con el
- * reloj del servidor para que un cambio de año no rompa la vista (spec 003, caso 3).
+ * Años civiles de las pestañas «En cartelera/emisión» y «Próximos»: se calculan con el
+ * reloj del servidor para que un cambio de año no rompa la vista.
  */
 export function calendarYears(now: Date = new Date()): { current: number; next: number } {
   const current = now.getFullYear();
@@ -120,29 +150,58 @@ export function calendarYears(now: Date = new Date()): { current: number; next: 
 }
 
 /**
- * Catálogo movie de cada pestaña (spec 003 §1.2). En `year` el extra `genre`
- * es el **año**, no un género: por eso el filtro de género se aplica en cliente.
+ * Endpoint del catálogo de cada pestaña según el tipo ('movie' o 'series').
  */
-export function movieListEndpoint(list: MovieList, now: Date = new Date()): string {
+export function catalogListEndpoint(
+  type: "movie" | "series",
+  list: CatalogList,
+  now: Date = new Date(),
+): string {
   const { current, next } = calendarYears(now);
 
   switch (list) {
     case "playing":
-      return `/catalog/movie/year/genre=${current}.json`;
+      return `/catalog/${type}/year/genre=${current}.json`;
     case "upcoming":
-      return `/catalog/movie/year/genre=${next}.json`;
+      return `/catalog/${type}/year/genre=${next}.json`;
     case "rated":
-      return "/catalog/movie/imdbRating.json";
+      return `/catalog/${type}/imdbRating.json`;
     case "trending":
-      return "/catalog/movie/trending.json";
+      return `/catalog/${type}/trending.json`;
   }
+}
+
+export function movieListEndpoint(list: MovieList, now: Date = new Date()): string {
+  return catalogListEndpoint("movie", list, now);
+}
+
+export function seriesListEndpoint(list: CatalogList, now: Date = new Date()): string {
+  return catalogListEndpoint("series", list, now);
+}
+
+/**
+ * Catálogos de película que alimentan la vista Actores: los que son distintos
+ * entre sí (en Cinemeta los catálogos «populares» devuelven el mismo top 100).
+ * Los de año son opcionales: si fallan aportan 0 pelis, como el «upcoming»
+ * de `getCatalogList`.
+ */
+export function actorSourceEndpoints(
+  now: Date = new Date(),
+): { endpoint: string; optional: boolean }[] {
+  return [
+    { endpoint: catalogListEndpoint("movie", "trending", now), optional: false },
+    { endpoint: catalogListEndpoint("movie", "rated", now), optional: false },
+    { endpoint: "/catalog/movie/top.json", optional: false },
+    { endpoint: catalogListEndpoint("movie", "playing", now), optional: true },
+    { endpoint: catalogListEndpoint("movie", "upcoming", now), optional: true },
+  ];
 }
 
 export function isSearchType(value: string): value is SearchType {
   return (SEARCH_TYPES as readonly string[]).includes(value);
 }
 
-/** Mayúsculas, acentos y espacios sobrantes fuera (RF-7). */
+/** Mayúsculas, acentos y espacios sobrantes fuera. */
 export function normalizeQuery(query: string): string {
   return query
     .trim()
@@ -152,7 +211,7 @@ export function normalizeQuery(query: string): string {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
-/** Primer año de «2008-2013» → «2008»; sin año reconocible → nada (RF-7). */
+/** Primer año de «2008-2013» → «2008»; sin año reconocible → nada. */
 export function extractYear(releaseInfo?: string): string | undefined {
   if (!releaseInfo) {
     return undefined;
@@ -161,7 +220,7 @@ export function extractYear(releaseInfo?: string): string | undefined {
   return releaseInfo.trim().match(/^(\d{4})/)?.[1];
 }
 
-/** Mezcla dos listas alternándolas y conservando el orden relativo de cada una (RF-1, RF-4, RF-5). */
+/** Mezcla dos listas alternándolas y conservando el orden relativo de cada una. */
 export function alternateTypes<T>(first: readonly T[], second: readonly T[]): T[] {
   const mixed: T[] = [];
   const length = Math.max(first.length, second.length);
@@ -179,7 +238,7 @@ export function alternateTypes<T>(first: readonly T[], second: readonly T[]): T[
   return mixed;
 }
 
-/** Filtro de género en inglés, sin deduplicar (RF-5). */
+/** Filtro de género en inglés, sin deduplicar. */
 export function filterByGenre(
   items: readonly CinemetaCatalogItem[],
   genre: string,
@@ -205,8 +264,8 @@ export function toCatalogItem(item: CinemetaCatalogItem): CatalogItem {
 }
 
 /**
- * Normaliza la meta de Cinemeta a la ficha: un solo repaso de campos
- * (RF-3…RF-6). Sin `name` no hay ficha que mostrar → `null` (RF-7).
+ * Normaliza la meta de Cinemeta a la ficha: un solo repaso de campos.
+ * Sin `name` no hay ficha que mostrar → `null`.
  */
 export function toTitleDetail(meta?: CinemetaRawMeta): TitleDetail | null {
   if (!meta?.name) {
@@ -243,6 +302,10 @@ export function limitResults(
 }
 
 class CinemetaService {
+  /** Caché de actores: promesa en vuelo + resultado con TTL (15 min). */
+  private actorsPromise: Promise<ActorEntry[]> | null = null;
+  private actorsCache: { actors: ActorEntry[]; expiresAt: number } | null = null;
+
   private async request<T>(endpoint: string): Promise<T> {
     const response = await fetch(`${CINEMETA_BASE_URL}${endpoint}`, {
       headers: {
@@ -308,15 +371,12 @@ class CinemetaService {
   }
 
   /**
-   * Lista movie de una pestaña (spec 003, D2): una petición al catálogo, sin
-   * `skip`. `upcoming` con la fuente !ok (el año siguiente aún no está
-   * publicado) devuelve lista vacía en vez de 502 (RF-4); un fallo de red o
-   * una respuesta ilegible siguen siendo error.
+   * Método genérico para consultar catálogos ('movie' o 'series').
    */
-  async getMovieList(list: MovieList): Promise<CatalogItem[]> {
+  async getCatalogList(type: "movie" | "series", list: CatalogList): Promise<CatalogItem[]> {
     try {
       const response = await this.request<CinemetaResponse<CinemetaCatalogItem>>(
-        movieListEndpoint(list),
+        catalogListEndpoint(type, list),
       );
 
       return (response.metas ?? []).map(toCatalogItem);
@@ -331,6 +391,114 @@ class CinemetaService {
 
       throw error;
     }
+  }
+
+  /** Lista movie de una pestaña (conservado por compatibilidad). */
+  async getMovieList(list: MovieList): Promise<CatalogItem[]> {
+    return this.getCatalogList("movie", list);
+  }
+
+  /** Lista series de una pestaña. */
+  async getSeriesList(list: CatalogList): Promise<CatalogItem[]> {
+    return this.getCatalogList("series", list);
+  }
+
+  /**
+   * Actores de todas las películas: unión del `cast` (top ~3 por peli) de los
+   * catálogos de `actorSourceEndpoints`, con películas deduplicadas por id.
+   * Caché en memoria con TTL; los fallos no se guardan (el reintento vuelve a
+   * pedir a Cinemeta).
+   */
+  async getActors(now: Date = new Date()): Promise<ActorEntry[]> {
+    if (this.actorsCache && now.getTime() < this.actorsCache.expiresAt) {
+      return this.actorsCache.actors;
+    }
+
+    if (!this.actorsPromise) {
+      const promise = this.fetchActors(now).then(
+        (actors) => {
+          this.actorsCache = {
+            actors,
+            expiresAt: Date.now() + ACTORS_CACHE_TTL_MS,
+          };
+          this.actorsPromise = null;
+          return actors;
+        },
+        (error: unknown) => {
+          this.actorsPromise = null;
+          throw error;
+        },
+      );
+
+      this.actorsPromise = promise;
+    }
+
+    return this.actorsPromise;
+  }
+
+  /** Trae los catálogos fuente en paralelo y arma el mapa actor → películas. */
+  private async fetchActors(now: Date): Promise<ActorEntry[]> {
+    const catalogs = await Promise.all(
+      actorSourceEndpoints(now).map(async ({ endpoint, optional }) => {
+        try {
+          const response = await this.request<CinemetaResponse<CinemetaCatalogItem>>(
+            endpoint,
+          );
+
+          return response.metas ?? [];
+        } catch (error) {
+          if (optional) {
+            return [];
+          }
+
+          throw error;
+        }
+      }),
+    );
+
+    // Películas deduplicadas por id: varios catálogos comparten títulos.
+    const movies = new Map<string, CinemetaCatalogItem>();
+
+    for (const metas of catalogs) {
+      for (const meta of metas) {
+        if (meta.name && !movies.has(meta.id)) {
+          movies.set(meta.id, meta);
+        }
+      }
+    }
+
+    const byActor = new Map<string, ActorMovieRef[]>();
+
+    for (const movie of movies.values()) {
+      for (const cast of movie.cast ?? []) {
+        const name = cast.trim();
+
+        if (!name) {
+          continue;
+        }
+
+        const list = byActor.get(name) ?? [];
+        list.push({
+          id: movie.id,
+          name: movie.name,
+          ...(movie.poster ? { poster: movie.poster } : {}),
+        });
+        byActor.set(name, list);
+      }
+    }
+
+    const actors: ActorEntry[] = [...byActor.entries()].map(([name, list]) => ({
+      name,
+      movieCount: list.length,
+      movies: list,
+    }));
+
+    // Más películas primero; de empate, alfabético.
+    actors.sort(
+      (a, b) => b.movieCount - a.movieCount || a.name.localeCompare(b.name, "es"),
+    );
+
+    return actors;
   }
 
   /** `limit` opcional (1..50): el panel pide 10 y la vista de resultados, más. */

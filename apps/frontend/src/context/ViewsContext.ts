@@ -1,4 +1,5 @@
 import { createContext } from "react";
+import type { MediaType } from "../api/cinemeta";
 
 /**
  * Películas marcadas como vistas por el usuario en sesión (spec 003, RF-8…RF-10):
@@ -12,8 +13,8 @@ export interface ViewsContextType {
   isViewed: (id: string) => boolean;
   /** true mientras esa película tiene una petición en vuelo (caso 9). */
   isPending: (id: string) => boolean;
-  /** Conmuta en servidor y solo tras la respuesta actualiza el set (D6). */
-  toggle: (id: string) => Promise<void>;
+  /** Conmuta en servidor recibiendo opcionalmente el tipo ('movie' | 'series'). */
+  toggle: (id: string, type?: MediaType) => Promise<void>;
   /** Solo con sesión existen el botón y el bloque Mostrar (RF-8, RF-9). */
   enabled: boolean;
 }

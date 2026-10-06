@@ -19,8 +19,7 @@ interface TitleViewProps {
 /**
  * Ficha de un título: URL pública `/title/:type/:id` con tres columnas en
  * escritorio (tarjeta/reparto · sinopsis/comentarios · ranking), estados
- * propios por sección y un único `<h1>` con el título de la obra (RF-1, RF-7,
- * RF-8, RNF-5, RNF-7).
+ * propios por sección y un único `<h1>` con el título de la obra.
  */
 function TitleView({ type, id }: TitleViewProps) {
   const title = useTitleData(type, id);
@@ -87,9 +86,8 @@ function TitleView({ type, id }: TitleViewProps) {
     >
       <div className="min-w-0 space-y-6">
         <TitleCard title={data} />
-        {/* RF-10: mismo control que las cards, solo en películas y con sesión
-            (WatchButton se oculta solo); abrir la ficha no crea VIEW. */}
-        {type === "movie" && <WatchButton id={id} />}
+        {/* RF-10: control de marcas de visto pasando el tipo correspondiente */}
+        <WatchButton id={id} type={type} />
         <CastSection director={data.director} cast={data.cast} />
       </div>
 

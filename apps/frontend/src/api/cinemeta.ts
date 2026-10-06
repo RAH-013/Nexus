@@ -17,8 +17,12 @@ export type Collection =
   | "comedy"
   | "horror";
 
-/** Pestañas de la vista Películas (spec 003, §1.2). */
-export type MovieList = "trending" | "playing" | "upcoming" | "rated";
+/** Pestañas de las vistas Películas y Series. */
+export type CatalogList = "trending" | "playing" | "upcoming" | "rated";
+
+/** Alias por retrocompatibilidad */
+export type MovieList = CatalogList;
+export type SeriesList = CatalogList;
 
 export interface MediaItem {
   id: string;
@@ -26,8 +30,22 @@ export interface MediaItem {
   name: string;
   poster?: string;
   year?: string;
-  /** Géneros en inglés de la fuente: los usa el filtro de Películas (spec 003, RF-7). */
+  /** Géneros en inglés de la fuente: los usan los filtros de Películas/Series. */
   genres?: string[];
+}
+
+/** Película referenciada por la card de un actor (vista Actores). */
+export interface ActorMovie {
+  id: string;
+  name: string;
+  poster?: string;
+}
+
+/** Actor agregado del reparto de todas las películas (vista Actores). */
+export interface ActorEntry {
+  name: string;
+  movieCount: number;
+  movies: ActorMovie[];
 }
 
 export interface SearchResults {
@@ -120,6 +138,72 @@ function parseMediaItemList(payload: unknown): MediaItem[] | null {
   return parseItems(payload);
 }
 
+function parseActorMovies(value: unknown): ActorMovie[] | null {
+  if (!Array.isArray(value)) {
+    return null;
+  }
+
+  const movies: ActorMovie[] = [];
+
+  for (const entry of value) {
+    if (
+      !isObject(entry) ||
+      typeof entry.id !== "string" ||
+      typeof entry.name !== "string" ||
+      (entry.poster !== undefined &&
+        entry.poster !== null &&
+        typeof entry.poster !== "string")
+    ) {
+      return null;
+    }
+
+    movies.push({
+      id: entry.id,
+      name: entry.name,
+      ...(entry.poster ? { poster: entry.poster } : {}),
+    });
+  }
+
+  return movies;
+}
+
+function parseActorEntry(value: unknown): ActorEntry | null {
+  if (
+    !isObject(value) ||
+    typeof value.name !== "string" ||
+    typeof value.movieCount !== "number" ||
+    !Number.isInteger(value.movieCount)
+  ) {
+    return null;
+  }
+
+  const movies = parseActorMovies(value.movies);
+
+  return movies === null
+    ? null
+    : { name: value.name, movieCount: value.movieCount, movies };
+}
+
+function parseActors(payload: unknown): ActorEntry[] | null {
+  if (!isObject(payload) || !Array.isArray(payload.actors)) {
+    return null;
+  }
+
+  const actors: ActorEntry[] = [];
+
+  for (const entry of payload.actors) {
+    const actor = parseActorEntry(entry);
+
+    if (actor === null) {
+      return null;
+    }
+
+    actors.push(actor);
+  }
+
+  return actors;
+}
+
 function parseSearchResults(payload: unknown): SearchResults | null {
   if (!isObject(payload)) {
     return null;
@@ -202,7 +286,7 @@ export function apiGetCollection(
   );
 }
 
-/** Lista de la vista Películas (spec 003, D1): una petición por pestaña. */
+/** Lista de la vista Películas: una petición por pestaña. */
 export function apiGetMovieList(
   list: MovieList,
   signal?: AbortSignal,
@@ -212,6 +296,25 @@ export function apiGetMovieList(
     { signal },
     parseMediaItemList,
   );
+}
+
+/** Lista de la vista Series: una petición por pestaña. */
+export function apiGetSeriesList(
+  list: SeriesList,
+  signal?: AbortSignal,
+): Promise<ApiResult<MediaItem[]>> {
+  return request(
+    `/api/cinemeta/series/${list}`,
+    { signal },
+    parseMediaItemList,
+  );
+}
+
+/** Actores de todas las películas: una sola petición para la vista. */
+export function apiGetActors(
+  signal?: AbortSignal,
+): Promise<ApiResult<ActorEntry[]>> {
+  return request(`/api/cinemeta/actors`, { signal }, parseActors);
 }
 
 export function apiSearch(

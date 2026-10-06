@@ -9,8 +9,9 @@ import {
 import { Outlet } from "react-router-dom";
 import {
   apiGetViews,
-  apiMarkViewed,
-  apiUnmarkViewed,
+  apiMarkTitleViewed,
+  apiUnmarkTitleViewed,
+  type MediaType,
   type ViewsError,
 } from "../api/views";
 import { ViewsContext, type ViewsContextType } from "../context/ViewsContext";
@@ -88,7 +89,7 @@ export function ViewsProvider({ children }: ViewsProviderProps) {
     userId !== null && loaded?.userId === userId ? loaded.ids : EMPTY_IDS;
 
   const toggle = useCallback(
-    async (id: string): Promise<void> => {
+    async (id: string, type: MediaType = "movie"): Promise<void> => {
       if (!userId) {
         return;
       }
@@ -103,7 +104,11 @@ export function ViewsProvider({ children }: ViewsProviderProps) {
       setPendingIds(new Set(pendingRef.current));
 
       const marking = !viewedIds.has(id);
-      const result = marking ? await apiMarkViewed(id) : await apiUnmarkViewed(id);
+      // El tipo viaja hasta el backend (PUT/DELETE /api/views/:type/:id),
+      // así una serie se guarda como serie y no como película.
+      const result = marking
+        ? await apiMarkTitleViewed(type, id)
+        : await apiUnmarkTitleViewed(type, id);
 
       pendingRef.current.delete(id);
       setPendingIds(new Set(pendingRef.current));

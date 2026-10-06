@@ -1,4 +1,4 @@
-/** Vocabulario de géneros ya usado en la home (Action→Acción…, spec 002, D9). */
+/** Vocabulario de géneros usado en la home, películas y series. */
 const GENRE_TRANSLATIONS: Record<string, string> = {
   Action: "Acción",
   Adventure: "Aventura",
@@ -22,7 +22,7 @@ const GENRE_TRANSLATIONS: Record<string, string> = {
 };
 
 /**
- * Un chip por cada género movie del manifiesto de Cinemeta, en el orden de la
+ * Un chip por cada género movie/series del manifiesto de Cinemeta, en el orden de la
  * maqueta (spec 003, RF-7): 19 ids en inglés, los mismos que pinta la ficha.
  */
 export const MOVIE_GENRES = [
@@ -47,9 +47,12 @@ export const MOVIE_GENRES = [
   "Western",
 ] as const;
 
+/** Alias para mantener semántica clara en la vista de Series */
+export const SERIES_GENRES = MOVIE_GENRES;
+
 /**
- * Género en español para pintarlo en la ficha; sin equivalente se muestra
- * tal cual llega, sin inventar traducción (RF-3, caso 7).
+ * Género en español para pintarlo en la ficha o chips; sin equivalente se muestra
+ * tal cual llega, sin inventar traducción.
  */
 export function translateGenre(genre: string): string {
   return GENRE_TRANSLATIONS[genre] ?? genre;

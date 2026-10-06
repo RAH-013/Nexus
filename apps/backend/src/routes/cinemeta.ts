@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   cinemetaService,
+  isCatalogList,
   isCollection,
   isMovieList,
   isSearchType,
@@ -49,6 +50,21 @@ cinemetaRouter.get("/search", async (req, res) => {
   }
 });
 
+// Ruta de un solo tramo: no colisiona con /:type/:id (necesita dos).
+cinemetaRouter.get("/actors", async (_req, res) => {
+  try {
+    const actors = await cinemetaService.getActors();
+
+    return res.json({ actors });
+  } catch (error) {
+    console.error("Error al cargar los actores de Cinemeta:", error);
+
+    return res.status(502).json({
+      message: "No se pudieron cargar los actores",
+    });
+  }
+});
+
 cinemetaRouter.get("/catalog/:collection", async (req, res) => {
   try {
     const collection = String(req.params.collection ?? "");
@@ -90,6 +106,42 @@ cinemetaRouter.get("/movies/:list", async (req, res) => {
 
     return res.status(502).json({
       message: "No se pudo cargar la lista de películas",
+    });
+  }
+});
+
+// Antes de /:type/:id para que «series» no se lea como tipo. Como la ficha usa
+// el tipo «series», un id tipo tt… se resuelve aquí mismo como detalle.
+cinemetaRouter.get("/series/:list", async (req, res) => {
+  try {
+    const list = String(req.params.list ?? "");
+
+    if (!isCatalogList(list)) {
+      if (!/^tt\d+$/i.test(list)) {
+        return res.status(400).json({
+          message: "La lista indicada no es válida",
+        });
+      }
+
+      const title = await cinemetaService.getTitle("series", list);
+
+      if (!title) {
+        return res.status(404).json({
+          message: "No encontramos ese título",
+        });
+      }
+
+      return res.json(title);
+    }
+
+    const items = await cinemetaService.getSeriesList(list);
+
+    return res.json(items);
+  } catch (error) {
+    console.error("Error al obtener contenido de series de Cinemeta:", error);
+
+    return res.status(502).json({
+      message: "No se pudo cargar la lista de series",
     });
   }
 });

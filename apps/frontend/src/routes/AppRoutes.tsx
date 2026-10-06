@@ -9,6 +9,12 @@ import { PrivateRoute } from "./PrivateRoutes";
 import { UserProvider } from "../providers/UserProvider";
 import { ViewsProvider } from "../providers/ViewsProvider";
 import { MoviesProvider } from "../providers/MoviesProvider";
+import Series from "../pages/Series";
+import SeriesSidebar from "../components/series/SeriesSideBar";
+import { SeriesProvider } from "../providers/SeriesProvider";
+import Actors from "../pages/Actors";
+import ActorsSidebar from "../components/actors/ActorsSidebar";
+import { ActorsProvider } from "../providers/ActorsProvider";
 import Main from "../layouts/Main";
 
 const NotFound = lazy(() => import("../pages/NotFound"));
@@ -41,6 +47,16 @@ const router = createBrowserRouter(
             vive en el layout para compartir sidebar y cuadrícula. */}
         <Route element={<MoviesProvider><Main browse /></MoviesProvider>}>
           <Route path="/movies" element={<Movies />} />
+        </Route>
+
+        <Route element={<SeriesProvider><Main browse sidebar={<SeriesSidebar />}/></SeriesProvider>}>
+          <Route path="/series" element={<Series />} />
+        </Route>
+
+        {/* Vista Actores: cuadrícula única de los actores de todas las
+            películas; el sidebar comparte Ordenar por y Buscar. */}
+        <Route element={<ActorsProvider><Main browse sidebar={<ActorsSidebar />} /></ActorsProvider>}>
+          <Route path="/actors" element={<Actors />} />
         </Route>
 
         <Route element={<PrivateRoute />}>

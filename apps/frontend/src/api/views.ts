@@ -3,9 +3,11 @@ const API_URL = "";
 /** El frontend aborta a los 10 s (mismo criterio que api/cinemeta.ts). */
 const REQUEST_TIMEOUT_MS = 10_000;
 
+export type MediaType = "movie" | "series";
+
 /**
- * Películas marcadas como vistas por el usuario en sesión (spec 003, RF-8):
- * `ids` son los `externalId` de las películas con `UserAction` VIEW.
+ * Títulos marcados como vistos por el usuario en sesión:
+ * `ids` son los `externalId` de los títulos con `UserAction` VIEW.
  */
 export interface ViewsData {
   ids: string[];
@@ -110,20 +112,44 @@ export function apiGetViews(signal?: AbortSignal): Promise<ViewsApiResult<ViewsD
   return request("/api/views", { signal }, parseViewsData);
 }
 
-export function apiMarkViewed(
-  id: string,
-  signal?: AbortSignal,
-): Promise<ViewsApiResult<ViewActionData>> {
-  return request(`/api/views/movie/${encodeURIComponent(id)}`, { method: "PUT", signal }, parseViewAction);
-}
-
-export function apiUnmarkViewed(
+/** General para marcar vistas (movie o series) */
+export function apiMarkTitleViewed(
+  type: MediaType,
   id: string,
   signal?: AbortSignal,
 ): Promise<ViewsApiResult<ViewActionData>> {
   return request(
-    `/api/views/movie/${encodeURIComponent(id)}`,
+    `/api/views/${type}/${encodeURIComponent(id)}`,
+    { method: "PUT", signal },
+    parseViewAction,
+  );
+}
+
+/** General para desmarcar vistas (movie o series) */
+export function apiUnmarkTitleViewed(
+  type: MediaType,
+  id: string,
+  signal?: AbortSignal,
+): Promise<ViewsApiResult<ViewActionData>> {
+  return request(
+    `/api/views/${type}/${encodeURIComponent(id)}`,
     { method: "DELETE", signal },
     parseViewAction,
   );
+}
+
+/* Helpers de retrocompatibilidad */
+
+export function apiMarkSeriesViewed(
+  id: string,
+  signal?: AbortSignal,
+): Promise<ViewsApiResult<ViewActionData>> {
+  return apiMarkTitleViewed("series", id, signal);
+}
+
+export function apiUnmarkSeriesViewed(
+  id: string,
+  signal?: AbortSignal,
+): Promise<ViewsApiResult<ViewActionData>> {
+  return apiUnmarkTitleViewed("series", id, signal);
 }

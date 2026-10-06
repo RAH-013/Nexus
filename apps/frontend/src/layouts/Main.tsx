@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+import { Suspense, type ReactNode } from "react";
 import { Outlet } from "react-router-dom";
 
 import Header from "../components/Header";
@@ -14,17 +14,21 @@ interface MainProps {
    */
   detail?: boolean;
   /**
-   * Layout de `/movies` (spec 003, D8): sin menú de destinos; la columna
-   * izquierda es Ordenar + Filtros (`MoviesSidebar`). La cabecera es la de
-   * Home, sin rediseño (RF-2).
+   * Layout de catálogos (`/movies`, `/series`): sin menú de destinos; la columna
+   * izquierda es Ordenar + Filtros.
    */
   browse?: boolean;
+  /**
+   * Permite inyectar un sidebar personalizado (ej. SeriesSidebar).
+   * Si no se especifica y browse es true, se renderiza MoviesSidebar por defecto.
+   */
+  sidebar?: ReactNode;
 }
 
-export default function Main({ detail = false, browse = false }: MainProps) {
+export default function Main({ detail = false, browse = false, sidebar }: MainProps) {
   return (
     <div className="flex min-h-screen bg-slate-900 text-white">
-      {browse ? <MoviesSidebar /> : !detail && <Menu />}
+      {browse ? (sidebar ?? <MoviesSidebar />) : !detail && <Menu />}
 
       <div className="flex min-w-0 flex-1 flex-col">
         <Header detail={detail} />
