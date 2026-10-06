@@ -11,7 +11,7 @@ function GridSkeleton() {
       className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
       aria-hidden="true"
     >
-      {Array.from({ length: 15 }, (_, position) => (
+      {Array.from({ length: ACTORS_PER_SCREEN }, (_, position) => (
         <div
           key={position}
           className="h-44 animate-pulse rounded-xl bg-slate-800 [@media(prefers-reduced-motion:reduce)]:animate-none"
@@ -33,16 +33,26 @@ function EmptyBox({ children }: { children: ReactNode }) {
   );
 }
 
+/** Una pantalla llena en escritorio: 5 columnas × 4 filas. */
+const ACTORS_PER_SCREEN = 20;
+
 /**
- * Vista Actores: una sola cuadrícula (5 columnas en escritorio) con los
- * actores de todas las películas. Ordenar por y Buscar viven en el sidebar y
- * actúan sobre la lista ya cargada: no se vuelve a pedir nada a Cinemeta.
+ * Vista Actores: una sola cuadrícula (5 columnas en escritorio) con
+ * los actores de todas las películas, limitada a una pantalla llena
+ * (5×4) sin búsqueda: cada card pide su foto a TMDB al entrar en
+ * pantalla y las ~489 cards excederían el límite de peticiones.
+ * El resto de actores se alcanza por el buscador del sidebar, que
+ * filtra toda la lista ya cargada (no se vuelve a pedir a Cinemeta).
  */
 function Actors() {
   const { sort, query } = useActors();
   const { actors, status, retry } = useActorList();
 
   const visible = filterActorsByQuery(sortActors(actors, sort), query);
+
+  // Con búsqueda se muestran todos los hallazgos; sin ella,
+  // solo la primera pantalla llena.
+  const shown = query ? visible : visible.slice(0, ACTORS_PER_SCREEN);
 
   return (
     <div className="space-y-6">
@@ -56,9 +66,9 @@ function Actors() {
           <EmptyBox>No encontramos actores que coincidan con tu búsqueda</EmptyBox>
         )}
 
-        {status === "ready" && visible.length > 0 && (
+        {status === "ready" && shown.length > 0 && (
           <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-            {visible.map((actor) => (
+            {shown.map((actor) => (
               <ActorCard key={actor.name} actor={actor} />
             ))}
           </ul>
