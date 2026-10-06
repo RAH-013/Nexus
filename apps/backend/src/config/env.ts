@@ -9,6 +9,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3000),
   TZ: z.string().default("UTC"),
   DATABASE_URL: z.string().min(1),
+  REDIS_URL: z.url().default("redis://localhost:6379"),
   BETTER_AUTH_SECRET: z.string().min(32),
   BETTER_AUTH_URL: z.url(),
   // Opcional: URL base de la fuente de contenido (vacía o ausente = la real).
