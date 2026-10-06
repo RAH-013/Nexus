@@ -1,7 +1,7 @@
 import { ItemType } from "../generated/prisma/enums";
 import { prisma } from "../lib/prisma";
 
-const COMMENT_LIST_LIMIT = 50;
+export const COMMENT_LIST_LIMIT = 50;
 const COMMENT_MAX_LENGTH = 500;
 
 export type CommentTextError = "invalid" | "empty" | "too-long";

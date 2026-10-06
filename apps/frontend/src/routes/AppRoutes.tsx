@@ -23,6 +23,7 @@ const Home = lazy(() => import("../pages/Home"));
 const SearchResults = lazy(() => import("../pages/SearchResults"));
 const Profile = lazy(() => import("../pages/private/Profile"));
 const TitleDetail = lazy(() => import("../pages/TitleDetail"));
+const ActorProfile = lazy(() => import("../pages/ActorProfile"));
 const Movies = lazy(() => import("../pages/Movies"));
 
 const router = createBrowserRouter(
@@ -51,6 +52,8 @@ const router = createBrowserRouter(
         {/* Ficha pública (spec 002, D7): sin menú lateral y con cabecera «Volver». */}
         <Route element={<Main detail />}>
           <Route path="/title/:type/:id" element={<TitleDetail />} />
+          {/* Perfil público del actor: misma cabecera «Volver». */}
+          <Route path="/actor/:name" element={<ActorProfile />} />
         </Route>
 
         {/* Vista Películas (spec 003, D7/D8): pública; el provider de filtros

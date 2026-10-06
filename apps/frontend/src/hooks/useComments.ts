@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import {
+  apiGetActorComments,
   apiGetComments,
+  apiPostActorComment,
   apiPostComment,
   type CommentEntry,
 } from "../api/comments";
@@ -8,6 +10,38 @@ import type { MediaType } from "../api/cinemeta";
 import { useUser } from "./useUser";
 
 const COMMENT_MAX_LENGTH = 500;
+
+/**
+ * Destino de los comentarios: una ficha (`type` + `id`) o el
+ * perfil de un actor (`actor`). La lógica de lista y publicación
+ * es la misma; cambia solo el endpoint (RF-8).
+ *
+ * `target` debe tener identidad estable (p. ej. `useMemo` en la
+ * sección de comentarios): el efecto y el envío dependen del
+ * objeto, no solo de sus valores.
+ */
+export type CommentTarget =
+  | { type: MediaType; id: string }
+  | { actor: string };
+
+/** Clave de caché del destino: única por título o actor. */
+function targetKey(target: CommentTarget): string {
+  return "actor" in target ? `actor:${target.actor}` : `${target.type}:${target.id}`;
+}
+
+/** Petición de lista según el destino. */
+function loadComments(target: CommentTarget, signal?: AbortSignal) {
+  return "actor" in target
+    ? apiGetActorComments(target.actor, signal)
+    : apiGetComments(target.type, target.id, signal);
+}
+
+/** Publicación según el destino. */
+function postComment(target: CommentTarget, text: string, signal?: AbortSignal) {
+  return "actor" in target
+    ? apiPostActorComment(target.actor, text, signal)
+    : apiPostComment(target.type, target.id, text, signal);
+}
 
 export type CommentsStatus =
   | "loading"
@@ -45,10 +79,10 @@ interface LoadedComments {
   status: CommentsStatus;
 }
 
-export function useComments(type: MediaType, id: string): CommentsState {
+export function useComments(target: CommentTarget): CommentsState {
   const { user } = useUser();
   const [attempt, setAttempt] = useState(0);
-  const key = `${type}:${id}#${attempt}`;
+  const key = `${targetKey(target)}#${attempt}`;
   const [loaded, setLoaded] = useState<LoadedComments>({
     key,
     comments: [],
@@ -56,10 +90,10 @@ export function useComments(type: MediaType, id: string): CommentsState {
   });
 
   useEffect(() => {
-    const requestKey = `${type}:${id}#${attempt}`;
+    const requestKey = `${targetKey(target)}#${attempt}`;
     let active = true;
 
-    void apiGetComments(type, id).then((result) => {
+    void loadComments(target).then((result) => {
       if (!active) {
         return;
       }
@@ -88,7 +122,7 @@ export function useComments(type: MediaType, id: string): CommentsState {
     return () => {
       active = false;
     };
-  }, [type, id, attempt]);
+  }, [target, attempt]);
 
   const retry = useCallback(() => {
     setAttempt((current) => current + 1);
@@ -111,7 +145,7 @@ export function useComments(type: MediaType, id: string): CommentsState {
         return { ok: false, error: "too-long" };
       }
 
-      const result = await apiPostComment(type, id, trimmed);
+      const result = await postComment(target, trimmed);
 
       if (!result.success) {
         if (result.error === "aborted") {
@@ -141,7 +175,7 @@ export function useComments(type: MediaType, id: string): CommentsState {
 
       return { ok: true };
     },
-    [user, type, id],
+    [user, target],
   );
 
   const stale = loaded.key !== key;

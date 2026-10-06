@@ -25,6 +25,7 @@ model User {
     actions         UserAction[]
     recommendations Recommendation[]
     comments        Comment[]
+    actorComments   ActorComment[]
 
     @@map("user")
 }
@@ -210,4 +211,18 @@ model Comment {
 
     @@index([itemId, createdAt(sort: Desc)])
     @@map("comment")
+}
+
+/** Comentario de un actor (vista Actores): el nombre es la clave,
+ *  porque Cinemeta no da id de persona. */
+model ActorComment {
+    id        Int      @id @default(autoincrement())
+    text      String   @db.VarChar(500)
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId    String
+    actorName String
+    createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+    @@index([actorName, createdAt(sort: Desc)])
+    @@map("actor_comment")
 }

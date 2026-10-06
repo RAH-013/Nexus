@@ -111,3 +111,5 @@ function toWebHeaders(req: import("express").Request): Headers {
 
   return headers;
 }
+
+export { toWebHeaders };

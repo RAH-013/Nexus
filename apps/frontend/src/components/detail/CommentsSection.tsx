@@ -1,13 +1,13 @@
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { UserIcon } from "lucide-animated";
 import type { MediaType } from "../../api/cinemeta";
+import type { CommentTarget } from "../../hooks/useComments";
 import { useComments, type SubmitError } from "../../hooks/useComments";
 
-interface CommentsSectionProps {
-  type: MediaType;
-  id: string;
-}
+type CommentsSectionProps =
+  | { type: MediaType; id: string; actor?: undefined }
+  | { type?: undefined; id?: undefined; actor: string };
 
 const SUBMIT_MESSAGES: Record<SubmitError, string> = {
   empty: "El comentario no puede estar vacío.",
@@ -21,10 +21,20 @@ const SUBMIT_MESSAGES: Record<SubmitError, string> = {
 /**
  * Sección «Comentarios»: compositor con textarea y «Publicar» y, debajo, las
  * tarjetas de autor + texto. Cada mensaje vive aquí y un fallo suyo no afecta
- * al resto de la ficha (RF-8, RNF-5, D16).
+ * al resto de la ficha (RF-8, RNF-5, D16). Vale para una ficha
+ * (`type` + `id`) y para el perfil de un actor (`actor`).
  */
-function CommentsSection({ type, id }: CommentsSectionProps) {
-  const { comments, status, retry, submit } = useComments(type, id);
+function CommentsSection(props: CommentsSectionProps) {
+  // Identidad estable del destino: el hook depende del objeto
+  // (sus valores), no de cada render del padre.
+  const target = useMemo<CommentTarget>(
+    () =>
+      props.actor !== undefined
+        ? { actor: props.actor }
+        : { type: props.type, id: props.id },
+    [props.actor, props.type, props.id],
+  );
+  const { comments, status, retry, submit } = useComments(target);
   const [text, setText] = useState("");
   const [notice, setNotice] = useState<SubmitError | null>(null);
   const [sending, setSending] = useState(false);

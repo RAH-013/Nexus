@@ -408,7 +408,8 @@ export const ModelName = {
   UserAction: 'UserAction',
   Recommendation: 'Recommendation',
   RecommendationItem: 'RecommendationItem',
-  Comment: 'Comment'
+  Comment: 'Comment',
+  ActorComment: 'ActorComment'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -424,7 +425,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "session" | "account" | "verification" | "item" | "category" | "itemCategory" | "userPreference" | "userAction" | "recommendation" | "recommendationItem" | "comment"
+    modelProps: "user" | "session" | "account" | "verification" | "item" | "category" | "itemCategory" | "userPreference" | "userAction" | "recommendation" | "recommendationItem" | "comment" | "actorComment"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1316,6 +1317,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    ActorComment: {
+      payload: Prisma.$ActorCommentPayload<ExtArgs>
+      fields: Prisma.ActorCommentFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ActorCommentFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActorCommentPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ActorCommentFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActorCommentPayload>
+        }
+        findFirst: {
+          args: Prisma.ActorCommentFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActorCommentPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ActorCommentFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActorCommentPayload>
+        }
+        findMany: {
+          args: Prisma.ActorCommentFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActorCommentPayload>[]
+        }
+        create: {
+          args: Prisma.ActorCommentCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActorCommentPayload>
+        }
+        createMany: {
+          args: Prisma.ActorCommentCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ActorCommentCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActorCommentPayload>[]
+        }
+        delete: {
+          args: Prisma.ActorCommentDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActorCommentPayload>
+        }
+        update: {
+          args: Prisma.ActorCommentUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActorCommentPayload>
+        }
+        deleteMany: {
+          args: Prisma.ActorCommentDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ActorCommentUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ActorCommentUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActorCommentPayload>[]
+        }
+        upsert: {
+          args: Prisma.ActorCommentUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActorCommentPayload>
+        }
+        aggregate: {
+          args: Prisma.ActorCommentAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateActorComment>
+        }
+        groupBy: {
+          args: Prisma.ActorCommentGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ActorCommentGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ActorCommentCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ActorCommentCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1500,6 +1575,17 @@ export const CommentScalarFieldEnum = {
 } as const
 
 export type CommentScalarFieldEnum = (typeof CommentScalarFieldEnum)[keyof typeof CommentScalarFieldEnum]
+
+
+export const ActorCommentScalarFieldEnum = {
+  id: 'id',
+  text: 'text',
+  userId: 'userId',
+  actorName: 'actorName',
+  createdAt: 'createdAt'
+} as const
+
+export type ActorCommentScalarFieldEnum = (typeof ActorCommentScalarFieldEnum)[keyof typeof ActorCommentScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1799,6 +1885,7 @@ export type GlobalOmitConfig = {
   recommendation?: Prisma.RecommendationOmit
   recommendationItem?: Prisma.RecommendationItemOmit
   comment?: Prisma.CommentOmit
+  actorComment?: Prisma.ActorCommentOmit
 }
 
 /* Types for Logging */

@@ -139,3 +139,32 @@ export function apiPostComment(
     parseComment,
   );
 }
+
+/** Comentarios de un actor (perfil `/actor/:name`). */
+export function apiGetActorComments(
+  name: string,
+  signal?: AbortSignal,
+): Promise<CommentsApiResult<CommentEntry[]>> {
+  return request(
+    `/api/actors/${encodeURIComponent(name)}/comments`,
+    { signal },
+    parseCommentList,
+  );
+}
+
+export function apiPostActorComment(
+  name: string,
+  text: string,
+  signal?: AbortSignal,
+): Promise<CommentsApiResult<CommentEntry>> {
+  return request(
+    `/api/actors/${encodeURIComponent(name)}/comments`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+      signal,
+    },
+    parseComment,
+  );
+}

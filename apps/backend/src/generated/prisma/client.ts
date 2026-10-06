@@ -101,3 +101,9 @@ export type RecommendationItem = Prisma.RecommendationItemModel
  * 
  */
 export type Comment = Prisma.CommentModel
+/**
+ * Model ActorComment
+ * * Comentario de un actor (vista Actores): el nombre es la clave,
+ *  *  porque Cinemeta no da id de persona.
+ */
+export type ActorComment = Prisma.ActorCommentModel

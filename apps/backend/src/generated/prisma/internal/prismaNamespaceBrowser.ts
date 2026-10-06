@@ -62,7 +62,8 @@ export const ModelName = {
   UserAction: 'UserAction',
   Recommendation: 'Recommendation',
   RecommendationItem: 'RecommendationItem',
-  Comment: 'Comment'
+  Comment: 'Comment',
+  ActorComment: 'ActorComment'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -226,6 +227,17 @@ export const CommentScalarFieldEnum = {
 } as const
 
 export type CommentScalarFieldEnum = (typeof CommentScalarFieldEnum)[keyof typeof CommentScalarFieldEnum]
+
+
+export const ActorCommentScalarFieldEnum = {
+  id: 'id',
+  text: 'text',
+  userId: 'userId',
+  actorName: 'actorName',
+  createdAt: 'createdAt'
+} as const
+
+export type ActorCommentScalarFieldEnum = (typeof ActorCommentScalarFieldEnum)[keyof typeof ActorCommentScalarFieldEnum]
 
 
 export const SortOrder = {
