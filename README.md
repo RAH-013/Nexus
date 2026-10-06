@@ -21,7 +21,7 @@ Nexus/
 │   └── frontend/
 ├── nginx/
 │   └── nginx.conf
-├── compose.yml
+├── docker-compose.yml
 ├── .env
 └── .gitignore
 ```
@@ -63,3 +63,12 @@ PostgreSQL está disponible durante el desarrollo en:
 ```bash
 localhost:5432
 ```
+
+La aplicación utiliza una red Docker `bridge` personalizada llamada
+`nexus_network`. Los servicios se resuelven entre sí mediante sus nombres
+(`frontend`, `backend` y `postgres`).
+
+Las imágenes de frontend y backend usan builds multi-stage: el frontend se
+compila y se sirve con Nginx, mientras que el backend compila TypeScript y
+ejecuta únicamente el resultado compilado junto con sus dependencias de
+producción.
