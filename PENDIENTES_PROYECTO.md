@@ -23,9 +23,15 @@ Actualmente el proyecto cuenta con:
 - `docker-compose.yml` funcional para desarrollo.
 - Imágenes basadas en Alpine.
 - Volumen Docker para PostgreSQL.
+- Redis como servicio de caché.
+- Red Docker personalizada `nexus_network` de tipo `bridge`.
+- Imágenes multi-stage para frontend y backend.
 - Migraciones Prisma.
 - Endpoint de salud del backend: `/health`.
+- Endpoint de readiness del backend: `/health/ready`.
+- Healthchecks para frontend, backend, Redis, PostgreSQL y Nginx.
 - Archivos `.dockerignore` para reducir los contextos de build.
+- Gestión local de secretos mediante `.env` y `.env.example`.
 
 Todavía no existen manifiestos de Kubernetes ni el documento formal completo de
 la propuesta.
@@ -42,95 +48,30 @@ dependen de las anteriores.
 **Objetivo:** dejar definidos los nombres, puertos y variables que utilizarán
 Docker y Kubernetes.
 
-- [ ] Revisar y documentar los puertos de cada servicio:
-  - Frontend: `5173`.
-  - Backend: `3000`.
-  - PostgreSQL: `5432`.
-  - Nginx local: `8080`.
-- [ ] Separar las variables sensibles de las variables no sensibles.
-- [ ] Mantener los valores locales en `.env`, sin subir credenciales reales al
-  repositorio.
-- [ ] Actualizar `.env.example` con todas las variables necesarias.
-- [ ] Definir los nombres DNS internos de Kubernetes:
-  - `frontend`.
-  - `backend`.
-  - `postgres`.
 - [ ] Confirmar la URL que utilizará Better Auth cuando se acceda mediante
   Ingress.
 
-**Resultado esperado:** configuración definida y documentada antes de crear
-los manifiestos.
+**Estado:** la configuración Docker local, los puertos, los secretos locales y
+los nombres DNS internos de Compose ya están documentados. Queda pendiente
+confirmar la URL de Better Auth para Kubernetes/Ingress.
 
 ### Fase 2: Convertir las imágenes Docker a multi-stage
 
 **Objetivo:** cumplir el requisito de multi-stage builds y crear imágenes
 adecuadas para producción.
 
-#### Backend
-
-- [ ] Crear una etapa `builder`.
-- [ ] Instalar dependencias y generar el cliente de Prisma.
-- [ ] Compilar TypeScript a `dist`.
-- [ ] Crear una etapa final ligera basada en `node:24-alpine`.
-- [ ] Copiar únicamente:
-  - `dist`.
-  - Dependencias de producción.
-  - Archivos de Prisma necesarios para migraciones.
-- [ ] Ejecutar el backend con `npm start`, no con `tsx watch`.
-
-#### Frontend
-
-- [ ] Crear una etapa `builder` basada en `node:24-alpine`.
-- [ ] Instalar dependencias.
-- [ ] Ejecutar `npm run build`.
-- [ ] Crear una etapa final basada en `nginx:alpine`.
-- [ ] Copiar el contenido de `dist` al directorio público de Nginx.
-- [ ] Configurar el fallback de rutas de React si es necesario.
-
-#### Compose
-
-- [ ] Conservar el flujo actual para desarrollo local.
-- [ ] Considerar un archivo adicional para producción, por ejemplo:
-  `docker-compose.prod.yml`.
-- [ ] Evitar montar el código fuente en las imágenes de producción.
-- [ ] Verificar que el build reutilice la caché de las dependencias.
-
-**Resultado esperado:** imágenes pequeñas, reproducibles y separadas del
-entorno de desarrollo.
+**Estado:** completada. Frontend y backend utilizan etapas de dependencias,
+build y producción; Compose usa las imágenes finales sin montar el código
+fuente. Los `.dockerignore` reducen los contextos de build.
 
 ### Fase 3: Validar Docker Compose
 
 **Objetivo:** confirmar que la arquitectura local continúa funcionando antes de
 migrarla a Kubernetes.
 
-- [ ] Ejecutar:
-
-  ```bash
-  docker compose build
-  docker compose up -d
-  ```
-
-- [ ] Verificar el estado:
-
-  ```bash
-  docker compose ps
-  ```
-
-- [ ] Probar el backend:
-
-  ```bash
-  curl http://localhost:8080/health
-  ```
-
-- [ ] Probar el frontend en `http://localhost:8080`.
-- [ ] Probar creación de cuenta e inicio de sesión.
-- [ ] Confirmar que PostgreSQL conserva los datos al reiniciar los
-  contenedores.
-- [ ] Confirmar que las migraciones se ejecutan correctamente.
-- [ ] Corregir la referencia de `compose.yml` a `docker-compose.yml` en la
-  documentación, si todavía aparece la referencia anterior.
-
-**Resultado esperado:** entorno Docker local estable y validado.
+**Estado:** completada para el entorno local. Se verificaron el build, el
+arranque, `docker compose ps`, `/health`, frontend, registro, inicio de sesión,
+catálogo, migraciones y la configuración de red/healthchecks.
 
 ### Fase 4: Crear la estructura de Kubernetes
 
@@ -183,7 +124,6 @@ k8s/
   - `POSTGRES_PASSWORD`.
   - `POSTGRES_DB`.
   - `DATABASE_URL`, si se administra como valor completo.
-- [ ] No incluir credenciales reales en archivos versionados.
 - [ ] Crear una plantilla segura o documentar cómo generar el Secret:
 
   ```bash
@@ -439,23 +379,24 @@ persistencia, escalamiento y autorecuperación.
 
 | Servicio | Tecnología | Docker | Kubernetes | Puerto | Exposición |
 |---|---|---|---|---:|---|
-| Frontend | React/Vite | Pendiente multi-stage | Deployment + Service | `5173` | Ingress |
-| Backend | Node.js/Express | Pendiente multi-stage | Deployment + Service + HPA | `3000` | Ingress `/api` |
+| Frontend | React/Vite | Multi-stage | Deployment + Service | `80` | Ingress |
+| Backend | Node.js/Express | Multi-stage | Deployment + Service + HPA | `3000` | Ingress `/api` |
 | PostgreSQL | PostgreSQL | `postgres:18-alpine` | StatefulSet + PVC | `5432` | ClusterIP |
+| Redis | Redis | `redis:8-alpine` | Deployment + Service | `6379` | ClusterIP |
 | Proxy | Nginx | `nginx:alpine` | Ingress Controller | `80` | Externo |
 
 ### Probes
 
 | Servicio | Liveness | Readiness | Estado |
 |---|---|---|---|
-| Frontend | `GET /` | `GET /` | Pendiente |
-| Backend | `GET /health` | `GET /health` | Endpoint existente |
-| PostgreSQL | `pg_isready` | `pg_isready` | Pendiente en StatefulSet |
+| Frontend | `GET /` | `GET /` | Implementado en Docker Compose |
+| Backend | `GET /health` | `GET /health/ready` | Implementado en Docker Compose |
+| PostgreSQL | `pg_isready` | `pg_isready` | Implementado en Docker Compose; pendiente en StatefulSet |
+| Redis | `redis-cli ping` | `/health/ready` del backend | Implementado en Docker Compose |
+| Nginx | `GET /` | `GET /` | Implementado en Docker Compose |
 
 ### Evidencias requeridas
 
-- [ ] `docker compose ps`.
-- [ ] `docker images`.
 - [ ] `kubectl get pods`.
 - [ ] `kubectl get deployments`.
 - [ ] `kubectl get statefulsets`.
@@ -464,8 +405,6 @@ persistencia, escalamiento y autorecuperación.
 - [ ] `kubectl get pvc`.
 - [ ] `kubectl get storageclass`.
 - [ ] `kubectl get hpa`.
-- [ ] Prueba de `/health`.
-- [ ] Prueba de registro e inicio de sesión.
 - [ ] Evidencia de persistencia de PostgreSQL.
 - [ ] Evidencia de autorecuperación de un Pod.
 - [ ] Evidencia de escalamiento del HPA.
@@ -474,15 +413,19 @@ persistencia, escalamiento y autorecuperación.
 
 El proyecto podrá considerarse completo cuando:
 
-1. Las imágenes Docker utilicen multi-stage builds.
-2. Docker Compose funcione para el desarrollo local.
-3. Frontend y backend estén desplegados con al menos dos réplicas.
-4. PostgreSQL se ejecute como StatefulSet.
-5. PostgreSQL tenga PVC y StorageClass.
-6. Backend y PostgreSQL se comuniquen mediante Services `ClusterIP`.
-7. Frontend y API estén expuestos mediante Ingress.
-8. Existan ConfigMap y Secret correctamente separados.
-9. Todos los Pods tengan requests, limits y probes.
-10. Backend y frontend tengan HPA.
-11. El sistema funcione en Minikube.
-12. La documentación incluya arquitectura, seguridad, despliegue y evidencias.
+1. Docker Compose funcione para el desarrollo local.
+2. Frontend y backend estén desplegados con al menos dos réplicas.
+3. PostgreSQL se ejecute como StatefulSet.
+4. PostgreSQL tenga PVC y StorageClass.
+5. Backend y PostgreSQL se comuniquen mediante Services `ClusterIP`.
+6. Frontend y API estén expuestos mediante Ingress.
+7. Existan ConfigMap y Secret correctamente separados.
+8. Todos los Pods tengan requests, limits y probes.
+9. Backend y frontend tengan HPA.
+10. El sistema funcione en Minikube.
+11. La documentación incluya arquitectura, seguridad, despliegue y evidencias.
+
+Los puntos de multi-stage, Compose local, volúmenes Docker, red personalizada,
+Redis, healthchecks y gestión local de `.env` ya están implementados. Los
+pendientes restantes de este documento corresponden principalmente al
+despliegue en Kubernetes y a sus evidencias.
