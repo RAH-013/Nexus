@@ -21,6 +21,7 @@ const NotFound = lazy(() => import("../pages/NotFound"));
 const Auth = lazy(() => import("../pages/Auth"));
 const Home = lazy(() => import("../pages/Home"));
 const SearchResults = lazy(() => import("../pages/SearchResults"));
+const Recent = lazy(() => import("../pages/private/Recent")); 
 const Profile = lazy(() => import("../pages/private/Profile"));
 const TitleDetail = lazy(() => import("../pages/TitleDetail"));
 const ActorProfile = lazy(() => import("../pages/ActorProfile"));
@@ -110,6 +111,11 @@ const router = createBrowserRouter(
               handle={{ title: "Mi perfil" }}
             />
           </Route>
+          <Route
+              path="/recent"
+              element={<Recent />}
+              handle={{ title: "Recientes" }}
+            />
         </Route>
 
         <Route path="*" element={<NotFound />} />

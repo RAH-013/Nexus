@@ -7,6 +7,7 @@ import { actorCommentsRouter } from "./routes/actorComments";
 import { cinemetaRouter } from "./routes/cinemeta";
 import { commentsRouter } from "./routes/comments";
 import { viewsRouter } from "./routes/views";
+import { activityRouter } from "./routes/activity";
 
 import { healthRouter } from "./routes/health";
 import { errorHandler } from "./middleware/error";
@@ -38,5 +39,7 @@ app.use("/api/actors", actorCommentsRouter);
 app.use("/api/views", viewsRouter);
 
 app.use("/health", healthRouter);
+
+app.use("/api/activity", activityRouter);
 
 app.use(errorHandler);

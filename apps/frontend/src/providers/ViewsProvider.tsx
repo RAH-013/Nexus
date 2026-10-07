@@ -7,11 +7,11 @@ import {
   type ReactNode,
 } from "react";
 import { Outlet } from "react-router-dom";
+import type { MediaType } from "../api/cinemeta";
 import {
   apiGetViews,
   apiMarkTitleViewed,
   apiUnmarkTitleViewed,
-  type MediaType,
   type ViewsError,
 } from "../api/views";
 import { ViewsContext, type ViewsContextType } from "../context/ViewsContext";
@@ -23,9 +23,9 @@ const TOGGLE_MESSAGES: Record<ViewsError, string> = {
   unauthorized: "Tu sesión ha caducado. Inicia sesión de nuevo.",
   "rate-limit":
     "Se alcanzó el límite de peticiones. Vuelve a intentarlo en unos minutos.",
-  timeout: "No se pudo actualizar la película. Inténtalo de nuevo.",
-  http: "No se pudo actualizar la película. Inténtalo de nuevo.",
-  network: "No se pudo actualizar la película. Inténtalo de nuevo.",
+  timeout: "No se pudo actualizar el título. Inténtalo de nuevo.",
+  http: "No se pudo actualizar el título. Inténtalo de nuevo.",
+  network: "No se pudo actualizar el título. Inténtalo de nuevo.",
 };
 
 interface ViewsProviderProps {
@@ -42,12 +42,8 @@ interface LoadedViews {
 }
 
 /**
- * Carga y conmuta los `VIEW` de películas (spec 003, D6): dentro de
- * `UserProvider`, se pide `GET /api/views` cuando hay sesión (por id, para que
- * el revalidado del poll no re-pida la lista). El set expuesto se deriva del
- * usuario actual: sin sesión o antes de cargar se muestra vacío. El toggle
- * espera la respuesta antes de tocar el set (sin optimista) y un ref serializa
- * los clics de la misma película para que no haya dos `VIEW` a la vez.
+ * Carga y conmuta los `VIEW` de obras (películas y series): dentro de
+ * `UserProvider`, se pide `GET /api/views` cuando hay sesión.
  */
 export function ViewsProvider({ children }: ViewsProviderProps) {
   const { user, refreshUser } = useUser();
@@ -94,8 +90,7 @@ export function ViewsProvider({ children }: ViewsProviderProps) {
         return;
       }
 
-      // Guardia síncrona: el doble clic no llega a lanzar dos peticiones
-      // (caso 9) y el estado solo cambia con la respuesta del servidor.
+      // Guardia síncrona: el doble clic no llega a lanzar dos peticiones.
       if (pendingRef.current.has(id)) {
         return;
       }
@@ -104,8 +99,6 @@ export function ViewsProvider({ children }: ViewsProviderProps) {
       setPendingIds(new Set(pendingRef.current));
 
       const marking = !viewedIds.has(id);
-      // El tipo viaja hasta el backend (PUT/DELETE /api/views/:type/:id),
-      // así una serie se guarda como serie y no como película.
       const result = marking
         ? await apiMarkTitleViewed(type, id)
         : await apiUnmarkTitleViewed(type, id);
@@ -115,7 +108,9 @@ export function ViewsProvider({ children }: ViewsProviderProps) {
 
       if (result.success) {
         setLoaded((current) => {
-          const next = new Set(current?.userId === userId ? current.ids : EMPTY_IDS);
+          const next = new Set(
+            current?.userId === userId ? current.ids : EMPTY_IDS,
+          );
 
           if (marking) {
             next.add(id);
