@@ -19,7 +19,8 @@ services:
       timeout: 3s
       retries: 5
     networks:
-      - nexus_network
+      nexus_network:
+        ipv4_address: 10.89.5.10
 
   frontend:
     build:
@@ -34,7 +35,8 @@ services:
       timeout: 3s
       retries: 5
     networks:
-      - nexus_network
+      nexus_network:
+        ipv4_address: 10.89.5.11
 
   backend:
     build:
@@ -68,7 +70,8 @@ services:
       retries: 10
       start_period: 10s
     networks:
-      - nexus_network
+      nexus_network:
+        ipv4_address: 10.89.5.12
 
   redis:
     image: redis:8-alpine
@@ -81,7 +84,8 @@ services:
       timeout: 3s
       retries: 5
     networks:
-      - nexus_network
+      nexus_network:
+        ipv4_address: 10.89.5.13
 
   postgres:
     image: postgres:18-alpine
@@ -100,7 +104,8 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - nexus_network
+      nexus_network:
+        ipv4_address: 10.89.5.14
 
 volumes:
   postgres_data:
@@ -109,3 +114,11 @@ networks:
   nexus_network:
     name: nexus_network
     driver: bridge
+    # Subred fija e IPs estáticas: nginx resuelve los
+    # upstreams (frontend, backend) una sola vez al
+    # arrancar; con IPs cambiantes (rebuild de un
+    # servicio) se quedaba con la vieja y daba 502
+    # hasta reiniciar nginx.
+    ipam:
+      config:
+        - subnet: 10.89.5.0/24
