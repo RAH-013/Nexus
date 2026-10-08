@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ClapIcon } from "lucide-animated";
 import {
@@ -10,6 +10,7 @@ import {
   type RecentComment,
   type RecentView,
 } from "../../api/activity";
+import SectionError from "../../components/home/SectionError";
 import {
   useInfiniteActivity,
   type InfiniteStatus,
@@ -24,31 +25,33 @@ function formatDate(iso: string): string {
   }).format(new Date(iso));
 }
 
-/** Fallo de una fila con «Reintentar»: no afecta a las otras filas. */
-function RowError({ onRetry }: { onRetry: () => void }) {
+/** Vacío de fila: la misma caja de las vistas Películas y Actores. */
+function EmptyBox({ children }: { children: ReactNode }) {
   return (
-    <p role="alert" className="text-sm text-rose-300">
-      No se pudo cargar la fila.{" "}
-      <button
-        type="button"
-        onClick={onRetry}
-        className="font-medium text-indigo-300 underline underline-offset-2"
-      >
-        Reintentar
-      </button>
-    </p>
+    <div
+      role="status"
+      className="flex min-h-40 items-center justify-center rounded-xl border border-slate-700 bg-slate-800/60 px-6 py-10 text-center text-sm text-slate-300"
+    >
+      {children}
+    </div>
   );
 }
 
-function RowLimit() {
+/** Esqueleto de fila mientras carga la primera página. */
+function RowSkeleton() {
   return (
-    <p role="alert" className="text-sm text-amber-300">
-      Se alcanzó el límite de peticiones. Vuelve a intentarlo en unos minutos.
-    </p>
+    <div className="space-y-3" aria-hidden="true">
+      {Array.from({ length: 3 }, (_, position) => (
+        <div
+          key={position}
+          className="h-28 animate-pulse rounded-xl bg-slate-800 [@media(prefers-reduced-motion:reduce)]:animate-none"
+        />
+      ))}
+    </div>
   );
 }
 
-/** Estados que comparten las tres filas. */
+/** Estados que comparten las tres filas (carga, fallo, límite, vacío). */
 function RowStates({
   status,
   retry,
@@ -61,15 +64,15 @@ function RowStates({
   emptyMessage: string;
 }) {
   if (status === "loading") {
-    return <p className="text-sm text-slate-400">Cargando…</p>;
+    return <RowSkeleton />;
   }
 
   if (status === "error") {
-    return <RowError onRetry={retry} />;
+    return <SectionError onRetry={retry} />;
   }
 
   if (status === "rate-limit") {
-    return <RowLimit />;
+    return <SectionError variant="limit" />;
   }
 
   if (status === "unauthorized") {
@@ -80,10 +83,8 @@ function RowStates({
     );
   }
 
-  // «ready»: el mensaje vacío solo cuando no hay nada que mostrar.
-  return isEmpty ? (
-    <p className="text-sm text-slate-400">{emptyMessage}</p>
-  ) : null;
+  // «ready»: el vacío solo cuando no hay nada que mostrar.
+  return isEmpty ? <EmptyBox>{emptyMessage}</EmptyBox> : null;
 }
 
 /** Póster con reserva (icono si no hay o si falla), como `PosterCard`. */
@@ -97,13 +98,13 @@ function PosterThumb({ poster, name }: { poster?: string; name: string }) {
       alt=""
       loading="lazy"
       onError={() => setBroken(true)}
-      className="h-24 w-16 shrink-0 rounded-md object-cover"
+      className="h-24 w-16 shrink-0 rounded-lg object-cover"
     />
   ) : (
     <span
       role="img"
       aria-label={`Sin póster de ${name}`}
-      className="flex h-24 w-16 shrink-0 items-center justify-center rounded-md bg-slate-700 text-slate-500"
+      className="flex h-24 w-16 shrink-0 items-center justify-center rounded-lg bg-slate-700 text-slate-500"
     >
       <ClapIcon size={24} animateOnHover={false} aria-hidden="true" />
     </span>
@@ -125,7 +126,7 @@ function ViewsRow({ order }: { order: ActivityOrder }) {
 
   return (
     <section aria-label="Vistas" className="space-y-3">
-      <h2 className="text-lg font-semibold">Vistas</h2>
+      <h2 className="text-lg font-semibold sm:text-xl">Vistas</h2>
 
       <RowStates
         status={status}
@@ -134,11 +135,13 @@ function ViewsRow({ order }: { order: ActivityOrder }) {
         emptyMessage="No has visto títulos todavía."
       />
 
-      <ul className="space-y-3">
-        {items.map((item) => (
-          <ViewCard key={`${item.type}:${item.externalId}`} item={item} />
-        ))}
-      </ul>
+      {status !== "loading" && items.length > 0 && (
+        <ul className="space-y-3">
+          {items.map((item) => (
+            <ViewCard key={`${item.type}:${item.externalId}`} item={item} />
+          ))}
+        </ul>
+      )}
 
       {/* Centinela: al entrar en pantalla se pide la siguiente página. */}
       <div ref={sentinelRef} aria-hidden="true" className="h-2" />
@@ -153,15 +156,15 @@ function ViewCard({ item }: { item: RecentView }) {
       <Link
         to={`/title/${item.type}/${encodeURIComponent(item.externalId)}`}
         aria-label={`Ver ficha de ${item.name}`}
-        className="flex items-center gap-4 rounded-xl border border-slate-700/60 bg-slate-800/60 p-3 transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+        className="flex items-center gap-4 rounded-xl border border-slate-700 bg-slate-800 p-4 transition-colors hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
       >
         <PosterThumb poster={item.poster} name={item.name} />
 
         <span className="min-w-0 flex-1">
-          <span className="block truncate font-medium text-white">
+          <span className="block truncate text-sm font-semibold text-white">
             {item.name}
           </span>
-          <span className="block text-xs text-slate-400">
+          <span className="mt-1 block text-xs text-slate-500">
             {item.type === "movie" ? "Película" : "Serie"} · Vista el{" "}
             {formatDate(item.date)}
           </span>
@@ -185,7 +188,9 @@ function CommentsRow({ order }: { order: ActivityOrder }) {
 
   return (
     <section aria-label="Comentarios de títulos" className="space-y-3">
-      <h2 className="text-lg font-semibold">Comentarios de títulos</h2>
+      <h2 className="text-lg font-semibold sm:text-xl">
+        Comentarios de títulos
+      </h2>
 
       <RowStates
         status={status}
@@ -194,11 +199,13 @@ function CommentsRow({ order }: { order: ActivityOrder }) {
         emptyMessage="No has comentado películas ni series todavía."
       />
 
-      <ul className="space-y-3">
-        {items.map((item) => (
-          <CommentCard key={item.id} item={item} />
-        ))}
-      </ul>
+      {status !== "loading" && items.length > 0 && (
+        <ul className="space-y-3">
+          {items.map((item) => (
+            <CommentCard key={item.id} item={item} />
+          ))}
+        </ul>
+      )}
 
       <div ref={sentinelRef} aria-hidden="true" className="h-2" />
     </section>
@@ -212,16 +219,19 @@ function CommentCard({ item }: { item: RecentComment }) {
       <Link
         to={`/title/${item.type}/${encodeURIComponent(item.externalId)}`}
         aria-label={`Ver ficha de ${item.name}`}
-        className="flex items-center gap-4 rounded-xl border border-slate-700/60 bg-slate-800/60 p-3 transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+        className="flex items-center gap-4 rounded-xl border border-slate-700 bg-slate-800 p-4 transition-colors hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
       >
         <PosterThumb poster={item.poster} name={item.name} />
 
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm text-slate-200">
+          <span className="block truncate text-sm text-slate-300">
             «{item.text}»
           </span>
-          <span className="mt-1 block truncate text-xs text-slate-400">
-            {item.name} · {formatDate(item.date)}
+          <span className="mt-1 block truncate text-sm font-semibold text-white">
+            {item.name}
+          </span>
+          <span className="mt-1 block text-xs text-slate-500">
+            Comentario del {formatDate(item.date)}
           </span>
         </span>
       </Link>
@@ -243,7 +253,9 @@ function ActorCommentsRow({ order }: { order: ActivityOrder }) {
 
   return (
     <section aria-label="Comentarios de actores" className="space-y-3">
-      <h2 className="text-lg font-semibold">Comentarios de actores</h2>
+      <h2 className="text-lg font-semibold sm:text-xl">
+        Comentarios de actores
+      </h2>
 
       <RowStates
         status={status}
@@ -252,11 +264,13 @@ function ActorCommentsRow({ order }: { order: ActivityOrder }) {
         emptyMessage="No has comentado actores todavía."
       />
 
-      <ul className="space-y-3">
-        {items.map((item) => (
-          <ActorCommentCard key={item.id} item={item} />
-        ))}
-      </ul>
+      {status !== "loading" && items.length > 0 && (
+        <ul className="space-y-3">
+          {items.map((item) => (
+            <ActorCommentCard key={item.id} item={item} />
+          ))}
+        </ul>
+      )}
 
       <div ref={sentinelRef} aria-hidden="true" className="h-2" />
     </section>
@@ -270,7 +284,7 @@ function ActorCommentCard({ item }: { item: RecentActorComment }) {
       <Link
         to={`/actor/${encodeURIComponent(item.actorName)}`}
         aria-label={`Ver perfil de ${item.actorName}`}
-        className="flex items-center gap-4 rounded-xl border border-slate-700/60 bg-slate-800/60 p-3 transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+        className="flex items-center gap-4 rounded-xl border border-slate-700 bg-slate-800 p-4 transition-colors hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
       >
         {item.imageUrl ? (
           <img
@@ -289,13 +303,13 @@ function ActorCommentCard({ item }: { item: RecentActorComment }) {
         )}
 
         <span className="min-w-0 flex-1">
-          <span className="block truncate font-medium text-white">
+          <span className="block truncate text-sm font-semibold text-white">
             {item.actorName}
           </span>
-          <span className="block truncate text-sm text-slate-300">
+          <span className="mt-1 block truncate text-sm text-slate-300">
             «{item.text}»
           </span>
-          <span className="block text-xs text-slate-400">
+          <span className="mt-1 block text-xs text-slate-500">
             Comentario del {formatDate(item.date)}
           </span>
         </span>
@@ -306,12 +320,6 @@ function ActorCommentCard({ item }: { item: RecentActorComment }) {
 
 /* ================= PÁGINA ================= */
 
-function sortButtonClass(active: boolean): string {
-  return `px-3 py-1.5 font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400 ${
-    active ? "bg-indigo-600 text-white" : "text-slate-300 hover:text-white"
-  }`;
-}
-
 /**
  * «Recientes»: la actividad del usuario en tres filas con scroll
  * infinito y el mismo orden por tiempo. El título de la página lo
@@ -321,18 +329,22 @@ function Recent() {
   const [order, setOrder] = useState<ActivityOrder>("desc");
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-6">
       <div className="flex justify-end">
         <div
           role="group"
           aria-label="Ordenar por tiempo"
-          className="flex overflow-hidden rounded-lg border border-slate-700 text-sm"
+          className="flex flex-wrap gap-2"
         >
           <button
             type="button"
             aria-pressed={order === "desc"}
             onClick={() => setOrder("desc")}
-            className={sortButtonClass(order === "desc")}
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400 ${
+              order === "desc"
+                ? "bg-indigo-600 text-white"
+                : "bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white"
+            }`}
           >
             Más recientes
           </button>
@@ -340,7 +352,11 @@ function Recent() {
             type="button"
             aria-pressed={order === "asc"}
             onClick={() => setOrder("asc")}
-            className={sortButtonClass(order === "asc")}
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400 ${
+              order === "asc"
+                ? "bg-indigo-600 text-white"
+                : "bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white"
+            }`}
           >
             Más antiguos
           </button>
