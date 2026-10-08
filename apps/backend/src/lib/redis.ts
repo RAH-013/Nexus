@@ -2,7 +2,8 @@ import { createClient } from "redis";
 import { env } from "../config/env";
 
 const redis = createClient({ url: env.REDIS_URL });
-let connection: Promise<void> | undefined;
+// redis v5: connect() resuelve con el cliente, no con void.
+let connection: Promise<unknown> | undefined;
 
 redis.on("error", (error) => {
   console.error("Error de conexión con Redis:", error);
