@@ -110,12 +110,12 @@ const router = createBrowserRouter(
               element={<Profile />}
               handle={{ title: "Mi perfil" }}
             />
-          </Route>
-          <Route
+            <Route
               path="/recent"
               element={<Recent />}
               handle={{ title: "Recientes" }}
             />
+          </Route>
         </Route>
 
         <Route path="*" element={<NotFound />} />
