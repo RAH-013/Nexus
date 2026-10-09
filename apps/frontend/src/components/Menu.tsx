@@ -8,11 +8,9 @@ import {
 import { Link } from "react-router-dom";
 import {
   ClapIcon,
-  HeartIcon,
   HistoryIcon,
   MenuIcon,
   PlayIcon,
-  PartyPopperIcon,
   UsersIcon,
   XIcon,
 } from "lucide-animated";
@@ -108,16 +106,6 @@ function Menu() {
       icon: UsersIcon,
       label: "Actores",
       to: "/actors",
-    },
-    {
-      icon: PartyPopperIcon,
-      label: "Premios",
-      to: "/awards",
-    },
-    {
-      icon: HeartIcon,
-      label: "Favoritos",
-      to: "/favorites",
     },
     {
       icon: HistoryIcon,
