@@ -1,5 +1,6 @@
 import { ItemType } from "../generated/prisma/enums";
 import { prisma } from "../lib/prisma";
+import { ensureItem } from "./item";
 
 export const COMMENT_LIST_LIMIT = 50;
 const COMMENT_MAX_LENGTH = 500;
@@ -80,11 +81,7 @@ export async function createComment(
   userId: string,
   text: string,
 ): Promise<CommentView> {
-  const item = await prisma.item.upsert({
-    where: { externalId: id },
-    create: { externalId: id, type: itemTypeOf(type) },
-    update: {},
-  });
+  const item = await ensureItem(id, itemTypeOf(type));
 
   const comment = await prisma.comment.create({
     data: { text, userId, itemId: item.id },

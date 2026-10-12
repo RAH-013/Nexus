@@ -112,6 +112,11 @@ function Menu() {
       label: "Recientes",
       to: "/recent",
     },
+    {
+      icon: HistoryIcon,
+      label: "Para ti",
+      to: "/for-you",
+    },
   ];
 
   return (

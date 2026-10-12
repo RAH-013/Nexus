@@ -4,6 +4,8 @@ import type { MediaType } from "../api/cinemeta";
 import CastSection from "../components/detail/CastSection";
 import CommentsSection from "../components/detail/CommentsSection";
 import DetailSkeleton from "../components/detail/DetailSkeleton";
+import FavoriteButton from "../components/detail/FavoriteButton";
+import LikeButtons from "../components/detail/LikeButtons";
 import RatingCircle from "../components/detail/RatingCircle";
 import TitleCard from "../components/detail/TitleCard";
 import WatchButton from "../components/movies/WatchButton";
@@ -88,6 +90,9 @@ function TitleView({ type, id }: TitleViewProps) {
         <TitleCard title={data} />
         {/* RF-10: control de marcas de visto pasando el tipo correspondiente */}
         <WatchButton id={id} type={type} />
+        {/* Spec 004, RF-1: reacciones (favorito + gustan) solo con sesión */}
+        <FavoriteButton id={id} type={type} />
+        <LikeButtons id={id} type={type} />
         <CastSection director={data.director} cast={data.cast} />
       </div>
 
