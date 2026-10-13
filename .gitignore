@@ -34,7 +34,6 @@ dist-ssr
 # Archivos y carpetas de gobernanza del agente (no se commitean)
 /MEMORY.md
 /AGENTS.md
-/docs/
 /specs/
 
 # Configuración local de OpenCode (no se commitea)
