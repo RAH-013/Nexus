@@ -8,6 +8,7 @@ import {
 import { PrivateRoute } from "./PrivateRoutes";
 import { UserProvider } from "../providers/UserProvider";
 import { ViewsProvider } from "../providers/ViewsProvider";
+import { ReactionsProvider } from "../providers/ReactionsProvider";
 import { MoviesProvider } from "../providers/MoviesProvider";
 import Series from "../pages/Series";
 import SeriesSidebar from "../components/series/SeriesSideBar";
@@ -22,6 +23,7 @@ const Auth = lazy(() => import("../pages/Auth"));
 const Home = lazy(() => import("../pages/Home"));
 const SearchResults = lazy(() => import("../pages/SearchResults"));
 const Recent = lazy(() => import("../pages/private/Recent")); 
+const ForYou = lazy(() => import("../pages/ForYou"));
 const Profile = lazy(() => import("../pages/private/Profile"));
 const TitleDetail = lazy(() => import("../pages/TitleDetail"));
 const ActorProfile = lazy(() => import("../pages/ActorProfile"));
@@ -30,11 +32,15 @@ const Movies = lazy(() => import("../pages/Movies"));
 const router = createBrowserRouter(
   createRoutesFromElements(
     <>
-      {/* ViewsProvider dentro de UserProvider (spec 003, D6): vistos en cards y ficha. */}
+      {/* ViewsProvider dentro de UserProvider (spec 003, D6): vistos en cards y ficha.
+          ReactionsProvider anidado en ViewsProvider (spec 004, T10): reacciones en la ficha
+          y, en el futuro, el menú de Favoritos. */}
       <Route
         element={
           <UserProvider>
-            <ViewsProvider />
+            <ViewsProvider>
+              <ReactionsProvider />
+            </ViewsProvider>
           </UserProvider>
         }
       >
@@ -114,6 +120,12 @@ const router = createBrowserRouter(
               path="/recent"
               element={<Recent />}
               handle={{ title: "Recientes" }}
+            />
+            {/* Spec 004, RF-11: privada con título, sin entrada de menú. */}
+            <Route
+              path="/for-you"
+              element={<ForYou />}
+              handle={{ title: "Para ti" }}
             />
           </Route>
         </Route>

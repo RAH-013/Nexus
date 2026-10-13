@@ -1,5 +1,6 @@
 import { ActionType, ItemType } from "../generated/prisma/enums";
 import { prisma } from "../lib/prisma";
+import { ensureItem } from "./item";
 
 /**
  * Retorna todos los `externalId` marcados como vistos por el usuario.
@@ -44,13 +45,7 @@ export async function markItemViewed(
   id: string,
   type: ItemType,
 ): Promise<void> {
-  const item = await prisma.item.upsert({
-    // Los ids de IMDb son globales (un tt… pertenece a un solo título/tipo),
-    // así basta el único de `externalId` para identificar el par (tipo, id).
-    where: { externalId: id },
-    create: { externalId: id, type },
-    update: {},
-  });
+  const item = await ensureItem(id, type);
 
   const existing = await prisma.userAction.count({
     where: { userId, itemId: item.id, type: ActionType.VIEW },

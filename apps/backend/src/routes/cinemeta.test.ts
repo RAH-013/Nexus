@@ -326,12 +326,14 @@ test("al superar el límite de peticiones la respuesta es 429", async () => {
   let limited = false;
 
   for (let index = 0; index < 320 && !limited; index += 1) {
-    const response = await get("/health");
+    // /api/views sí cuenta (sin sesión responde 401 y no toca BD): /health
+    // está en el `skip` del rate limit desde el 07/10 (infraestructura).
+    const response = await get("/api/views");
 
     if (response.status === 429) {
       limited = true;
     } else {
-      assert.equal(response.status, 200);
+      assert.equal(response.status, 401);
     }
   }
 

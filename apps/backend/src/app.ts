@@ -6,6 +6,8 @@ import { authRouter } from "./routes/auth";
 import { actorCommentsRouter } from "./routes/actorComments";
 import { cinemetaRouter } from "./routes/cinemeta";
 import { commentsRouter } from "./routes/comments";
+import { reactionsRouter } from "./routes/reactions";
+import { recommendationsRouter } from "./routes/recommendations";
 import { viewsRouter } from "./routes/views";
 import { activityRouter } from "./routes/activity";
 
@@ -37,6 +39,12 @@ app.use("/api/actors", actorCommentsRouter);
 
 // Después de express.json (spec 003, D1), igual que comentarios.
 app.use("/api/views", viewsRouter);
+
+// Reacciones (favorito, me gusta, no me gusta), igual que vistos (spec 004).
+app.use("/api/reactions", reactionsRouter);
+
+// Recomendaciones «Para ti» (spec 004), igual que el resto de rutas privadas.
+app.use("/api/recommendations", recommendationsRouter);
 
 app.use("/health", healthRouter);
 
