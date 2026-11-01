@@ -1,6 +1,7 @@
 import { ActionType, ItemType } from "../generated/prisma/enums";
 import { prisma } from "../lib/prisma";
 import { ensureItem } from "./item";
+import { invalidateRecommendationsCache } from "./interactions";
 
 /**
  * Retorna todos los `externalId` marcados como vistos por el usuario.
@@ -56,6 +57,8 @@ export async function markItemViewed(
       data: { userId, itemId: item.id, type: ActionType.VIEW },
     });
   }
+
+  await invalidateRecommendationsCache(userId);
 }
 
 /** Desmarcar borra todos los `VIEW` de ese usuario sobre ese ítem por tipo. */
@@ -71,6 +74,8 @@ export async function unmarkItemViewed(
       item: { externalId: id, type },
     },
   });
+
+  await invalidateRecommendationsCache(userId);
 }
 
 /* ================= Funciones Helper para Películas ================= */

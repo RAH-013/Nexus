@@ -6,7 +6,7 @@ const API_URL = "";
 const REQUEST_TIMEOUT_MS = 20_000;
 
 /** De dónde salió la lista (RF-12): Gemini, heurística local o sin actividad. */
-export type ForYouSource = "gemini" | "heuristic" | "empty";
+export type ForYouSource = "gemini" | "heuristic" | "empty" | "cold-start";
 
 /** Recomendación de `GET /api/recommendations/for-you` (RF-12). */
 export interface ForYouItem {
