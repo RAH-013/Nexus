@@ -6,7 +6,7 @@ Nexus recopila las interacciones de los usuarios y utiliza algoritmos de recomen
 
 ---
 
-## 🏛️ Arquitectura
+## Arquitectura
 
 - **Frontend:** React 19 + TypeScript + Vite + Tailwind CSS (empaquetado en imagen ligera `nginx:alpine`).
 - **Backend API:** Node.js 24 + Express + TypeScript + Prisma ORM.
@@ -19,7 +19,7 @@ Nexus recopila las interacciones de los usuarios y utiliza algoritmos de recomen
 
 ---
 
-## 📁 Estructura del proyecto
+## Estructura del proyecto
 
 ```text
 Nexus/
@@ -51,11 +51,11 @@ Nexus/
 
 ---
 
-## 🚀 Despliegue en Kubernetes con Minikube (Instrucciones para el equipo)
+## Despliegue en Kubernetes con Minikube (Instrucciones para el equipo)
 
 Todos los manifiestos ya están enlazados con las imágenes de Docker Hub (`theedu117/nexus-backend:1.0.0` y `theedu117/nexus-frontend:1.0.0`). Cualquier miembro del equipo puede levantar la arquitectura completa en Minikube siguiendo estos pasos.
 
-> **💡 Recomendación:** Si estás en Windows, ejecuta estos comandos dentro de la terminal de **WSL (Ubuntu)** para evitar problemas de permisos de red y DNS.
+> ** Recomendación:** Si estás en Windows, ejecuta estos comandos dentro de la terminal de **WSL (Ubuntu)** para evitar problemas de permisos de red y DNS.
 
 ### 1. Iniciar Minikube con los recursos adecuados
 Para evitar que Minikube sobreasigne la memoria del sistema, arráncalo con 4GB de RAM y 2 CPUs:
@@ -107,11 +107,11 @@ minikube tunnel
 *(Te pedirá tu contraseña de `sudo` para enlazar la red).*
 
 Abre tu navegador web en Windows e ingresa a:
-👉 **`http://127.0.0.1`** (o `http://localhost`).
+ **`http://127.0.0.1`** (o `http://localhost`).
 
 ---
 
-## 🛠️ Ejecución local alternativa con Docker Compose
+## Ejecución local alternativa con Docker Compose
 
 Si deseas probar la aplicación localmente sin Kubernetes:
 
@@ -126,7 +126,7 @@ docker compose up -d --build
 docker compose ps
 ```
 Acceso en el navegador:
-👉 **`http://localhost:8080`**
+ **`http://localhost:8080`**
 
 Para detenerlo:
 ```bash
@@ -136,7 +136,7 @@ docker compose down
 
 ---
 
-## 🧠 Novedades del Sistema de Recomendaciones e Interacciones
+## Novedades del Sistema de Recomendaciones e Interacciones
 
 Se mejoró integralmente el sistema para reflejar la experiencia de plataformas de streaming reales:
 
@@ -159,7 +159,7 @@ Se mejoró integralmente el sistema para reflejar la experiencia de plataformas 
 4. **Rotación dinámica de recomendaciones:**
    Al presionar **«Actualizar recomendaciones»**, el motor no repite los mismos 10 títulos; realiza un muestreo estocástico entre los 35 mejores candidatos afines para rotar y descubrir novedades.
 
-5. **✨ Fila «Recomendado para ti» en la Pantalla Principal (Home):**
+5. ** Fila «Recomendado para ti» en la Pantalla Principal (Home):**
    Al ingresar a la app con tu usuario autenticado, debajo del Hero Carousel aparece una fila personalizada con tus títulos recomendados, tu nivel de compatibilidad y el motivo de la recomendación.
 
 ---
@@ -186,7 +186,7 @@ Todos los endpoints se sirven bajo `/api` a través de Nginx / Ingress:
 
 ---
 
-## 🔄 Cómo actualizar las imágenes en Docker Hub (Si haces cambios de código)
+## Cómo actualizar las imágenes en Docker Hub (Si haces cambios de código)
 
 Si realizas cambios en el código de `apps/backend` o `apps/frontend` y quieres compartirlos con el equipo:
 
@@ -212,7 +212,7 @@ kubectl rollout restart deployment/frontend -n nexus
 
 ---
 
-## 🧪 Pruebas automatizadas
+## Pruebas automatizadas
 
 Para ejecutar la suite de 90 pruebas unitarias y de integración del backend:
 
