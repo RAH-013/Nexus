@@ -14,14 +14,34 @@ const base = `http://127.0.0.1:${port}`;
 
 after(() => new Promise<void>((resolve) => server.close(() => resolve())));
 
-test("un GET con type inválido responde 400 con message", async () => {
+test("un GET con type inválido responde 400 con error y detalles", async () => {
   const response = await fetch(`${base}/api/comments/book/tt1`);
 
   assert.equal(response.status, 400);
 
-  const body = (await response.json()) as { message?: unknown };
-  assert.match(String(body.message), /movie/);
-  assert.match(String(body.message), /series/);
+  const body = (await response.json()) as {
+    error?: unknown;
+    detalles?: unknown;
+  };
+
+  assert.equal(body.error, "Datos inválidos");
+  assert.deepEqual(body.detalles, ["El tipo debe ser movie o series"]);
+});
+
+test("un GET con commentId inválido responde 400 con error y detalles", async () => {
+  const response = await fetch(`${base}/api/comments/movie/tt1/abc`);
+
+  assert.equal(response.status, 400);
+
+  const body = (await response.json()) as {
+    error?: unknown;
+    detalles?: unknown;
+  };
+
+  assert.equal(body.error, "Datos inválidos");
+  assert.deepEqual(body.detalles, [
+    "El ID del comentario debe ser un entero positivo",
+  ]);
 });
 
 test("un POST sin sesión responde 401 con message", async () => {

@@ -1,7 +1,8 @@
-import { Router } from "express";
+import { Router, type Response } from "express";
 import { auth } from "../lib/auth";
 import {
   createComment,
+  getComment,
   listComments,
   validateCommentText,
   type CommentTextError,
@@ -10,6 +11,16 @@ import {
 export const commentsRouter = Router();
 
 const MAX_ID_LENGTH = 80;
+
+/** Error del recurso con el formato `{"error", "detalles"}` del ticket. */
+function commentError(
+  res: Response,
+  status: number,
+  error: string,
+  detalles: string[] = [],
+) {
+  return res.status(status).json({ error, detalles });
+}
 
 const COMMENT_TEXT_MESSAGES: Record<CommentTextError, string> = {
   invalid: "El comentario es requerido",
@@ -22,7 +33,7 @@ commentsRouter.get("/:type/:id", async (req, res) => {
     const params = parseTitleParams(req.params.type, req.params.id);
 
     if ("error" in params) {
-      return res.status(400).json({ message: params.error });
+      return commentError(res, 400, "Datos inválidos", [params.error]);
     }
 
     const comments = await listComments(params.type, params.id);
@@ -31,9 +42,35 @@ commentsRouter.get("/:type/:id", async (req, res) => {
   } catch (error) {
     console.error("Error al cargar los comentarios:", error);
 
-    return res.status(500).json({
-      message: "No se pudieron cargar los comentarios",
-    });
+    return commentError(res, 500, "No se pudieron cargar los comentarios");
+  }
+});
+
+commentsRouter.get("/:type/:id/:commentId", async (req, res) => {
+  try {
+    const params = parseTitleParams(req.params.type, req.params.id);
+
+    if ("error" in params) {
+      return commentError(res, 400, "Datos inválidos", [params.error]);
+    }
+
+    const commentId = parseCommentId(req.params.commentId);
+
+    if ("error" in commentId) {
+      return commentError(res, 400, "Datos inválidos", [commentId.error]);
+    }
+
+    const comment = await getComment(params.type, params.id, commentId.value);
+
+    if (!comment) {
+      return commentError(res, 404, "Comentario no encontrado");
+    }
+
+    return res.json(comment);
+  } catch (error) {
+    console.error("Error al cargar el comentario:", error);
+
+    return commentError(res, 500, "No se pudo cargar el comentario");
   }
 });
 
@@ -97,6 +134,17 @@ function parseTitleParams(type: string, id: string): TitleParams | { error: stri
   }
 
   return { type, id };
+}
+
+/** ID de comentario de la ruta: entero positivo. */
+function parseCommentId(raw: string): { value: number } | { error: string } {
+  const value = Number(raw);
+
+  if (!/^\d+$/.test(raw) || !Number.isSafeInteger(value) || value < 1) {
+    return { error: "El ID del comentario debe ser un entero positivo" };
+  }
+
+  return { value };
 }
 
 /** Convierte los headers de Express en `Headers` de web (igual que routes/auth.ts). */

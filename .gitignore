@@ -35,6 +35,10 @@ dist-ssr
 /MEMORY.md
 /AGENTS.md
 /specs/
+constitution.md
+objetive.md
+ticketTasks.md
+INFORMACION_PROYECTO.md
 
 # Configuración local de OpenCode (no se commitea)
 /opencode.json
