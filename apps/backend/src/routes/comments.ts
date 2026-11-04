@@ -79,14 +79,18 @@ commentsRouter.post("/:type/:id", async (req, res) => {
     const params = parseTitleParams(req.params.type, req.params.id);
 
     if ("error" in params) {
-      return res.status(400).json({ message: params.error });
+      return res.status(400).json({
+        error: "Datos inválidos",
+        detalles: [params.error],
+      });
     }
 
     const session = await auth.api.getSession({ headers: toWebHeaders(req) });
 
     if (!session) {
       return res.status(401).json({
-        message: "Inicia sesión para comentar",
+        error: "Inicia sesión para comentar",
+        detalles: [],
       });
     }
 
@@ -94,22 +98,33 @@ commentsRouter.post("/:type/:id", async (req, res) => {
     const validated = validateCommentText(body?.text);
 
     if (!validated.ok) {
-      return res.status(400).json({ message: COMMENT_TEXT_MESSAGES[validated.reason] });
+      return res.status(400).json({
+        error: "Datos inválidos",
+        detalles: [COMMENT_TEXT_MESSAGES[validated.reason]],
+      });
     }
 
-    const comment = await createComment(
+    const result = await createComment(
       params.type,
       params.id,
       session.user.id,
       validated.text,
     );
 
-    return res.status(201).json(comment);
+    if (!result.ok) {
+      return res.status(409).json({
+        error: "Comentario duplicado",
+        detalles: ["Ya publicaste este mismo comentario en este título"],
+      });
+    }
+
+    return res.status(201).json(result.comment);
   } catch (error) {
     console.error("Error al publicar el comentario:", error);
 
     return res.status(500).json({
-      message: "No se pudo publicar el comentario",
+      error: "No se pudo publicar el comentario",
+      detalles: [],
     });
   }
 });
