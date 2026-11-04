@@ -13,6 +13,7 @@ import {
   PlayIcon,
   UsersIcon,
   XIcon,
+  HeartIcon
 } from "lucide-animated";
 
 type AnimatedIconHandle = {
@@ -113,7 +114,7 @@ function Menu() {
       to: "/recent",
     },
     {
-      icon: HistoryIcon,
+      icon: HeartIcon,
       label: "Para ti",
       to: "/for-you",
     },

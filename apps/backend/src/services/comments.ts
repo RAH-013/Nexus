@@ -1,3 +1,4 @@
+import { Prisma } from "../generated/prisma/client";
 import { ItemType } from "../generated/prisma/enums";
 import { prisma } from "../lib/prisma";
 import { ensureItem } from "./item";
@@ -72,29 +73,76 @@ export async function listComments(type: TitleType, id: string): Promise<Comment
 }
 
 /**
+ * ¿El usuario ya tiene un comentario con ese texto en el título?
+ * `excludeId` deja fuera el comentario que se está reemplazando (PUT).
+ */
+export async function hasCommentWithText(
+  itemId: number,
+  userId: string,
+  text: string,
+  excludeId?: number,
+): Promise<boolean> {
+  const existing = await prisma.comment.findFirst({
+    where: {
+      itemId,
+      userId,
+      text,
+      ...(excludeId === undefined ? {} : { id: { not: excludeId } }),
+    },
+    select: { id: true },
+  });
+
+  return existing !== null;
+}
+
+export type CreateCommentResult =
+  | { ok: true; comment: CommentView }
+  | { ok: false; reason: "duplicate" };
+
+/**
  * Da de alta el título por `externalId` si hace falta (mismo patrón que
- * UserAction) y publica el comentario.
+ * UserAction) y publica el comentario. El mismo usuario no puede repetir
+ * texto en el mismo título: el `@@unique` de la BD es la última defensa
+ * frente a dos peticiones simultáneas.
  */
 export async function createComment(
   type: TitleType,
   id: string,
   userId: string,
   text: string,
-): Promise<CommentView> {
+): Promise<CreateCommentResult> {
   const item = await ensureItem(id, itemTypeOf(type));
 
-  const comment = await prisma.comment.create({
-    data: { text, userId, itemId: item.id },
-    select: {
-      id: true,
-      text: true,
-      user: { select: { username: true, name: true } },
-    },
-  });
+  if (await hasCommentWithText(item.id, userId, text)) {
+    return { ok: false, reason: "duplicate" };
+  }
 
-  return {
-    id: comment.id,
-    text: comment.text,
-    author: comment.user.username ?? comment.user.name,
-  };
+  try {
+    const comment = await prisma.comment.create({
+      data: { text, userId, itemId: item.id },
+      select: {
+        id: true,
+        text: true,
+        user: { select: { username: true, name: true } },
+      },
+    });
+
+    return {
+      ok: true,
+      comment: {
+        id: comment.id,
+        text: comment.text,
+        author: comment.user.username ?? comment.user.name,
+      },
+    };
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return { ok: false, reason: "duplicate" };
+    }
+
+    throw error;
+  }
 }

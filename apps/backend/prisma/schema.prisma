@@ -209,6 +209,7 @@ model Comment {
     itemId    Int
     createdAt DateTime @default(now()) @db.Timestamptz(3)
 
+    @@unique([userId, itemId, text])
     @@index([itemId, createdAt(sort: Desc)])
     @@map("comment")
 }

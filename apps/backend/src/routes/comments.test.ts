@@ -24,7 +24,7 @@ test("un GET con type inválido responde 400 con message", async () => {
   assert.match(String(body.message), /series/);
 });
 
-test("un POST sin sesión responde 401 con message", async () => {
+test("un POST sin sesión responde 401 con error y detalles vacío", async () => {
   const response = await fetch(`${base}/api/comments/movie/tt1`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -33,6 +33,7 @@ test("un POST sin sesión responde 401 con message", async () => {
 
   assert.equal(response.status, 401);
 
-  const body = (await response.json()) as { message?: unknown };
-  assert.match(String(body.message), /sesión/i);
+  const body = (await response.json()) as { error?: unknown; detalles?: unknown };
+  assert.equal(body.error, "Inicia sesión para comentar");
+  assert.deepEqual(body.detalles, []);
 });
