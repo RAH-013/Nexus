@@ -12,7 +12,6 @@ export type ValidatedCommentText =
   | { ok: true; text: string }
   | { ok: false; reason: CommentTextError };
 
-/** Valida el texto en servidor (mismas reglas que en cliente, RF-8). */
 export function validateCommentText(value: unknown): ValidatedCommentText {
   if (typeof value !== "string") {
     return { ok: false, reason: "invalid" };
@@ -43,7 +42,18 @@ function itemTypeOf(type: TitleType): ItemType {
   return type === "movie" ? ItemType.MOVIE : ItemType.SERIES;
 }
 
-/** Resuelve el `Item` de un título por `externalId` + tipo (sin crearlo). */
+function toCommentView(comment: {
+  id: number;
+  text: string;
+  user: { username: string | null; name: string };
+}): CommentView {
+  return {
+    id: comment.id,
+    text: comment.text,
+    author: comment.user.username ?? comment.user.name,
+  };
+}
+
 export async function findTitleItem(
   type: TitleType,
   id: string,
@@ -54,8 +64,10 @@ export async function findTitleItem(
   });
 }
 
-/** Hasta 50 comentarios por título, más reciente primero (RF-8). */
-export async function listComments(type: TitleType, id: string): Promise<CommentView[]> {
+export async function listComments(
+  type: TitleType,
+  id: string,
+): Promise<CommentView[]> {
   const item = await findTitleItem(type, id);
 
   if (!item) {
@@ -73,17 +85,9 @@ export async function listComments(type: TitleType, id: string): Promise<Comment
     },
   });
 
-  return comments.map((comment) => ({
-    id: comment.id,
-    text: comment.text,
-    author: comment.user.username ?? comment.user.name,
-  }));
+  return comments.map(toCommentView);
 }
 
-/**
- * ¿El usuario ya tiene un comentario con ese texto en el título?
- * `excludeId` deja fuera el comentario que se está reemplazando (PUT).
- */
 export async function hasCommentWithText(
   itemId: number,
   userId: string,
@@ -107,12 +111,6 @@ export type CreateCommentResult =
   | { ok: true; comment: CommentView }
   | { ok: false; reason: "duplicate" };
 
-/**
- * Da de alta el título por `externalId` si hace falta (mismo patrón que
- * UserAction) y publica el comentario. El mismo usuario no puede repetir
- * texto en el mismo título: el `@@unique` de la BD es la última defensa
- * frente a dos peticiones simultáneas.
- */
 export async function createComment(
   type: TitleType,
   id: string,
@@ -137,11 +135,7 @@ export async function createComment(
 
     return {
       ok: true,
-      comment: {
-        id: comment.id,
-        text: comment.text,
-        author: comment.user.username ?? comment.user.name,
-      },
+      comment: toCommentView(comment),
     };
   } catch (error) {
     if (
@@ -155,7 +149,6 @@ export async function createComment(
   }
 }
 
-/** Un comentario concreto de un título (público, como la lista). */
 export async function getComment(
   type: TitleType,
   id: string,
@@ -176,13 +169,118 @@ export async function getComment(
     },
   });
 
-  if (!comment) {
-    return null;
+  return comment ? toCommentView(comment) : null;
+}
+
+export type ReplaceCommentResult =
+  | { ok: true; comment: CommentView }
+  | { ok: false; reason: "not-found" | "forbidden" | "duplicate" };
+
+export async function replaceComment(
+  type: TitleType,
+  id: string,
+  commentId: number,
+  userId: string,
+  text: string,
+): Promise<ReplaceCommentResult> {
+  const item = await findTitleItem(type, id);
+
+  if (!item) {
+    return { ok: false, reason: "not-found" };
   }
 
-  return {
-    id: comment.id,
-    text: comment.text,
-    author: comment.user.username ?? comment.user.name,
-  };
+  const existing = await prisma.comment.findFirst({
+    where: { id: commentId, itemId: item.id },
+    select: { id: true, userId: true },
+  });
+
+  if (!existing) {
+    return { ok: false, reason: "not-found" };
+  }
+
+  if (existing.userId !== userId) {
+    return { ok: false, reason: "forbidden" };
+  }
+
+  if (await hasCommentWithText(item.id, userId, text, commentId)) {
+    return { ok: false, reason: "duplicate" };
+  }
+
+  try {
+    const comment = await prisma.comment.update({
+      where: { id: commentId },
+      data: { text },
+      select: {
+        id: true,
+        text: true,
+        user: { select: { username: true, name: true } },
+      },
+    });
+
+    return {
+      ok: true,
+      comment: toCommentView(comment),
+    };
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return { ok: false, reason: "duplicate" };
+    }
+
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2025"
+    ) {
+      return { ok: false, reason: "not-found" };
+    }
+
+    throw error;
+  }
+}
+
+export type DeleteCommentResult = "ok" | "not-found" | "forbidden";
+
+export async function deleteComment(
+  type: TitleType,
+  id: string,
+  commentId: number,
+  userId: string,
+): Promise<DeleteCommentResult> {
+  const item = await findTitleItem(type, id);
+
+  if (!item) {
+    return "not-found";
+  }
+
+  const existing = await prisma.comment.findFirst({
+    where: { id: commentId, itemId: item.id },
+    select: { id: true, userId: true },
+  });
+
+  if (!existing) {
+    return "not-found";
+  }
+
+  if (existing.userId !== userId) {
+    return "forbidden";
+  }
+
+  try {
+    await prisma.comment.delete({
+      where: { id: commentId },
+    });
+
+    return "ok";
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2025"
+    ) {
+      return "not-found";
+    }
+
+    throw error;
+  }
 }
