@@ -1,6 +1,7 @@
 import { ActionType, ItemType } from "../generated/prisma/enums";
 import { prisma } from "../lib/prisma";
 import { ensureItem } from "./item";
+import { invalidateRecommendationsCache } from "./interactions";
 
 /** Reacciones sobre un título que entran en el perfil de recomendaciones (spec 004). */
 export const REACTION_KINDS = ["favorite", "like", "dislike"] as const;
@@ -79,6 +80,7 @@ export async function setReaction(
       where: { userId, itemId: item.id, type: actionType },
     });
 
+    await invalidateRecommendationsCache(userId);
     return;
   }
 
@@ -107,4 +109,6 @@ export async function setReaction(
       data: { userId, itemId: item.id, type: actionType },
     }),
   ]);
+
+  await invalidateRecommendationsCache(userId);
 }

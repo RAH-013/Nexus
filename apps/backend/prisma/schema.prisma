@@ -198,6 +198,9 @@ enum ActionType {
     RATING
     FAVORITE
     SEARCH
+    DETAIL_VIEW
+    NOT_INTERESTED
+    IMPRESSION
 }
 
 model Comment {

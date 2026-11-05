@@ -1,10 +1,11 @@
 import type { Collection } from "../api/cinemeta";
 import ContentRow from "../components/home/ContentRow";
 import HeroCarousel from "../components/home/HeroCarousel";
+import HomeRecommendedRow from "../components/home/HomeRecommendedRow";
 import SectionError from "../components/home/SectionError";
 import { useSectionData } from "../hooks/useSectionData";
 
-/** Orden fijo de los 8 huecos de la pantalla (plan §4.1). */
+/** Orden de los bloques del catálogo en la pantalla principal. */
 const ROWS: { collection: Collection; title: string }[] = [
   { collection: "trending", title: "Tendencias" },
   { collection: "action", title: "Acción" },
@@ -50,8 +51,7 @@ function HeroSkeleton() {
 }
 
 /**
- * Orquestador de la home: cada sección se pinta en cuanto llega y sus fallos
- * no afectan al resto (RF-12, RF-13, RNF-5). No hay estado global de error.
+ * Orquestador de la home: HeroCarousel -> Fila personalizada «Recomendado para ti» -> Tendencias y Géneros.
  */
 function Home() {
   const featured = useSectionData("featured");
@@ -62,6 +62,9 @@ function Home() {
       {featured.status === "error" && <SectionError onRetry={featured.retry} />}
       {featured.status === "rate-limit" && <SectionError variant="limit" />}
       {featured.status === "ready" && <HeroCarousel items={featured.items} />}
+
+      {/* Fila personalizada para el usuario autenticado que rota según sus gustos */}
+      <HomeRecommendedRow />
 
       {ROWS.map((row) => (
         <ContentRow

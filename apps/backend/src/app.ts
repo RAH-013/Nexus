@@ -10,6 +10,7 @@ import { reactionsRouter } from "./routes/reactions";
 import { recommendationsRouter } from "./routes/recommendations";
 import { viewsRouter } from "./routes/views";
 import { activityRouter } from "./routes/activity";
+import { interactionsRouter } from "./routes/interactions";
 
 import { healthRouter } from "./routes/health";
 import { errorHandler } from "./middleware/error";
@@ -42,6 +43,9 @@ app.use("/api/views", viewsRouter);
 
 // Reacciones (favorito, me gusta, no me gusta), igual que vistos (spec 004).
 app.use("/api/reactions", reactionsRouter);
+
+// Interacciones avanzadas (calificaciones, descartes, impresiones, apertura de detalle).
+app.use("/api/interactions", interactionsRouter);
 
 // Recomendaciones «Para ti» (spec 004), igual que el resto de rutas privadas.
 app.use("/api/recommendations", recommendationsRouter);

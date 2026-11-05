@@ -9,6 +9,7 @@ import { PrivateRoute } from "./PrivateRoutes";
 import { UserProvider } from "../providers/UserProvider";
 import { ViewsProvider } from "../providers/ViewsProvider";
 import { ReactionsProvider } from "../providers/ReactionsProvider";
+import { InteractionsProvider } from "../providers/InteractionsProvider";
 import { MoviesProvider } from "../providers/MoviesProvider";
 import Series from "../pages/Series";
 import SeriesSidebar from "../components/series/SeriesSideBar";
@@ -32,14 +33,14 @@ const Movies = lazy(() => import("../pages/Movies"));
 const router = createBrowserRouter(
   createRoutesFromElements(
     <>
-      {/* ViewsProvider dentro de UserProvider (spec 003, D6): vistos en cards y ficha.
-          ReactionsProvider anidado en ViewsProvider (spec 004, T10): reacciones en la ficha
-          y, en el futuro, el menú de Favoritos. */}
+      {/* Jerarquía de Providers de usuario, vistos, reacciones e interacciones avanzadas */}
       <Route
         element={
           <UserProvider>
             <ViewsProvider>
-              <ReactionsProvider />
+              <ReactionsProvider>
+                <InteractionsProvider />
+              </ReactionsProvider>
             </ViewsProvider>
           </UserProvider>
         }
@@ -48,7 +49,7 @@ const router = createBrowserRouter(
 
         <Route element={<Main />}>
           <Route path="/" element={<Home />} />
-          {/* Vista de resultados de búsqueda (enmienda spec 001): pública. */}
+          {/* Vista de resultados de búsqueda: pública */}
           <Route
             path="/search"
             element={<SearchResults />}
@@ -56,15 +57,14 @@ const router = createBrowserRouter(
           />
         </Route>
 
-        {/* Ficha pública (spec 002, D7): sin menú lateral y con cabecera «Volver». */}
+        {/* Ficha pública: sin menú lateral y con cabecera «Volver» */}
         <Route element={<Main detail />}>
           <Route path="/title/:type/:id" element={<TitleDetail />} />
-          {/* Perfil público del actor: misma cabecera «Volver». */}
+          {/* Perfil público del actor */}
           <Route path="/actor/:name" element={<ActorProfile />} />
         </Route>
 
-        {/* Vista Películas (spec 003, D7/D8): pública; el provider de filtros
-            vive en el layout para compartir sidebar y cuadrícula. */}
+        {/* Vista Películas */}
         <Route
           element={
             <MoviesProvider>
@@ -93,8 +93,7 @@ const router = createBrowserRouter(
           />
         </Route>
 
-        {/* Vista Actores: cuadrícula única de los actores de todas las
-            películas; el sidebar comparte Ordenar por y Buscar. */}
+        {/* Vista Actores */}
         <Route
           element={
             <ActorsProvider>
@@ -121,7 +120,6 @@ const router = createBrowserRouter(
               element={<Recent />}
               handle={{ title: "Recientes" }}
             />
-            {/* Spec 004, RF-11: privada con título, sin entrada de menú. */}
             <Route
               path="/for-you"
               element={<ForYou />}

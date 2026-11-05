@@ -24,6 +24,7 @@ export interface PromptTitle {
   name?: string;
   year?: string;
   genres?: string[];
+  createdAt?: Date;
 }
 
 /** Comentario propio del usuario que el modelo debe clasificar (RF-9). */
@@ -32,6 +33,8 @@ export interface PromptComment {
   fuente: "titulo" | "actor";
   text: string;
   actorName?: string;
+  genres?: string[];
+  sentiment?: Sentiment;
 }
 
 export interface UserProfile {
@@ -41,6 +44,11 @@ export interface UserProfile {
   likes: PromptTitle[];
   dislikes: PromptTitle[];
   comments: PromptComment[];
+  ratings?: { id: string; rating: number; genres?: string[]; createdAt?: Date }[];
+  detailViews?: { id: string; count: number; genres?: string[]; createdAt?: Date }[];
+  notInterested?: string[];
+  preferredDirectors?: string[];
+  preferredActors?: string[];
 }
 
 export interface Candidate {
@@ -50,6 +58,8 @@ export interface Candidate {
   poster?: string;
   year?: string;
   genres?: string[];
+  director?: string;
+  cast?: string[];
 }
 
 export interface GeminiRecommendation {
@@ -286,8 +296,8 @@ export function buildPrompt(
     "",
     "Reglas:",
     `- Clasifica cada comentario del perfil como sentimiento "positivo", "negativo" o "neutro".`,
-    `- Elige exactamente ${RECOMMENDATION_LIMIT} recomendaciones: SOLO con ids tomados de "candidatos", sin repetir ninguno y sin títulos que el usuario ya haya visto, marcado como favorito o puntuado como no me gusta.`,
-    `- Ordénalas de mejor a peor con "score" de 100 a 0 y escribe cada "reason" en español, con máximo 120 caracteres, citando un gusto concreto del perfil (un género o un título parecido que haya visto o comentado).`,
+    `- Elige exactamente ${RECOMMENDATION_LIMIT} recomendaciones: SOLO con ids tomados de "candidatos", sin repetir ninguno y sin títulos que el usuario ya haya visto, marcado como favorito, descartado o puntuado como no me gusta.`,
+    `- Ordénalas de mejor a peor con "score" de 100 a 0 y escribe cada "reason" en español, con máximo 120 caracteres, citando un gusto concreto del perfil (un género, director o un título parecido que haya visto o comentado).`,
     "- No inventes títulos ni ids: si un id no está en candidatos, no existe.",
     "",
     "Responde SOLO con JSON (sin texto adicional) con esta forma:",
@@ -306,6 +316,7 @@ export function buildPrompt(
         favoritos: profile.favorites,
         me_gusta: profile.likes,
         no_me_gusta: profile.dislikes,
+        calificaciones: profile.ratings,
         comentarios: profile.comments,
       },
       null,

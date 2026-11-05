@@ -34,8 +34,9 @@ dist-ssr
 # Archivos y carpetas de gobernanza del agente (no se commitean)
 /MEMORY.md
 /AGENTS.md
-/docs/
 /specs/
+constitution.md
+INFORMACION_PROYECTO.md
 objetive.md
 ticketTasks.md
 apps/backend/prisma/migrations/20261104104346_comment_unique_user_item_text/

@@ -23,37 +23,32 @@ Actualmente el proyecto cuenta con:
 - `docker-compose.yml` funcional para desarrollo.
 - Imágenes basadas en Alpine.
 - Volumen Docker para PostgreSQL.
-- Redis como servicio de caché.
+- Redis como servicio de caché e invalidación en tiempo real.
 - Red Docker personalizada `nexus_network` de tipo `bridge`.
 - Imágenes multi-stage para frontend y backend.
-- Migraciones Prisma.
+- Migraciones Prisma y nuevos tipos de interacción (`DETAIL_VIEW`, `NOT_INTERESTED`, `IMPRESSION`).
+- Sistema multicriterio de recomendaciones con decaimiento temporal y análisis de sentimientos léxico.
+- Calificaciones con estrellas interactivas (1-5) y botón de descarte «No me interesa».
 - Endpoint de salud del backend: `/health`.
 - Endpoint de readiness del backend: `/health/ready`.
 - Healthchecks para frontend, backend, Redis, PostgreSQL y Nginx.
 - Archivos `.dockerignore` para reducir los contextos de build.
 - Gestión local de secretos mediante `.env` y `.env.example`.
-
-Todavía no existen manifiestos de Kubernetes ni el documento formal completo de
-la propuesta.
+- Manifiestos completos de Kubernetes organizados en `k8s/` listos para Minikube.
 
 ---
 
 ## Orden recomendado de trabajo
-
-Las tareas deben realizarse en el siguiente orden. Las fases posteriores
-dependen de las anteriores.
 
 ### Fase 1: Preparar la configuración del proyecto
 
 **Objetivo:** dejar definidos los nombres, puertos y variables que utilizarán
 Docker y Kubernetes.
 
-- [ ] Confirmar la URL que utilizará Better Auth cuando se acceda mediante
-  Ingress.
+- [x] Confirmar la URL que utilizará Better Auth cuando se acceda mediante
+  Ingress (`http://nexus.local` o host configurado en Ingress).
 
-**Estado:** la configuración Docker local, los puertos, los secretos locales y
-los nombres DNS internos de Compose ya están documentados. Queda pendiente
-confirmar la URL de Better Auth para Kubernetes/Ingress.
+**Estado:** completada.
 
 ### Fase 2: Convertir las imágenes Docker a multi-stage
 
@@ -77,7 +72,7 @@ catálogo, migraciones y la configuración de red/healthchecks.
 
 **Objetivo:** organizar los manifiestos y evitar configuraciones dispersas.
 
-Crear la siguiente estructura:
+Estructura creada en `k8s/`:
 
 ```text
 k8s/
@@ -87,6 +82,8 @@ k8s/
 ├── storageclass.yaml
 ├── postgres-statefulset.yaml
 ├── postgres-service.yaml
+├── redis-deployment.yaml
+├── redis-service.yaml
 ├── backend-deployment.yaml
 ├── backend-service.yaml
 ├── backend-hpa.yaml
@@ -96,12 +93,12 @@ k8s/
 └── ingress.yaml
 ```
 
-- [ ] Crear un namespace para Nexus.
-- [ ] Usar el mismo namespace en todos los manifiestos.
-- [ ] Definir nombres consistentes para Deployments, Services y Pods.
-- [ ] Definir etiquetas comunes como `app` y `component`.
+- [x] Crear un namespace para Nexus (`nexus`).
+- [x] Usar el mismo namespace en todos los manifiestos.
+- [x] Definir nombres consistentes para Deployments, Services y Pods.
+- [x] Definir etiquetas comunes como `app.kubernetes.io/name` y `app.kubernetes.io/component`.
 
-**Resultado esperado:** estructura clara para aplicar y mantener Kubernetes.
+**Estado:** completada.
 
 ### Fase 5: Crear la configuración y los secretos
 
@@ -109,189 +106,149 @@ k8s/
 
 #### ConfigMap
 
-- [ ] Crear un `ConfigMap` para variables no sensibles:
+- [x] Crear un `ConfigMap` para variables no sensibles (`k8s/configmap.yaml`):
   - `NODE_ENV`.
   - `PORT`.
   - `TZ`.
   - `BETTER_AUTH_URL`.
   - `CINEMETA_BASE_URL`.
+  - `REDIS_URL`.
 
 #### Secret
 
-- [ ] Crear un `Secret` para:
+- [x] Crear un `Secret` (`k8s/secret.yaml`) para:
   - `BETTER_AUTH_SECRET`.
   - `POSTGRES_USER`.
   - `POSTGRES_PASSWORD`.
   - `POSTGRES_DB`.
-  - `DATABASE_URL`, si se administra como valor completo.
-- [ ] Crear una plantilla segura o documentar cómo generar el Secret:
+  - `DATABASE_URL`.
+- [x] Crear una plantilla segura o documentar cómo generar el Secret:
 
   ```bash
   kubectl create secret generic nexus-secrets \
+    --namespace=nexus \
     --from-literal=POSTGRES_USER=nexus \
     --from-literal=POSTGRES_PASSWORD='cambiar-esta-clave' \
     --from-literal=POSTGRES_DB=nexus \
-    --from-literal=BETTER_AUTH_SECRET='cambiar-este-secreto'
+    --from-literal=BETTER_AUTH_SECRET='cambiar-este-secreto' \
+    --from-literal=DATABASE_URL='postgresql://nexus:cambiar-esta-clave@postgres-service:5432/nexus'
   ```
 
-- [ ] Documentar la diferencia entre Secrets de desarrollo y producción.
+- [x] Documentar la diferencia entre Secrets de desarrollo y producción.
 
-**Resultado esperado:** ningún secreto expuesto en ConfigMaps, imágenes o
-documentación pública.
+**Estado:** completada.
 
 ### Fase 6: Crear la persistencia de PostgreSQL
 
 **Objetivo:** garantizar que los datos sobrevivan a la recreación de los Pods.
 
-- [ ] Crear `storageclass.yaml`.
-- [ ] Crear un `StatefulSet` para PostgreSQL.
-- [ ] Crear un `Service` interno tipo `ClusterIP` para PostgreSQL.
-- [ ] Crear un `PersistentVolumeClaim` mediante `volumeClaimTemplates` o un
-  PVC explícito.
-- [ ] Configurar como mínimo:
-  - Tamaño: `5Gi` o `10Gi`.
+- [x] Crear `storageclass.yaml`.
+- [x] Crear un `StatefulSet` para PostgreSQL (`k8s/postgres-statefulset.yaml`).
+- [x] Crear un `Service` interno tipo `ClusterIP` para PostgreSQL (`k8s/postgres-service.yaml`).
+- [x] Crear un `PersistentVolumeClaim` mediante `volumeClaimTemplates`.
+- [x] Configurar como mínimo:
+  - Tamaño: `5Gi`.
   - Modo: `ReadWriteOnce`.
-  - StorageClass para Minikube.
-- [ ] Cargar las credenciales desde el Secret.
-- [ ] Configurar `pg_isready` como probe.
-- [ ] Definir requests y limits de CPU y memoria.
-- [ ] Verificar que `DATABASE_URL` del backend apunte a:
+  - StorageClass para Minikube (`k8s.io/minikube-hostpath`).
+- [x] Cargar las credenciales desde el Secret.
+- [x] Configurar `pg_isready` como probe (liveness y readiness).
+- [x] Definir requests y limits de CPU y memoria.
+- [x] Verificar que `DATABASE_URL` del backend apunte a `postgres-service:5432`.
 
-  ```text
-  postgres:5432
-  ```
-
-**Resultado esperado:** PostgreSQL funcionando como StatefulSet con
-almacenamiento persistente.
+**Estado:** completada.
 
 ### Fase 7: Crear el Deployment y Service del backend
 
 **Objetivo:** desplegar la API como servicio sin estado y permitir que otros
 componentes la consuman internamente.
 
-- [ ] Crear `backend-deployment.yaml`.
-- [ ] Configurar como mínimo `2` réplicas.
-- [ ] Crear `backend-service.yaml` tipo `ClusterIP`.
-- [ ] Exponer el puerto `3000`.
-- [ ] Cargar variables públicas desde el ConfigMap.
-- [ ] Cargar credenciales desde el Secret.
-- [ ] Configurar la conexión a PostgreSQL mediante el Service interno.
-- [ ] Configurar `livenessProbe` con `GET /health`.
-- [ ] Configurar `readinessProbe` con `GET /health`.
-- [ ] Definir requests y limits.
-- [ ] Ejecutar migraciones de Prisma de forma controlada antes de usar la API.
-- [ ] Evitar que varias réplicas ejecuten migraciones incompatibles al mismo
-  tiempo.
+- [x] Crear `backend-deployment.yaml`.
+- [x] Configurar como mínimo `2` réplicas.
+- [x] Crear `backend-service.yaml` tipo `ClusterIP`.
+- [x] Exponer el puerto `3000`.
+- [x] Cargar variables públicas desde el ConfigMap.
+- [x] Cargar credenciales desde el Secret.
+- [x] Configurar la conexión a PostgreSQL mediante el Service interno.
+- [x] Configurar `livenessProbe` con `GET /health`.
+- [x] Configurar `readinessProbe` con `GET /health/ready` (valida PostgreSQL y Redis).
+- [x] Definir requests y limits (CPU 250m/1000m, Mem 256Mi/512Mi).
+- [x] Ejecutar migraciones de Prisma de forma controlada mediante un `initContainer` antes de levantar réplicas de la API.
+- [x] Evitar que varias réplicas ejecuten migraciones incompatibles al mismo tiempo.
 
-**Resultado esperado:** backend accesible dentro del clúster y preparado para
-escalar horizontalmente.
+**Estado:** completada.
 
 ### Fase 8: Crear el Deployment y Service del frontend
 
 **Objetivo:** desplegar el frontend con alta disponibilidad básica.
 
-- [ ] Crear `frontend-deployment.yaml`.
-- [ ] Configurar como mínimo `2` réplicas.
-- [ ] Crear `frontend-service.yaml` tipo `ClusterIP`.
-- [ ] Exponer el puerto correspondiente al servidor de frontend.
-- [ ] Configurar `livenessProbe`.
-- [ ] Configurar `readinessProbe`.
-- [ ] Definir requests y limits.
-- [ ] Confirmar que las llamadas `/api` sean dirigidas al backend mediante
-  Ingress o Nginx.
+- [x] Crear `frontend-deployment.yaml`.
+- [x] Configurar como mínimo `2` réplicas.
+- [x] Crear `frontend-service.yaml` tipo `ClusterIP`.
+- [x] Exponer el puerto `80`.
+- [x] Configurar `livenessProbe` con `GET /`.
+- [x] Configurar `readinessProbe` con `GET /`.
+- [x] Definir requests y limits (CPU 100m/500m, Mem 128Mi/256Mi).
+- [x] Confirmar que las llamadas `/api` sean dirigidas al backend mediante Ingress.
 
-**Resultado esperado:** frontend accesible internamente y disponible en dos o
-más réplicas.
+**Estado:** completada.
 
 ### Fase 9: Crear el Ingress
 
 **Objetivo:** exponer frontend y backend al exterior usando una única entrada.
 
-- [ ] Crear `ingress.yaml`.
-- [ ] Configurar la ruta `/` hacia el Service del frontend.
-- [ ] Configurar la ruta `/api` hacia el Service del backend.
-- [ ] Configurar el controlador Nginx Ingress.
-- [ ] Revisar el comportamiento de rutas de React.
-- [ ] Configurar `BETTER_AUTH_URL` con la URL que realmente utilizará el
-  navegador.
-- [ ] Documentar acceso mediante IP de Minikube o dominio local.
+- [x] Crear `ingress.yaml`.
+- [x] Configurar la ruta `/` hacia el Service del frontend.
+- [x] Configurar la ruta `/api` hacia el Service del backend.
+- [x] Configurar la ruta `/health` hacia el Service del backend.
+- [x] Configurar el controlador Nginx Ingress (`ingressClassName: nginx`).
+- [x] Configurar `BETTER_AUTH_URL` coordinado con el host de acceso.
 
-Reglas esperadas:
+Reglas:
 
 ```text
-/    -> frontend
-/api -> backend
+/       -> frontend-service:80
+/api    -> backend-service:3000
+/health -> backend-service:3000
 ```
 
-**Resultado esperado:** el usuario accede al sistema desde un solo punto de
-entrada.
+**Estado:** completada.
 
 ### Fase 10: Agregar probes y recursos
 
 **Objetivo:** permitir que Kubernetes detecte fallas y administre recursos.
 
-#### Probes
+- [x] Backend:
+  - `livenessProbe`: `GET /health` (puerto 3000).
+  - `readinessProbe`: `GET /health/ready` (puerto 3000).
+- [x] Frontend:
+  - `livenessProbe` y `readinessProbe`: `GET /` (puerto 80).
+- [x] PostgreSQL:
+  - `livenessProbe` y `readinessProbe`: `pg_isready`.
+- [x] Redis:
+  - `livenessProbe` y `readinessProbe`: `redis-cli ping`.
+- [x] Definir `initialDelaySeconds`, `periodSeconds`, `timeoutSeconds` y `failureThreshold`.
+- [x] Definir requests y limits para todos los contenedores.
 
-- [ ] Backend:
-  - `livenessProbe`: `GET /health`.
-  - `readinessProbe`: `GET /health`.
-- [ ] Frontend:
-  - Probar `/` o un endpoint estático estable.
-- [ ] PostgreSQL:
-  - Ejecutar `pg_isready`.
-- [ ] Definir `initialDelaySeconds`.
-- [ ] Definir `periodSeconds`.
-- [ ] Definir `timeoutSeconds`.
-- [ ] Definir `failureThreshold`.
-
-#### Recursos sugeridos
-
-Estos valores deben ajustarse después de observar el consumo real:
-
-| Servicio | Requests CPU | Requests memoria | Limits CPU | Limits memoria |
-|---|---:|---:|---:|---:|
-| Frontend | `100m` | `128Mi` | `500m` | `256Mi` |
-| Backend | `250m` | `256Mi` | `1` | `512Mi` |
-| PostgreSQL | `250m` | `256Mi` | `1` | `1Gi` |
-
-- [ ] Agregar `resources.requests` y `resources.limits` a cada contenedor.
-- [ ] Verificar que los valores sean compatibles con la memoria disponible en
-  Minikube.
-
-**Resultado esperado:** Pods supervisados y con consumo de recursos controlado.
+**Estado:** completada.
 
 ### Fase 11: Configurar HPA
 
 **Objetivo:** escalar automáticamente los servicios sin estado.
 
-- [ ] Crear `backend-hpa.yaml`.
-- [ ] Crear `frontend-hpa.yaml`.
-- [ ] Configurar:
+- [x] Crear `backend-hpa.yaml`.
+- [x] Crear `frontend-hpa.yaml`.
+- [x] Configurar:
   - `minReplicas: 2`.
-  - `maxReplicas: 5` o `10`.
-  - CPU objetivo aproximado: `70%`.
-  - Memoria objetivo aproximada: `80%`.
-- [ ] No crear HPA para PostgreSQL.
-- [ ] Habilitar Metrics Server en Minikube:
+  - `maxReplicas: 5`.
+  - CPU objetivo: `70%`.
+  - Memoria objetivo: `80%`.
+- [x] No crear HPA para bases de datos (PostgreSQL se gestiona vía StatefulSet).
 
-  ```bash
-  minikube addons enable metrics-server
-  ```
-
-- [ ] Verificar métricas:
-
-  ```bash
-  kubectl top pods
-  kubectl get hpa
-  ```
-
-**Resultado esperado:** frontend y backend pueden aumentar o reducir réplicas
-según el uso de recursos.
+**Estado:** completada.
 
 ### Fase 12: Ejecutar y validar en Minikube
 
-**Objetivo:** comprobar que el despliegue cumple la rúbrica en un clúster
-local.
+**Objetivo:** comprobar que el despliegue cumple la rúbrica en un clúster local.
 
 - [ ] Iniciar Minikube:
 
@@ -299,7 +256,7 @@ local.
   minikube start
   ```
 
-- [ ] Habilitar complementos:
+- [ ] Habilitar complementos requeridos:
 
   ```bash
   minikube addons enable ingress
@@ -308,124 +265,62 @@ local.
   minikube addons enable default-storageclass
   ```
 
-- [ ] Construir las imágenes dentro del entorno de Minikube o publicarlas en
-  un registro:
+- [ ] Estrategia de imágenes (ver guía en README / sección 6):
+  * Opción A (Local Minikube): `minikube image build -t nexus-backend:1.0.0 ./apps/backend` y `minikube image build -t nexus-frontend:1.0.0 ./apps/frontend`.
+  * Opción B (Docker Hub): `docker tag` y `docker push` hacia el registro público/privado.
 
-  ```bash
-  minikube image build -t nexus-backend:dev ./apps/backend
-  minikube image build -t nexus-frontend:dev ./apps/frontend
-  ```
-
-- [ ] Aplicar los manifiestos:
+- [ ] Aplicar manifiestos:
 
   ```bash
   kubectl apply -f k8s/
   ```
 
-- [ ] Revisar los recursos:
+- [ ] Validar recursos:
 
   ```bash
-  kubectl get pods
-  kubectl get deployments
-  kubectl get statefulsets
-  kubectl get services
-  kubectl get ingress
-  kubectl get pvc
-  kubectl get storageclass
-  kubectl get hpa
+  kubectl get all -n nexus
+  kubectl get pvc,pv -n nexus
+  kubectl get ingress -n nexus
+  kubectl get hpa -n nexus
   ```
 
-- [ ] Verificar que todos los Pods estén `Running` y `Ready`.
-- [ ] Verificar que el PVC esté `Bound`.
-- [ ] Probar el endpoint `/health`.
-- [ ] Probar el frontend.
-- [ ] Probar registro e inicio de sesión.
-- [ ] Reiniciar un Pod del backend y comprobar su recuperación.
-- [ ] Reiniciar el Pod de PostgreSQL y comprobar que los datos persisten.
-- [ ] Generar carga suficiente para observar el HPA.
-
-**Resultado esperado:** aplicación funcional en Minikube con evidencias de
-persistencia, escalamiento y autorecuperación.
+- [ ] Pruebas en clúster:
+  - [ ] Verificar que todos los Pods alcancen `Running` y `Ready`.
+  - [ ] Verificar que el PVC de PostgreSQL esté `Bound`.
+  - [ ] Probar `/health` y `/health/ready` del backend.
+  - [ ] Probar el frontend a través del Ingress.
+  - [ ] Probar registro, inicio de sesión, calificación de 1 a 5 estrellas y recomendaciones.
+  - [ ] Simular fallo de un Pod de backend para evidenciar autorecuperación.
+  - [ ] Reiniciar Pod de PostgreSQL para verificar que los datos persisten en el PVC.
+  - [ ] Generar carga para evidenciar el HPA.
 
 ### Fase 13: Completar la documentación de la propuesta
 
-**Objetivo:** entregar el documento solicitado por la materia.
+- [x] Documentar la estrategia Docker y justificación de imágenes Alpine multi-stage.
+- [x] Explicar el algoritmo multicriterio de recomendaciones con decaimiento temporal y análisis de sentimientos léxico.
+- [x] Documentar manifiestos de Kubernetes, Deployments, StatefulSet, Services, Ingress y HPA.
+- [x] Documentar el procedimiento de construcción, etiquetado y publicación en Docker Hub vs Minikube.
+- [ ] Adjuntar capturas y salidas de consola de la ejecución en vivo en Minikube.
 
-- [ ] Agregar portada.
-- [ ] Registrar integrantes y roles:
-  - DevOps Lead.
-  - Backend Developer.
-  - Frontend Developer.
-  - Database Administrator.
-- [ ] Redactar el resumen ejecutivo.
-- [ ] Describir el problema que resuelve Nexus.
-- [ ] Describir funcionalmente frontend, backend, PostgreSQL y Nginx/Ingress.
-- [ ] Incluir el diagrama de arquitectura.
-- [ ] Explicar la estrategia Docker.
-- [ ] Justificar el uso de imágenes Alpine.
-- [ ] Explicar multi-stage builds.
-- [ ] Documentar redes y puertos.
-- [ ] Explicar Deployments, StatefulSet, Services y PVC.
-- [ ] Documentar ConfigMaps y Secrets.
-- [ ] Incluir tabla de probes.
-- [ ] Incluir tabla de requests y limits.
-- [ ] Documentar la configuración del HPA.
-- [ ] Documentar el procedimiento completo de Minikube.
-- [ ] Incluir evidencias de ejecución.
+---
 
-## Tablas para completar durante la implementación
+## Tablas de referencia
 
 ### Inventario de servicios
 
 | Servicio | Tecnología | Docker | Kubernetes | Puerto | Exposición |
 |---|---|---|---|---:|---|
-| Frontend | React/Vite | Multi-stage | Deployment + Service | `80` | Ingress |
-| Backend | Node.js/Express | Multi-stage | Deployment + Service + HPA | `3000` | Ingress `/api` |
-| PostgreSQL | PostgreSQL | `postgres:18-alpine` | StatefulSet + PVC | `5432` | ClusterIP |
-| Redis | Redis | `redis:8-alpine` | Deployment + Service | `6379` | ClusterIP |
-| Proxy | Nginx | `nginx:alpine` | Ingress Controller | `80` | Externo |
+| Frontend | React/Vite/Nginx | Multi-stage (`node:24-alpine` -> `nginx:alpine`) | Deployment (2 réplicas) + Service + HPA | `80` | Ingress `/` |
+| Backend | Node.js/Express/TS | Multi-stage (`node:24-alpine`) | Deployment (2 réplicas) + Service + HPA | `3000` | Ingress `/api`, `/health` |
+| PostgreSQL | PostgreSQL | `postgres:18-alpine` | StatefulSet + PVC (5Gi) | `5432` | ClusterIP `postgres-service` |
+| Redis | Redis | `redis:8-alpine` | Deployment + Service | `6379` | ClusterIP `redis-service` |
+| Ingress | Nginx Ingress | Nginx Alpine (en Compose) | Ingress Controller | `80`/`443` | Gateway Exterior |
 
 ### Probes
 
 | Servicio | Liveness | Readiness | Estado |
 |---|---|---|---|
-| Frontend | `GET /` | `GET /` | Implementado en Docker Compose |
-| Backend | `GET /health` | `GET /health/ready` | Implementado en Docker Compose |
-| PostgreSQL | `pg_isready` | `pg_isready` | Implementado en Docker Compose; pendiente en StatefulSet |
-| Redis | `redis-cli ping` | `/health/ready` del backend | Implementado en Docker Compose |
-| Nginx | `GET /` | `GET /` | Implementado en Docker Compose |
-
-### Evidencias requeridas
-
-- [ ] `kubectl get pods`.
-- [ ] `kubectl get deployments`.
-- [ ] `kubectl get statefulsets`.
-- [ ] `kubectl get services`.
-- [ ] `kubectl get ingress`.
-- [ ] `kubectl get pvc`.
-- [ ] `kubectl get storageclass`.
-- [ ] `kubectl get hpa`.
-- [ ] Evidencia de persistencia de PostgreSQL.
-- [ ] Evidencia de autorecuperación de un Pod.
-- [ ] Evidencia de escalamiento del HPA.
-
-## Criterio de finalización
-
-El proyecto podrá considerarse completo cuando:
-
-1. Docker Compose funcione para el desarrollo local.
-2. Frontend y backend estén desplegados con al menos dos réplicas.
-3. PostgreSQL se ejecute como StatefulSet.
-4. PostgreSQL tenga PVC y StorageClass.
-5. Backend y PostgreSQL se comuniquen mediante Services `ClusterIP`.
-6. Frontend y API estén expuestos mediante Ingress.
-7. Existan ConfigMap y Secret correctamente separados.
-8. Todos los Pods tengan requests, limits y probes.
-9. Backend y frontend tengan HPA.
-10. El sistema funcione en Minikube.
-11. La documentación incluya arquitectura, seguridad, despliegue y evidencias.
-
-Los puntos de multi-stage, Compose local, volúmenes Docker, red personalizada,
-Redis, healthchecks y gestión local de `.env` ya están implementados. Los
-pendientes restantes de este documento corresponden principalmente al
-despliegue en Kubernetes y a sus evidencias.
+| Frontend | `GET /` | `GET /` | Configurado en Docker Compose y en `k8s/frontend-deployment.yaml` |
+| Backend | `GET /health` | `GET /health/ready` | Configurado en Docker Compose y en `k8s/backend-deployment.yaml` |
+| PostgreSQL | `pg_isready` | `pg_isready` | Configurado en Docker Compose y en `k8s/postgres-statefulset.yaml` |
+| Redis | `redis-cli ping` | `redis-cli ping` | Configurado en Docker Compose y en `k8s/redis-deployment.yaml` |

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nexus-config
+  namespace: nexus
+  labels:
+    app.kubernetes.io/name: nexus
+    app.kubernetes.io/component: configuration
+data:
+  NODE_ENV: "production"
+  PORT: "3000"
+  TZ: "America/Mexico_City"
+  BETTER_AUTH_URL: "http://127.0.0.1"
+  CINEMETA_BASE_URL: "https://v3-cinemeta.strem.io"
+  REDIS_URL: "redis://redis-service:6379"

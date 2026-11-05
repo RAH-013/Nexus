@@ -6,10 +6,13 @@ import CommentsSection from "../components/detail/CommentsSection";
 import DetailSkeleton from "../components/detail/DetailSkeleton";
 import FavoriteButton from "../components/detail/FavoriteButton";
 import LikeButtons from "../components/detail/LikeButtons";
+import NotInterestedButton from "../components/detail/NotInterestedButton";
 import RatingCircle from "../components/detail/RatingCircle";
 import TitleCard from "../components/detail/TitleCard";
+import UserRating from "../components/detail/UserRating";
 import WatchButton from "../components/movies/WatchButton";
 import SectionError from "../components/home/SectionError";
+import { useInteractions } from "../hooks/useInteractions";
 import { useTitleData } from "../hooks/useTitleData";
 import NotFound from "./NotFound";
 
@@ -20,20 +23,20 @@ interface TitleViewProps {
 
 /**
  * Ficha de un título: URL pública `/title/:type/:id` con tres columnas en
- * escritorio (tarjeta/reparto · sinopsis/comentarios · ranking), estados
- * propios por sección y un único `<h1>` con el título de la obra.
+ * escritorio (tarjeta/reparto · sinopsis/comentarios · ranking e interacciones).
  */
 function TitleView({ type, id }: TitleViewProps) {
   const title = useTitleData(type, id);
+  const { recordDetail } = useInteractions();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Al entrar o cambiar de título, arriba del todo (spec 002, D7).
+  // Al entrar o cambiar de título, arriba del todo y registrar apertura de detalle
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [type, id]);
+    recordDetail(type, id);
+  }, [type, id, recordDetail]);
 
-  /** URL directa sin historial previo → al inicio (caso 9). */
   const goBack = () => {
     if (location.key === "default") {
       navigate("/");
@@ -86,13 +89,15 @@ function TitleView({ type, id }: TitleViewProps) {
         hasRating ? "lg:grid-cols-[1fr_1.4fr_1fr]" : "lg:grid-cols-[1fr_1.4fr]"
       }`}
     >
-      <div className="min-w-0 space-y-6">
+      <div className="min-w-0 space-y-4">
         <TitleCard title={data} />
-        {/* RF-10: control de marcas de visto pasando el tipo correspondiente */}
+        {/* Calificación interactiva de 1 a 5 estrellas */}
+        <UserRating id={id} type={type} />
+        {/* Controles de consumo y preferencia */}
         <WatchButton id={id} type={type} />
-        {/* Spec 004, RF-1: reacciones (favorito + gustan) solo con sesión */}
         <FavoriteButton id={id} type={type} />
         <LikeButtons id={id} type={type} />
+        <NotInterestedButton id={id} type={type} />
         <CastSection director={data.director} cast={data.cast} />
       </div>
 
@@ -124,7 +129,6 @@ function TitleView({ type, id }: TitleViewProps) {
 function TitleDetail() {
   const { type, id } = useParams();
 
-  // Tipo o id inválido → la página de ruta no encontrada existente (D7).
   if ((type !== "movie" && type !== "series") || !id?.trim()) {
     return <NotFound />;
   }

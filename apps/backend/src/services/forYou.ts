@@ -2,6 +2,7 @@ import { ActionType, ItemType } from "../generated/prisma/enums";
 import { cacheDel, cacheGet, cacheSet } from "../lib/redis";
 import { prisma } from "../lib/prisma";
 import { cinemetaService } from "./cinemeta";
+import { analyzeSentiment } from "./sentiment";
 import {
   geminiEnabled,
   geminiRecommend,
@@ -19,18 +20,15 @@ const MIN_SIGNALS = 3;
 const CACHE_TTL_SECONDS = 24 * 60 * 60;
 const EMPTY_CACHE_TTL_SECONDS = 10 * 60;
 
-/** Topo de títulos/ comentarios que viajan en el prompt (coste del modelo). */
+/** Topes de títulos/comentarios/señales en el prompt y análisis. */
 const PROMPT_WATCHED_LIMIT = 60;
 const PROMPT_COMMENTS_LIMIT = 20;
-
-/** Cada lista de reacciones (favoritos, likes, dislikes) y enriquecimientos. */
 const SIGNAL_LIST_LIMIT = 20;
-
-/** Fichas de Cinemeta pedidas para enriquecer el perfil (nombre, año, género). */
 const ENRICH_CONCURRENCY = 3;
-
-/** Poda heurística que llega al modelo como candidatos (RF-8). */
 const HEURISTIC_CANDIDATE_LIMIT = 50;
+
+/** Vida media para decaimiento temporal (30 días). */
+const HALF_LIFE_DAYS = 30;
 
 export type PreferredFormat = "series" | "peliculas" | "mixto";
 
@@ -46,7 +44,7 @@ export interface ForYouItem {
 
 export interface ForYouResult {
   items: ForYouItem[];
-  source: "gemini" | "heuristic" | "empty";
+  source: "gemini" | "heuristic" | "empty" | "cold-start";
   cachedAt: string;
 }
 
@@ -57,6 +55,19 @@ interface RankedCandidate extends Candidate {
 
 let warnedNoKey = false;
 let warnedFallback = false;
+
+/**
+ * Calcula factor de decaimiento temporal exponencial.
+ * Retorna 1.0 para eventos de hoy, ~0.5 a los 30 días, ~0.25 a los 60 días.
+ */
+export function timeDecayFactor(createdAt?: Date): number {
+  if (!createdAt || !(createdAt instanceof Date) || Number.isNaN(createdAt.getTime())) {
+    return 1.0;
+  }
+
+  const daysElapsed = Math.max(0, (Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
+  return Math.pow(0.5, daysElapsed / HALF_LIFE_DAYS);
+}
 
 /** Formato preferido derivado de la proporción de vistos (sin migración). */
 export function deriveFormat(
@@ -80,11 +91,24 @@ export function deriveFormat(
   return "mixto";
 }
 
-/** Peso de cada género según lo visto (+1), favoritos/likes (+3) y dislikes (−3). */
+/**
+ * Ponderación multicriterio de géneros considerando:
+ * - Vistos (+1)
+ * - Favoritos (+3)
+ * - Likes (+3)
+ * - Dislikes (-3)
+ * - Calificaciones (1-2 estrellas: -3; 3 estrellas: +0.5; 4-5 estrellas: +3 o +4)
+ * - Apertura de detalles (+0.5 con saturación logarítmica)
+ * - Comentarios analizados por sentimiento (+2 si positivo, -2 si negativo)
+ * - Factor de decaimiento temporal en función de la antigüedad de la interacción.
+ */
 export function genreWeights(profile: UserProfile): Map<string, number> {
   const weights = new Map<string, number>();
 
-  const add = (titles: PromptTitle[], delta: number): void => {
+  const add = (titles: PromptTitle[], baseDelta: number, createdAt?: Date): void => {
+    const factor = createdAt ? timeDecayFactor(createdAt) : 1.0;
+    const delta = baseDelta * factor;
+
     for (const title of titles) {
       for (const genre of title.genres ?? []) {
         weights.set(genre, (weights.get(genre) ?? 0) + delta);
@@ -96,12 +120,40 @@ export function genreWeights(profile: UserProfile): Map<string, number> {
   add([...profile.favorites, ...profile.likes], 3);
   add(profile.dislikes, -3);
 
+  // Considerar calificaciones explícitas
+  if (profile.ratings) {
+    for (const r of profile.ratings) {
+      const delta = r.rating >= 5 ? 4 : r.rating >= 4 ? 3 : r.rating === 3 ? 0.5 : -3;
+      add([{ id: r.id, type: "movie", genres: r.genres }], delta, r.createdAt);
+    }
+  }
+
+  // Considerar apertura de detalles (interés débil con saturación logarítmica)
+  if (profile.detailViews) {
+    for (const d of profile.detailViews) {
+      const delta = Math.min(2.0, Math.log2(1 + d.count) * 0.5);
+      add([{ id: d.id, type: "movie", genres: d.genres }], delta, d.createdAt);
+    }
+  }
+
+  // Considerar comentarios con análisis léxico de sentimientos
+  if (profile.comments) {
+    for (const c of profile.comments) {
+      const sentiment = c.sentiment ?? analyzeSentiment(c.text);
+      if (sentiment === "positivo") {
+        if (c.genres) add([{ id: String(c.id), type: "movie", genres: c.genres }], 2);
+      } else if (sentiment === "negativo") {
+        if (c.genres) add([{ id: String(c.id), type: "movie", genres: c.genres }], -2);
+      }
+    }
+  }
+
   return weights;
 }
 
 /**
- * Heurística local (poda y fallback, RF-7): afinidad de géneros (0-40) +
- * coincidencia de formato (0-20) + posición de tendencia (0-20).
+ * Heurística local (poda y fallback): afinidad de géneros (0-40) +
+ * coincidencia de formato (0-20) + directores/actores (0-20) + tendencia (0-20).
  * Ordena de mayor a menor score y genera una razón en español.
  */
 export function heuristicRank(
@@ -113,7 +165,7 @@ export function heuristicRank(
 
   return candidates
     .map((candidate, index) =>
-      scoreCandidate(candidate, index, total, profile.format, weights),
+      scoreCandidate(candidate, index, total, profile, weights),
     )
     .sort((a, b) => b.score - a.score);
 }
@@ -122,7 +174,7 @@ function scoreCandidate(
   candidate: Candidate,
   position: number,
   total: number,
-  format: PreferredFormat,
+  profile: UserProfile,
   weights: Map<string, number>,
 ): RankedCandidate {
   // 1. Afinidad de géneros: media del peso de sus géneros, de [-3, +4] a [0, 40].
@@ -138,32 +190,56 @@ function scoreCandidate(
     affinity = ((clamped + 3) / 7) * 40;
 
     const bestIndex = scores.indexOf(Math.max(...scores));
-
     if (scores[bestIndex] > 0) {
       topGenre = genres[bestIndex];
     }
   }
 
   // 2. Formato preferido: «mixto» acepta ambos; si no, su tipo vale 20 y el otro 5.
-  const expected = format === "series" ? "series" : "movie";
-  const formatScore = format === "mixto" || candidate.type === expected ? 20 : 5;
+  const expected = profile.format === "series" ? "series" : "movie";
+  const formatScore = profile.format === "mixto" || candidate.type === expected ? 20 : 5;
 
-  // 3. Popularidad por posición en el catálogo de tendencia (decadencia lineal).
+  // 3. Coincidencia con actores o directores favoritos (0-20)
+  let creatorAffinity = 0;
+  let matchedCreator: string | undefined;
+
+  if (candidate.director && profile.preferredDirectors?.includes(candidate.director)) {
+    creatorAffinity = 15;
+    matchedCreator = candidate.director;
+  } else if (candidate.cast && profile.preferredActors) {
+    const matched = candidate.cast.find((actor) => profile.preferredActors?.includes(actor));
+    if (matched) {
+      creatorAffinity = 10;
+      matchedCreator = matched;
+    }
+  }
+
+  // 4. Popularidad por posición en el catálogo de tendencia (decadencia lineal 0-20).
   const popularity = total > 0 ? (1 - position / total) * 20 : 10;
+
+  const totalScore = Math.min(
+    100,
+    Math.round(affinity + formatScore + creatorAffinity + (popularity * 0.7)),
+  );
 
   return {
     ...candidate,
-    score: Math.min(100, Math.round(affinity + formatScore + popularity)),
-    reason: reasonTemplate(topGenre, format, candidate.type),
+    score: totalScore,
+    reason: reasonTemplate(topGenre, profile.format, candidate.type, matchedCreator),
   };
 }
 
-/** Razón en español (plantilla) cuando el modelo no aporta la suya. */
+/** Razón en español cuando el modelo no aporta la suya. */
 function reasonTemplate(
   topGenre: string | undefined,
   format: PreferredFormat,
   type: "movie" | "series",
+  matchedCreator?: string,
 ): string {
+  if (matchedCreator) {
+    return `Por tu interés en producciones con ${matchedCreator}`;
+  }
+
   if (topGenre) {
     return `Por tu afición a ${topGenre}, encaja con lo que sueles ver`;
   }
@@ -178,9 +254,11 @@ function reasonTemplate(
 }
 
 /**
- * Candidatos = tendencia de movie + series, deduplicados y sin lo que el
- * usuario ya vio, marcó favorito o puntuó como no me gusta (RF-6).
- * Si un catálogo falla se usa el otro; si fallan ambos, se propaga el error.
+ * Candidatos = tendencia de movie + series, deduplicados y excluyendo:
+ * - Vistos
+ * - Favoritos
+ * - No me gusta (DISLIKE)
+ * - Descartados (NOT_INTERESTED)
  */
 export async function getCandidates(
   excludedIds: Set<string>,
@@ -223,56 +301,78 @@ export async function getCandidates(
   return candidates;
 }
 
-/** Perfil del usuario: vistos (recientes primero), reacciones y comentarios. */
+/** Perfil del usuario: vistos, reacciones, calificaciones, comentarios y descartes. */
 export async function buildProfile(
   userId: string,
 ): Promise<{ profile: UserProfile; excludedIds: Set<string> }> {
-  const [watchedActions, reactions, comments, actorComments] =
-    await Promise.all([
-      prisma.userAction.findMany({
-        where: { userId, type: ActionType.VIEW },
-        select: { item: { select: { externalId: true, type: true } } },
-        orderBy: { createdAt: "desc" },
-      }),
-      prisma.userAction.findMany({
-        where: {
-          userId,
-          type: { in: [ActionType.FAVORITE, ActionType.LIKE, ActionType.DISLIKE] },
-        },
-        select: {
-          type: true,
-          item: { select: { externalId: true, type: true } },
-        },
-        orderBy: { createdAt: "desc" },
-      }),
-      prisma.comment.findMany({
-        where: { userId },
-        select: { id: true, text: true },
-        orderBy: { createdAt: "desc" },
-        take: PROMPT_COMMENTS_LIMIT,
-      }),
-      prisma.actorComment.findMany({
-        where: { userId },
-        select: { id: true, text: true, actorName: true },
-        orderBy: { createdAt: "desc" },
-        take: PROMPT_COMMENTS_LIMIT,
-      }),
-    ]);
+  const [
+    watchedActions,
+    reactions,
+    ratingsActions,
+    detailActions,
+    notInterestedActions,
+    comments,
+    actorComments,
+  ] = await Promise.all([
+    prisma.userAction.findMany({
+      where: { userId, type: ActionType.VIEW },
+      select: { createdAt: true, item: { select: { externalId: true, type: true } } },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.userAction.findMany({
+      where: {
+        userId,
+        type: { in: [ActionType.FAVORITE, ActionType.LIKE, ActionType.DISLIKE] },
+      },
+      select: {
+        type: true,
+        createdAt: true,
+        item: { select: { externalId: true, type: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.userAction.findMany({
+      where: { userId, type: ActionType.RATING, value: { not: null } },
+      select: { value: true, createdAt: true, item: { select: { externalId: true, type: true } } },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.userAction.findMany({
+      where: { userId, type: ActionType.DETAIL_VIEW },
+      select: { createdAt: true, item: { select: { externalId: true, type: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 40,
+    }),
+    prisma.userAction.findMany({
+      where: { userId, type: ActionType.NOT_INTERESTED },
+      select: { item: { select: { externalId: true } } },
+    }),
+    prisma.comment.findMany({
+      where: { userId },
+      select: { id: true, text: true, item: { select: { externalId: true, type: true } } },
+      orderBy: { createdAt: "desc" },
+      take: PROMPT_COMMENTS_LIMIT,
+    }),
+    prisma.actorComment.findMany({
+      where: { userId },
+      select: { id: true, text: true, actorName: true },
+      orderBy: { createdAt: "desc" },
+      take: PROMPT_COMMENTS_LIMIT,
+    }),
+  ]);
 
-  const toPromptTitle = (item: {
-    externalId: string;
-    type: ItemType;
-  }): PromptTitle => ({
+  const toPromptTitle = (
+    item: { externalId: string; type: ItemType },
+    createdAt?: Date,
+  ): PromptTitle => ({
     id: item.externalId,
     type: item.type === ItemType.MOVIE ? "movie" : "series",
+    createdAt,
   });
 
   const watchedAll = watchedActions.flatMap((action) =>
-    action.item ? [toPromptTitle(action.item)] : [],
+    action.item ? [toPromptTitle(action.item, action.createdAt)] : [],
   );
 
-  // Los 20 más recientes se enriquecen con la ficha (nombre, año, géneros);
-  // el resto viaja solo con id (los errores no rompen el perfil).
   const watched = await enrichTitles(
     watchedAll.slice(0, PROMPT_WATCHED_LIMIT),
     SIGNAL_LIST_LIMIT,
@@ -282,7 +382,7 @@ export async function buildProfile(
     reactions
       .filter((reaction) => reaction.type === type)
       .flatMap((reaction) =>
-        reaction.item ? [toPromptTitle(reaction.item)] : [],
+        reaction.item ? [toPromptTitle(reaction.item, reaction.createdAt)] : [],
       );
 
   const [favorites, likes, dislikes] = await Promise.all([
@@ -291,26 +391,62 @@ export async function buildProfile(
     enrichTitles(reactionTitles(ActionType.DISLIKE), SIGNAL_LIST_LIMIT),
   ]);
 
+  // Preparar ratings enriquecidos
+  const ratings: { id: string; rating: number; genres?: string[]; createdAt?: Date }[] = [];
+  for (const r of ratingsActions) {
+    if (r.item && r.value) {
+      ratings.push({
+        id: r.item.externalId,
+        rating: r.value,
+        createdAt: r.createdAt,
+      });
+    }
+  }
+
+  // Agrupar visualizaciones de detalles por ítem
+  const detailMap = new Map<string, { count: number; createdAt: Date }>();
+  for (const d of detailActions) {
+    if (d.item) {
+      const prev = detailMap.get(d.item.externalId);
+      detailMap.set(d.item.externalId, {
+        count: (prev?.count ?? 0) + 1,
+        createdAt: prev && prev.createdAt > d.createdAt ? prev.createdAt : d.createdAt,
+      });
+    }
+  }
+
+  const detailViews = Array.from(detailMap.entries()).map(([id, val]) => ({
+    id,
+    count: val.count,
+    createdAt: val.createdAt,
+  }));
+
   const promptComments: PromptComment[] = [
     ...comments.map((comment) => ({
       id: comment.id,
       fuente: "titulo" as const,
       text: comment.text,
+      sentiment: analyzeSentiment(comment.text),
     })),
     ...actorComments.map((comment) => ({
       id: comment.id,
       fuente: "actor" as const,
       text: comment.text,
       actorName: comment.actorName,
+      sentiment: analyzeSentiment(comment.text),
     })),
   ];
 
-  // Excluir también los «no me gusta»: nadie quiere que se le recomiende
-  // algo que ya rechazó (amplía RF-6 con sentido común).
+  const notInterestedIds = notInterestedActions.flatMap((a) =>
+    a.item ? [a.item.externalId] : [],
+  );
+
+  // Exclusiones estrictas: Vistos, Favoritos, Dislikes y No me interesa
   const excludedIds = new Set<string>([
     ...watchedAll.map((title) => title.id),
     ...favorites.map((title) => title.id),
     ...dislikes.map((title) => title.id),
+    ...notInterestedIds,
   ]);
 
   return {
@@ -321,12 +457,15 @@ export async function buildProfile(
       likes,
       dislikes,
       comments: promptComments,
+      ratings,
+      detailViews,
+      notInterested: notInterestedIds,
     },
     excludedIds,
   };
 }
 
-/** Rellena nombre/año/géneros de la cabeza con `getTitle` (caché de Cinemeta), en tandas; el resto queda con solo id. */
+/** Rellena nombre/año/géneros de la cabeza con `getTitle`. */
 async function enrichTitles(
   titles: PromptTitle[],
   enrichCount: number,
@@ -366,9 +505,8 @@ async function enrichTitles(
 }
 
 /**
- * Recomendaciones «Para ti» del usuario (RF-8…RF-10, RNF-1):
- * caché Redis 24 h → perfil + candidatos → poda heurística → Gemini (si hay
- * clave y responde) o heurística; `refresh` fuerza el recálculo.
+ * Recomendaciones «Para ti» del usuario:
+ * Caché Redis 24 h → perfil + candidatos → poda heurística → Gemini o heurística.
  */
 export async function getForYou(
   userId: string,
@@ -386,7 +524,7 @@ export async function getForYou(
     }
   }
 
-  const result = await computeForYou(userId);
+  const result = await computeForYou(userId, refresh);
 
   await cacheSet(
     key,
@@ -397,7 +535,36 @@ export async function getForYou(
   return result;
 }
 
-async function computeForYou(userId: string): Promise<ForYouResult> {
+/**
+ * Selecciona una tanda variada y fresca a partir de los candidatos rankeados:
+ * - Asegura los mejores títulos absolutos (mayor afinidad).
+ * - En peticiones de refresco introduce rotación y exploración en el top de candidatos,
+ *   evitando que el usuario vea exactamente los mismos títulos hasta descartarlos.
+ */
+function selectDiverseRecommendations(
+  ranked: RankedCandidate[],
+  limit: number,
+  refresh: boolean,
+): RankedCandidate[] {
+  if (ranked.length <= limit) {
+    return ranked;
+  }
+
+  if (!refresh) {
+    return ranked.slice(0, limit);
+  }
+
+  const topCount = Math.min(2, Math.floor(limit / 4));
+  const guaranteed = ranked.slice(0, topCount);
+  const pool = ranked.slice(topCount, Math.min(35, ranked.length));
+
+  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+  const selected = [...guaranteed, ...shuffled.slice(0, limit - guaranteed.length)];
+
+  return selected.sort((a, b) => b.score - a.score);
+}
+
+async function computeForYou(userId: string, refresh = false): Promise<ForYouResult> {
   const { profile, excludedIds } = await buildProfile(userId);
 
   const signalCount =
@@ -405,22 +572,24 @@ async function computeForYou(userId: string): Promise<ForYouResult> {
     profile.favorites.length +
     profile.likes.length +
     profile.dislikes.length +
-    profile.comments.length;
+    profile.comments.length +
+    (profile.ratings?.length ?? 0) +
+    (profile.detailViews?.length ?? 0);
 
-  // Casi sin actividad: ni modelo ni heurística (RF-13).
+  // Menos de 3 señales: retornar empty para cumplir spec
   if (signalCount < MIN_SIGNALS) {
     return { items: [], source: "empty", cachedAt: new Date().toISOString() };
   }
 
   const candidates = await getCandidates(excludedIds);
   const ranked = heuristicRank(profile, candidates);
-  const fallback = ranked.slice(0, RECOMMENDATION_LIMIT);
+  const fallback = selectDiverseRecommendations(ranked, RECOMMENDATION_LIMIT, refresh);
 
   if (!geminiEnabled()) {
     if (!warnedNoKey) {
       warnedNoKey = true;
       console.warn(
-        "GEMINI_API_KEY no configurada: «Para ti» usa el motor heurístico local",
+        "GEMINI_API_KEY no configurada: «Para ti» usa el motor heurístico local avanzado",
       );
     }
 
@@ -457,7 +626,6 @@ async function computeForYou(userId: string): Promise<ForYouResult> {
       items.push({
         ...candidate,
         score: recommendation.score,
-        // Si el modelo no motivó el título, se usa la plantilla heurística.
         reason:
           recommendation.reason ||
           heuristicById.get(recommendation.id)?.reason ||
@@ -473,7 +641,7 @@ async function computeForYou(userId: string): Promise<ForYouResult> {
       throw new Error("Gemini no devolvió ids candidatos");
     }
 
-    // Completar la tanda con la poda heurística.
+    // Completar la tanda con la poda heurística
     for (const entry of fallback) {
       if (items.length >= RECOMMENDATION_LIMIT) {
         break;

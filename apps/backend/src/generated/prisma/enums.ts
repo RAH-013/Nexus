@@ -30,7 +30,10 @@ export const ActionType = {
   DISLIKE: 'DISLIKE',
   RATING: 'RATING',
   FAVORITE: 'FAVORITE',
-  SEARCH: 'SEARCH'
+  SEARCH: 'SEARCH',
+  DETAIL_VIEW: 'DETAIL_VIEW',
+  NOT_INTERESTED: 'NOT_INTERESTED',
+  IMPRESSION: 'IMPRESSION'
 } as const
 
 export type ActionType = (typeof ActionType)[keyof typeof ActionType]
