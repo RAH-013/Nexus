@@ -1,0 +1,129 @@
+openapi: 3.0.3
+info:
+  title: "API de comentarios"
+  version: "1.0"
+  description: 'Todos los errores responden {"error", "detalles"}.'
+paths:
+  "/api/comments/movie/tt22084616":
+    get:
+      summary: "Listar api/comments/movie/tt22084616"
+      responses:
+        "200":
+          description: "Lista"
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Api" }
+    post:
+      summary: "Crear"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ApiNuevo" }
+      responses:
+        "201":
+          description: "Creado"
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Api" }
+        "400": { $ref: "#/components/responses/JsonInvalido" }
+        "409": { $ref: "#/components/responses/Conflicto" }
+        "422": { $ref: "#/components/responses/DatosInvalidos" }
+  "/api/comments/movie/tt22084616/{id}":
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer }
+    get:
+      summary: "Consultar uno"
+      responses:
+        "200":
+          description: "Encontrado"
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Api" }
+        "404": { $ref: "#/components/responses/NoExiste" }
+    put:
+      summary: "Reemplazar completo"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ApiNuevo" }
+      responses:
+        "200":
+          description: "Reemplazado"
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Api" }
+        "400": { $ref: "#/components/responses/JsonInvalido" }
+        "404": { $ref: "#/components/responses/NoExiste" }
+        "409": { $ref: "#/components/responses/Conflicto" }
+        "422": { $ref: "#/components/responses/DatosInvalidos" }
+    delete:
+      summary: "Borrar"
+      responses:
+        "204":
+          description: "Borrado"
+        "404": { $ref: "#/components/responses/NoExiste" }
+components:
+  schemas:
+    ApiNuevo:
+      type: object
+      required: ["tipo", "idTitulo", "idComentario", "body"]
+      properties:
+        "tipo":
+          type: string
+          description: "Solo `movie` o `series`"
+        "idTitulo":
+          type: string
+          minLength: 1
+          maxLength: 80
+          description: "Entre 1 y 80 caracteres"
+        "idComentario":
+          type: integer
+          description: "Entero positivo (≥ 1)"
+        "body":
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: "Entre 1 y 500 caracteres tras quitar espacios"
+    Api:
+      allOf:
+        - $ref: "#/components/schemas/ApiNuevo"
+        - type: object
+          required: ["id"]
+          properties:
+            id: { type: integer }
+    Error:
+      type: object
+      required: ["error", "detalles"]
+      properties:
+        error: { type: string }
+        detalles:
+          type: array
+          items: { type: string }
+  responses:
+    JsonInvalido:
+      description: "El cuerpo no es un JSON válido"
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    DatosInvalidos:
+      description: "Los datos no cumplen las reglas"
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NoExiste:
+      description: "No existe ese Api"
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Conflicto:
+      description: "Cuando un usuario intenta publicar dos veces el mismo comentario en la misma película o serie, la API debe responder 409 para evitar comentarios duplicados."
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }

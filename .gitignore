@@ -1,3 +1,6 @@
+*.py
+*.json
+
 node_modules/
 dist/
 .env
