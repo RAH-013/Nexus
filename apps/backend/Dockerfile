@@ -26,6 +26,8 @@ COPY --from=builder /app/src/generated ./src/generated
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 
+COPY --from=builder /app/src/docs/openapi.yaml ./src/docs/openapi.yaml
+
 EXPOSE 3000
 
 CMD ["sh", "-c", "npm run prisma:deploy && npm start"]
