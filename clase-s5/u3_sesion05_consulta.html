@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>U3 · Sesión 5 · APIs de terceros y de IA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F3F5F9; --panel:#FFFFFF; --ink:#141C2B; --soft:#4F5A6B; --line:#DCE2EB; --line2:#C6CEDA;
+  --dark:#121722; --dark2:#1C2331; --blue:#2E5BE6; --blue-ink:#1F43B0; --blue-t:#E8EEFD; --teal:#17A398; --teal-ink:#0C6259; --teal-t:#E2F5F2;
+  --amber:#E8A33D; --amber-ink:#7A4E0E; --amber-t:#FCF0DC; --red:#D2553F; --red-ink:#9C3422; --red-t:#FBE9E6;
+  --vio:#7B4FD6; --vio-ink:#5631A8; --vio-t:#EFE8FC;
+  --mono:'IBM Plex Mono', Consolas, Menlo, monospace;
+  --sans:'IBM Plex Sans','Segoe UI',system-ui,-apple-system,Roboto,sans-serif;
+  --disp:'Space Grotesk','Segoe UI',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#0B0F17;overflow:hidden}
+body{font-family:var(--sans);color:var(--ink)}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+[hidden]{display:none!important}
+#stage{position:absolute;left:50%;top:50%;width:1280px;height:720px;transform-origin:center center}
+.s{position:absolute;inset:0;background:var(--bg);display:none;flex-direction:column;padding:42px 64px 54px;overflow:hidden}
+.s.on{display:flex}
+.s.dark{background:var(--dark);color:#fff}
+.k{font-family:var(--mono);font-size:17px;font-weight:600;letter-spacing:.16em;color:var(--teal-ink);text-transform:uppercase}
+.dark .k{color:#4FD1C5}
+h1{font-family:var(--disp);font-size:58px;line-height:1.05;margin:10px 0 14px}
+h2{font-family:var(--disp);font-size:40px;line-height:1.12;margin:6px 0 18px}
+p,li,td,th{font-size:22px;line-height:1.45}
+p{margin:0 0 10px}
+.lead{font-size:24px;color:var(--soft);margin:0 0 18px}
+.dark .lead{color:#C9D2E3}
+code,.mono{font-family:var(--mono)}
+code{background:#E9EDF4;border-radius:6px;padding:1px 7px;font-size:.92em}
+.dark code{background:#2A3346;color:#E7ECF5}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px 22px}
+.card h3{font-family:var(--disp);font-size:25px;margin:0 0 8px}
+.card p:last-child{margin:0}
+.pill{display:inline-block;border-radius:999px;padding:2px 14px;font-weight:600;font-size:18px}
+.ok{background:var(--teal-t);color:var(--teal-ink)}
+.no{background:var(--red-t);color:var(--red-ink)}
+.warn{background:var(--amber-t);color:var(--amber-ink)}
+.info{background:var(--blue-t);color:var(--blue-ink)}
+table{border-collapse:collapse;width:100%}
+th{font-family:var(--disp);font-size:19px;text-align:left;color:var(--soft);border-bottom:2px solid var(--line2);padding:6px 10px}
+td{border-bottom:1px solid var(--line);padding:7px 10px;vertical-align:top;font-size:20px}
+td.c{font-family:var(--mono);font-weight:600;white-space:nowrap}
+.big{font-family:var(--disp);font-size:72px;font-weight:700;line-height:1}
+.stat{display:flex;flex-direction:column;gap:6px}
+.stat .big{color:var(--blue-ink)}
+.stat.r .big{color:var(--red-ink)}
+.stat.t .big{color:var(--teal-ink)}
+.stat span{font-size:20px;color:var(--soft);line-height:1.35}
+.def{border-left:6px solid var(--teal);background:var(--panel);border-radius:0 16px 16px 0;padding:16px 22px;font-size:26px;line-height:1.4;margin:0 0 16px}
+.ana{border-left:6px solid var(--amber);background:var(--amber-t);border-radius:0 16px 16px 0;padding:14px 22px;font-size:21px;line-height:1.45}
+.ref{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;border:1.5px solid var(--blue);color:var(--blue-ink);background:#fff;font-family:var(--disp);font-weight:700;font-size:16px;vertical-align:middle;margin-left:10px;padding:0}
+.dark .ref{background:transparent;color:#9FB6FF;border-color:#9FB6FF}
+.code{background:var(--dark);color:#E7ECF5;border-radius:16px;padding:16px 22px;font-family:var(--mono);font-size:18px;line-height:1.5;white-space:pre;overflow:hidden}
+.code .cm{color:#7FD4C9}
+.code .dim{color:#8C97AB}
+.foot{position:absolute;left:64px;right:200px;bottom:16px;font-size:15px;color:var(--soft)}
+.dark .foot{color:#8C97AB}
+.vote{display:grid;gap:12px;margin-top:6px}
+.vote div{border:2px solid #3A4458;border-radius:14px;padding:12px 18px;font-size:24px}
+.vote b{font-family:var(--disp);color:#4FD1C5;margin-right:12px}
+ul.tight{margin:0;padding-left:26px}
+ul.tight li{margin:5px 0}
+.steps{counter-reset:st;display:grid;gap:12px}
+.steps>div{position:relative;padding-left:50px;min-height:34px;font-size:22px;line-height:1.45}
+.steps>div::before{counter-increment:st;content:counter(st);position:absolute;left:0;top:0;width:34px;height:34px;border-radius:10px;background:var(--teal-t);color:var(--teal-ink);font-family:var(--mono);font-weight:600;display:flex;align-items:center;justify-content:center;font-size:18px}
+/* diagrama cliente-servidor */
+.cs{display:grid;grid-template-columns:1fr 240px 1fr;align-items:center;gap:0;margin:8px 0 18px}
+.box{border:2px solid var(--line2);background:#fff;border-radius:18px;padding:18px 20px;text-align:center}
+.box b{display:block;font-family:var(--disp);font-size:26px}
+.box span{font-size:19px;color:var(--soft)}
+.box.api{border-color:var(--blue);background:var(--blue-t)}
+.arrows{display:flex;flex-direction:column;gap:18px;padding:0 10px}
+.arr{position:relative;text-align:center;font-family:var(--mono);font-size:16px;font-weight:600;padding-bottom:8px;border-bottom:3px solid var(--blue);color:var(--blue-ink)}
+.arr::after{content:'';position:absolute;right:-2px;bottom:-9px;border:7px solid transparent;border-left:12px solid var(--blue)}
+.arr.back{border-color:var(--teal);color:var(--teal-ink)}
+.arr.back::after{right:auto;left:-2px;border-left:7px solid transparent;border-right:12px solid var(--teal)}
+/* mensajes crudos anotados */
+.msg{background:var(--dark);border-radius:16px;padding:16px 20px;font-family:var(--mono);font-size:19px;line-height:1.6;color:#E7ECF5}
+.msg .ln{display:flex;gap:14px;align-items:baseline;white-space:pre}
+.msg .tg{flex:none;width:150px;font-family:var(--sans);font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;text-align:right}
+.c1{color:#9FB6FF}.c2{color:#7FD4C9}.c3{color:#F2C27B}.c4{color:#F29A87}.c5{color:#C9B3FF}.cg{color:#8C97AB}
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.legend span{border-radius:10px;padding:6px 12px;font-size:19px;background:#fff;border:1px solid var(--line)}
+.legend b{font-family:var(--disp)}
+/* tabla con revelado */
+.rv button{border:1.5px dashed var(--line2);background:#fff;border-radius:10px;padding:3px 12px;font-size:17px;color:var(--soft)}
+.rv .ans{font-weight:600}
+/* simulador de fotos */
+.sim{display:grid;grid-template-columns:380px 1fr;gap:20px}
+.sim .btns{display:grid;gap:8px;align-content:start}
+.sim button.req{text-align:left;border:2px solid var(--line2);background:#fff;border-radius:12px;padding:8px 12px;font-family:var(--mono);font-size:16.5px}
+.sim button.req:hover{border-color:var(--blue)}
+.sim button.req small{display:block;font-family:var(--sans);color:var(--soft);font-size:14px}
+.photos{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.photo{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 14px;font-family:var(--mono);font-size:16px;min-height:150px;white-space:pre}
+.photo .chg{background:var(--amber-t);color:var(--amber-ink);font-weight:600}
+.lbl{font-size:16px;color:var(--soft);font-weight:700;margin:0 0 4px;text-transform:uppercase;letter-spacing:.05em}
+.verdict{margin-top:12px;border-radius:14px;padding:12px 16px;font-size:20px;line-height:1.4;background:#fff;border:2px dashed var(--line2)}
+.verdict.y{border:2px solid var(--teal);background:var(--teal-t);color:var(--teal-ink)}
+.verdict.n{border:2px solid var(--red);background:var(--red-t);color:var(--red-ink)}
+/* termostato */
+.thermo{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.thermo .card{text-align:center}
+.thermo .seq{display:flex;justify-content:center;gap:10px;margin:10px 0;font-family:var(--mono);font-size:22px}
+.thermo .seq span{border-radius:10px;padding:6px 12px;background:var(--bg);border:1px solid var(--line)}
+/* malentendidos */
+.myth{display:grid;grid-template-columns:1fr;gap:12px}
+.myth .m{display:grid;grid-template-columns:380px 1fr;gap:18px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px 20px}
+.myth .m .x{font-size:22px;color:var(--red-ink);font-weight:600}
+.myth .m .x::before{content:'✗ ';font-weight:700}
+.myth .m p{margin:0;font-size:20.5px}
+/* sistema final */
+.sys{display:grid;grid-template-columns:1fr 1.25fr 1fr;gap:16px;align-items:stretch}
+.sys .node{border:2px solid var(--line2);background:#fff;border-radius:16px;padding:12px 14px}
+.sys .node>b{font-family:var(--disp);font-size:22px;display:block;margin-bottom:4px}
+.sys .node ul{margin:0;padding-left:20px}
+.sys .node li{font-size:18.5px;margin:2px 0}
+.sys .api{border-color:var(--blue);background:var(--blue-t)}
+.ss{font-family:var(--mono);font-size:14px;font-weight:600;border-radius:8px;padding:1px 7px;background:var(--teal-t);color:var(--teal-ink);margin-left:4px;white-space:nowrap}
+.sys .col{display:grid;gap:12px;align-content:center}
+.sys .lnk{font-family:var(--mono);font-size:15px;color:var(--soft);text-align:center}
+.small td{font-size:17.5px;padding:5px 8px}
+.small th{font-size:16px;padding:4px 8px}
+/* navegación */
+#nav{position:fixed;right:14px;bottom:12px;display:flex;gap:8px;align-items:center;z-index:20}
+#nav button{background:#1C2331;color:#fff;border:1px solid #3A4458;border-radius:10px;padding:6px 12px;font-size:15px}
+#nav span{color:#AEB8CA;font-family:var(--mono);font-size:14px;min-width:64px;text-align:center}
+#bar{position:fixed;left:0;top:0;height:4px;background:var(--teal);z-index:20;transition:width .2s}
+#modal{position:fixed;inset:0;background:rgba(10,14,22,.62);display:flex;align-items:center;justify-content:center;z-index:30;padding:20px}
+#modal .box2{background:#fff;color:var(--ink);border-radius:18px;max-width:760px;width:100%;padding:24px 28px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+#modal h4{font-family:var(--disp);font-size:24px;margin:0 0 8px}
+#modal .d{font-size:18px;line-height:1.5;margin:0 0 12px}
+#modal .apa{font-size:16px;line-height:1.5;background:var(--bg);border-radius:12px;padding:12px 14px;padding-left:2.2em;text-indent:-1.6em}
+#modal button{margin-top:14px;border:1px solid var(--line2);background:#fff;border-radius:10px;padding:8px 16px;font-size:16px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<style>
+.filters{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.filters .f{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px 16px;position:relative}
+.filters .f .num{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--soft)}
+.filters .f h3{font-family:var(--disp);font-size:22px;margin:4px 0 6px;line-height:1.2}
+.filters .f .cd{font-family:var(--disp);font-size:44px;font-weight:700;line-height:1;margin:6px 0}
+.filters .f p{font-size:18px;margin:0;color:var(--soft)}
+.filters .f.fc1{border-top:6px solid var(--amber)} .filters .f.fc1 .cd{color:var(--amber-ink)}
+.filters .f.fc2{border-top:6px solid var(--blue)} .filters .f.fc2 .cd{color:var(--blue-ink)}
+.filters .f.fc3{border-top:6px solid var(--vio)} .filters .f.fc3 .cd{color:var(--vio-ink)}
+.filters .f.fc4{border-top:6px solid var(--red)} .filters .f.fc4 .cd{color:var(--red-ink)}
+.pipe{display:flex;align-items:center;gap:10px;margin:8px 0 16px;flex-wrap:nowrap}
+.pipe .st{border:2px solid var(--line2);background:#fff;border-radius:14px;padding:10px 14px;font-size:19px;text-align:center;flex:1}
+.pipe .st b{display:block;font-family:var(--disp);font-size:21px}
+.pipe .st.v{border-color:var(--teal);background:var(--teal-t)}
+.pipe .ar{font-size:26px;color:var(--soft)}
+.term{background:var(--dark);color:#E7ECF5;border-radius:14px;padding:12px 16px;font-family:var(--mono);font-size:16px;line-height:1.5;white-space:pre;overflow:hidden}
+.term .ok{color:#7FD4C9;background:none}.term .bad{color:#F29A87}.term .cm{color:#8C97AB}.term .y{color:#F2C27B}
+.cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.cols3 .code{font-size:14.5px;padding:12px 14px;line-height:1.5}
+.cols3 h3{font-family:var(--disp);font-size:20px;margin:0 0 6px}
+.code .new{display:block;background:rgba(232,163,61,.18);border-left:4px solid var(--amber);margin:0 -22px;padding:0 18px}
+.retro{display:grid;grid-template-columns:1fr;gap:9px}
+.retro .r{display:grid;grid-template-columns:330px 1fr;gap:16px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:14px;padding:9px 16px}
+.retro .r code{font-size:16.5px}
+.retro .r p{margin:0;font-size:18.5px;line-height:1.4}
+.team{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.team div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:16.5px;line-height:1.35}
+.team b{font-family:var(--disp);font-size:17.5px;display:block}
+.flow6{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:6px}
+.flow6 .st{position:relative;background:#fff;border:2px solid var(--line2);border-radius:14px;padding:12px 12px;font-size:16.5px;line-height:1.35;color:var(--soft)}
+.flow6 .st b{display:block;font-family:var(--disp);font-size:20px;color:var(--ink);margin:2px 0 4px}
+.flow6 .st .n{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--soft)}
+.flow6 .st.hoy{border-color:var(--teal);background:var(--teal-t)}
+.flow6 .st.hoy::after{content:'HOY';position:absolute;top:-11px;right:10px;background:var(--teal);color:#fff;font-family:var(--mono);font-size:12px;font-weight:700;border-radius:6px;padding:1px 7px}
+tr.now td{background:var(--teal-t);font-weight:600}
+.mapa td{font-size:15.5px;padding:3px 8px;line-height:1.3}.mapa th{font-size:14.5px;padding:3px 8px}
+.ticket{background:#fff;border:1px solid var(--line);border-left:8px solid var(--red);border-radius:16px;padding:16px 22px;margin-top:6px}
+.ticket .th{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.ticket .id{font-family:var(--mono);font-weight:700;font-size:19px;color:var(--blue-ink)}
+.ticket .tag{border-radius:999px;padding:1px 12px;font-size:15px;font-weight:600}
+.ticket .tag.r{background:var(--red-t);color:var(--red-ink)} .ticket .tag.a{background:var(--amber-t);color:var(--amber-ink)}
+.ticket h3{font-family:var(--disp);font-size:26px;margin:4px 0 8px;line-height:1.2}
+.ticket p{font-size:19.5px;margin:0}
+ul.ac{list-style:none;padding:0;margin:4px 0 0}
+ul.ac li{position:relative;padding-left:32px;font-size:19px;line-height:1.4;margin:5px 0}
+ul.ac li::before{content:'';position:absolute;left:0;top:3px;width:18px;height:18px;border:2px solid var(--line2);border-radius:5px;background:#fff}
+.lbl2{font-size:15px;color:var(--soft);font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin:0 0 6px}
+.iv{display:grid;gap:10px}
+.iv div{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 16px}
+.iv b{display:block;font-family:var(--disp);font-size:21px;margin-bottom:3px}
+.iv span{font-size:18.5px;color:var(--soft);line-height:1.4}
+
+/* ---------- terminal en vivo ---------- */
+.live{display:grid;grid-template-columns:330px 1fr;gap:14px;flex:1;min-height:0}
+.live.row{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+.live.row .lv-steps ol{display:flex;gap:8px}
+.live.row .lv-steps li{flex:1}
+.lv-steps ol{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.lv-steps li{display:flex;gap:6px;align-items:stretch}
+.lv-steps li.lv-g{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--soft);letter-spacing:.02em;margin-top:4px;text-transform:uppercase}
+.lv-b{flex:1;display:flex;align-items:center;gap:10px;text-align:left;background:#fff;border:2px solid var(--line2);border-radius:12px;padding:7px 10px;font:600 16px/1.25 var(--sans);color:var(--ink);cursor:pointer;transition:border-color .15s,background .15s}
+.lv-b:hover{border-color:var(--teal)}
+.lv-b:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.lv-n{flex:none;width:26px;height:26px;border-radius:50%;background:var(--line);display:grid;place-items:center;font:700 14px var(--mono);color:var(--soft)}
+.lv-b.lv-run{border-color:var(--amber);background:var(--amber-t)}
+.lv-b.lv-done{border-color:var(--teal);background:var(--teal-t)}
+.lv-b.lv-done .lv-n{background:var(--teal);color:#fff}
+.lv-busy .lv-b{cursor:progress}
+.lv-cp{flex:none;width:34px;border:1px solid var(--line2);background:#fff;border-radius:10px;color:var(--soft);font-size:16px;cursor:pointer}
+.lv-cp:hover{color:var(--teal);border-color:var(--teal)}
+.lv-right{display:flex;flex-direction:column;gap:8px;min-height:0;min-width:0}
+.lv-term{flex:1;display:flex;flex-direction:column;background:#0E1420;border-radius:14px;overflow:hidden;min-height:0;box-shadow:0 6px 18px rgba(14,20,32,.18)}
+.lv-bar{display:flex;align-items:center;gap:6px;background:#1C2433;padding:6px 10px;font:12.5px var(--mono);color:#AEB8C9}
+.lv-bar i{width:10px;height:10px;border-radius:50%;background:#3A4458}
+.lv-t{margin-left:6px;flex:1}
+.lv-mode{font-weight:700;border-radius:6px;padding:1px 8px}
+.lv-mode.on{color:#7FD4C9;background:rgba(127,212,201,.12)}
+.lv-mode.rec{color:#F2C27B;background:rgba(242,194,123,.12)}
+.lv-bar button{background:none;border:1px solid #3A4458;color:#AEB8C9;border-radius:6px;font:12px var(--mono);padding:2px 8px;cursor:pointer}
+.lv-bar button:hover{color:#fff;border-color:#AEB8C9}
+.lv-out{flex:1;margin:0;padding:10px 14px;overflow:auto;font:14px/1.45 var(--mono);color:#E7ECF5;white-space:pre-wrap;word-break:break-word}
+.lv-p{color:#7FD4C9}.lv-cmd{color:#fff;font-weight:600}
+.lv-wait{color:#F2C27B;animation:lvb 1s infinite}@keyframes lvb{50%{opacity:.35}}
+.lv-c2{color:#7FD4C9;font-weight:700}.lv-c4{color:#F2C27B;font-weight:700}.lv-c5{color:#F29A87;font-weight:700}
+.lv-ok{color:#7FD4C9}.lv-bad{color:#F29A87}.lv-dim{color:#8C97AB}
+.lv-out mark{background:rgba(242,194,123,.28);color:#FFE3B0;border-radius:3px;padding:0 2px}
+.lv-nota{background:var(--teal-t);border-left:5px solid var(--teal);border-radius:10px;padding:8px 14px;font-size:18px;line-height:1.35;min-height:44px}
+.lv-nota code{font-size:16px}
+.lv-nota{max-height:235px;overflow:auto;flex:none}
+.lv-term{min-height:170px}
+.lv-b.lv-sel{border-color:var(--blue);background:var(--blue-t)}
+.lv-tag{display:inline-block;font:700 12.5px var(--mono);background:var(--blue);color:#fff;border-radius:6px;padding:1px 8px;margin-right:8px;vertical-align:2px}
+.lv-tag.ok{background:var(--teal)}
+.lv-planm{background:#fff;border-left-color:var(--blue);font-size:16px;padding-bottom:0}
+.lv-planm p{font-size:16px;line-height:1.38}
+.lv-ph b{font-family:var(--disp);font-size:18px}
+.lv-q{margin:4px 0 6px}
+.lv-parts{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;align-items:baseline;margin:0 0 6px;font-size:15px}
+.lv-parts code{font-size:13px;white-space:nowrap;max-width:300px;overflow:hidden;text-overflow:ellipsis;background:var(--dark);color:#E7ECF5;border-radius:5px;padding:1px 6px}
+.lv-parts span{color:var(--soft)}
+.lv-body{margin:0 0 6px;font-size:15px}.lv-body code{font-size:13.5px;word-break:break-all}
+.lv-exp{margin:0 0 6px;background:var(--amber-t);border-radius:8px;padding:6px 10px}
+.lv-act{display:flex;gap:8px;justify-content:flex-end;position:sticky;bottom:0;background:#fff;padding:6px 0 8px}
+.lv-more{margin:0 0 6px;font-size:14.5px}.lv-more summary{cursor:pointer;color:var(--blue-ink);font-weight:600}
+.lv-act button,.lv-again{border-radius:9px;font:600 15px var(--sans);padding:5px 14px;cursor:pointer}
+.lv-show{background:#fff;border:2px solid var(--amber);color:var(--amber-ink)}
+.lv-go{background:var(--teal);border:2px solid var(--teal);color:#fff}
+.lv-go:hover{filter:brightness(1.08)}
+.lv-again{background:none;border:none;color:var(--blue-ink);text-decoration:underline;padding:0 4px;font-size:14.5px}
+.lv-sv{color:#9FB4FF}
+</style>
+
+<style>
+.tk2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.tk2 .ticket{margin-top:0}
+.ticket.b{border-left-color:var(--blue)}
+.ticket .tag.b{background:var(--blue-t);color:var(--blue-ink)}
+.ticket.b h3,.ticket h3{font-size:23px}
+.ticket ul.ac li{font-size:17.5px}
+.y2{color:#F2C27B}
+.q4{width:100%;border-collapse:separate;border-spacing:0 8px}
+.q4 td{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:9px 14px;font-size:18.5px;line-height:1.3;vertical-align:middle}
+.q4 td:first-child{border-left:6px solid var(--teal);border-radius:12px 0 0 12px;font-family:var(--disp);font-weight:700;font-size:21px}
+.q4 td:last-child{border-right:1px solid var(--line);border-radius:0 12px 12px 0}
+.q4 th{font-size:14px;color:var(--soft);text-transform:uppercase;letter-spacing:.04em;text-align:left;padding:0 14px}
+.q4 .cd{font-family:var(--mono);font-weight:700;font-size:20px}
+.q4 .c4{color:var(--amber-ink)} .q4 .c40{color:var(--red-ink)}
+.an2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.an2 .card h3{font-family:var(--disp);font-size:24px;margin:0 0 4px}
+.an2 .card .who{font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}
+.an2 .card p{font-size:19px;margin:6px 0 0;line-height:1.4}
+.an2 .card .cod{display:inline-block;font-family:var(--mono);font-weight:700;font-size:20px;border-radius:8px;padding:1px 10px;margin-top:8px}
+.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+.flow div{background:var(--blue-t);border:2px solid var(--blue);border-radius:14px;padding:10px 12px;font-size:17px;line-height:1.35;position:relative}
+.flow div b{display:block;font-family:var(--disp);font-size:18px;color:var(--blue-ink)}
+.flow div:not(:last-child)::after{content:"→";position:absolute;right:-17px;top:50%;transform:translateY(-50%);font-size:22px;color:var(--blue);font-weight:700}
+.flow code{font-size:14px}
+.jwt{font-family:var(--mono);font-size:21px;word-break:break-all;background:var(--dark);border-radius:14px;padding:14px 18px;line-height:1.45}
+.jwt .h{color:#F29A87}.jwt .p{color:#C4A7FF}.jwt .f{color:#7FD4C9}.jwt .d{color:#fff}
+.jp{display:grid;grid-template-columns:1fr 1.3fr 1fr;gap:12px;margin-top:12px}
+.jp div{border-radius:14px;padding:10px 14px;font-size:17px;line-height:1.35;background:#fff;border:2px solid}
+.jp b{display:block;font-family:var(--disp);font-size:19px}
+.jp code{font-size:14px}
+.jp .h{border-color:#E36B55}.jp .p{border-color:#8A63E0}.jp .f{border-color:var(--teal)}
+.dec{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:6px}
+.dec div{background:#fff;border:2px solid var(--line2);border-radius:14px;padding:10px 12px;font-size:17px;line-height:1.35}
+.dec b{display:block;font-family:var(--disp);font-size:19px;margin-bottom:4px}
+.dec .no{display:block;margin-top:8px;font-family:var(--mono);font-weight:700;font-size:17px;border-radius:8px;padding:3px 8px}
+.dec .r401{background:var(--amber-t);color:var(--amber-ink)} .dec .r403{background:var(--red-t);color:var(--red-ink)} .dec .r404{background:var(--blue-t);color:var(--blue-ink)}
+.ok200{margin-top:10px;background:var(--teal-t);border-radius:12px;padding:8px 14px;font-size:18px}
+.diff{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.diff .code{font-size:15.5px;padding:12px 16px}
+.diff h3{font-family:var(--disp);font-size:20px;margin:0 0 6px}
+.chk{display:grid;grid-template-columns:1fr 1fr;gap:8px 18px}
+.chk div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 14px;font-size:17.5px;line-height:1.35}
+.chk b{font-family:var(--mono);color:var(--teal-ink)}
+.src{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.src div{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 14px;font-size:16.5px;line-height:1.4}
+.src b{display:block;font-family:var(--disp);font-size:19px;margin-bottom:4px}
+.src code{font-size:13.5px}
+.stk{width:100%;border-collapse:collapse;font-size:16.5px}
+.stk th{text-align:left;font-size:14px;color:var(--soft);text-transform:uppercase;padding:4px 8px;border-bottom:2px solid var(--line2)}
+.stk td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.35}
+.stk td:first-child{font-family:var(--disp);font-weight:700;font-size:18px;white-space:nowrap}
+.stk code{font-size:14px}
+.chain{display:grid;grid-template-columns:1fr 50px 1.2fr 50px 1fr;align-items:stretch;gap:0;margin:2px 0 8px}
+.chain .nd{background:#fff;border:2px solid var(--line2);border-radius:14px;padding:10px 14px;font-family:var(--disp);font-weight:700;font-size:22px;text-align:center}
+.chain .nd small{display:block;font-family:var(--sans);font-weight:400;font-size:15px;color:var(--soft);margin-top:2px}
+.chain .me{border-color:var(--teal);background:var(--teal-t)}
+.chain .ex{border-color:var(--amber);background:var(--amber-t)}
+.chain .ar{display:grid;place-items:center;font-size:30px;color:var(--soft);font-weight:700}
+.tl{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.tl div{background:#fff;border:2px solid var(--line2);border-radius:14px;padding:12px 14px;font-size:18px;line-height:1.35}
+.tl div b:first-child{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--line);font-family:var(--mono);margin-right:6px}
+.tl .ok{border-color:var(--teal);background:var(--teal-t)} .tl .bad{border-color:var(--red);background:var(--red-t)}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<div id="stage">
+
+<!-- 1 -->
+<section class="s dark" data-t="Portada">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <img src="data:image/svg+xml;base64,IDxzdmcgdmVyc2lvbj0iMS4xIiBpZD0iTmVncm9fMDAwMDAwMzE5MDA3NTc4MzI2OTczMDEzOTAwMDAwMDc0MzIyNzY5ODU0NTMxNzgyNTFfIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4PSIwcHgiIHk9IjBweCIgdmlld0JveD0iMCAwIDU4Mi43IDE5OS4yIiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCA1ODIuNyAxOTkuMjsiIHhtbDpzcGFjZT0icHJlc2VydmUiPjxnPjxnPjxnPjxwYXRoIGQ9Ik05OC45LDE0LjZjLTQ2LjUsMC04NC4zLDM4LjMtODQuMyw4NS4yYzAsNDYuOSwzNy45LDg1LjIsODQuMyw4NS4yYzQ2LjQsMCw4NC4zLTM4LjMsODQuMy04NS4yJiN4QTtDMTgzLjMsNTIuOCwxNDUuNCwxNC42LDk4LjksMTQuNnogTTk4LjksMTgxLjVjLTQ0LjYsMC04MS0zNi43LTgxLTgxLjhjMC00NSwzNi40LTgxLjcsODEtODEuN2M0NC42LDAsODEsMzYuNyw4MSw4MS44JiN4QTtDMTc5LjksMTQ0LjgsMTQzLjUsMTgxLjUsOTguOSwxODEuNXoiPjwvcGF0aD48cGF0aCBkPSJNOTguOSwyMi42Yy00Mi4xLDAtNzYuNCwzNC43LTc2LjQsNzcuMmMwLDQyLjUsMzQuMyw3Ny4yLDc2LjQsNzcuMmM0Mi4xLDAsNzYuNC0zNC43LDc2LjQtNzcuMiYjeEE7QzE3NS40LDU3LjIsMTQxLDIyLjYsOTguOSwyMi42eiBNOTguOSwxNzMuNGMtNDAuMiwwLTczLTMzLjEtNzMtNzMuN2MwLTQwLjYsMzIuOC03My43LDczLTczLjdzNzMsMzMuMSw3Myw3My43JiN4QTtDMTcxLjksMTQwLjMsMTM5LjEsMTczLjQsOTguOSwxNzMuNHoiPjwvcGF0aD48Zz48cGF0aCBkPSJNMTQxLjUsNjYuMkMxNDEuNSw2Ni4zLDE0MS41LDY2LjMsMTQxLjUsNjYuMkMxNDEuNSw2Ni4zLDE0MS41LDY2LjMsMTQxLjUsNjYuMkMxNDEuNSw2Ni4zLDE0MS41LDY2LjMsMTQxLjUsNjYuMnoiPjwvcGF0aD48cGF0aCBkPSJNMTUwLjYsMTQ4Yy0zLjMsMC4xLTYuMi0yLjctNi4yLTYuMnYtMjIuM2wwLDBsNC43LDIuMnYyMi43QzE0OS4yLDE0NS42LDE0OS42LDE0Ni44LDE1MC42LDE0OHoiPjwvcGF0aD48cGF0aCBkPSJNMTQ0LjUsMTQ1LjFjLTMuMywwLjEtNi4yLTIuNy02LjItNi4ydi0yMi4zbDAsMGw0LjcsMi4ydjIyLjZDMTQzLDE0Mi44LDE0My40LDE0NCwxNDQuNSwxNDUuMXoiPjwvcGF0aD48cGF0aCBkPSJNMTM2LjksMTE2djIyLjVjMCwxLjMtMS4xLDIuNC0yLjQsMi40cy0yLjQtMS4xLTIuNC0yLjR2LTI0LjdsMCwwTDEzNi45LDExNnoiPjwvcGF0aD48cGF0aCBkPSJNMTUwLjYsMTE4LjFjLTMuMywwLjEtNi4yLTIuNi02LjItNi4yVjkxLjZsMCwwbDQuNywyLjJ2MjAuN0MxNDkuMiwxMTUuNywxNDkuNiwxMTYuOSwxNTAuNiwxMTguMXoiPjwvcGF0aD48cGF0aCBkPSJNMTUwLjYsOTAuMWMtMy4zLDAuMS02LjItMi43LTYuMi02LjJWNjUuMWwwLTEuOGw0LjcsMi4ydjIwLjlDMTQ5LjIsODcuOCwxNDkuNiw4OC45LDE1MC42LDkwLjF6Ij48L3BhdGg+PHBhdGggZD0iTTE0NC41LDExNS4yYy0zLjMsMC4xLTYuMi0yLjYtNi4yLTYuMlY4OC43bDAsMGw0LjcsMi4ydjIwLjdDMTQzLDExMi45LDE0My40LDExNCwxNDQuNSwxMTUuMnoiPjwvcGF0aD48cGF0aCBkPSJNMTQ0LjUsODcuM2MtMy4zLDAuMS02LjItMi42LTYuMi02LjJWNzAuN2MxLjctMSwzLjUtMi4zLDQuNy00LjJsMCwxNy4yQzE0Myw4NSwxNDMuNCw4Ni4xLDE0NC41LDg3LjN6Ij48L3BhdGg+PHBhdGggZD0iTTUzLjQsMTE5LjV2MjIuM2MwLDMuNS0yLjgsNi4yLTYuMiw2LjJjMS0xLjIsMS40LTIuMywxLjQtMy42di0yMi43TDUzLjQsMTE5LjVMNTMuNCwxMTkuNXoiPjwvcGF0aD48cGF0aCBkPSJNNTkuNiwxMTYuN1YxMzljMCwzLjUtMi44LDYuMi02LjIsNi4yYzEtMS4yLDEuNC0yLjMsMS40LTMuNnYtMjIuNkw1OS42LDExNi43TDU5LjYsMTE2Ljd6Ij48L3BhdGg+PHBhdGggZD0iTTY1LjcsMTEzLjh2MjQuN2MwLDEuMy0xLjEsMi40LTIuNCwyLjRjLTEuMywwLTIuNC0xLjEtMi40LTIuNFYxMTZMNjUuNywxMTMuOEw2NS43LDExMy44eiI+PC9wYXRoPjxwYXRoIGQ9Ik01My40LDkxLjZ2MjAuM2MwLDMuNS0yLjgsNi4yLTYuMiw2LjJjMS0xLjIsMS40LTIuMywxLjQtMy42VjkzLjhMNTMuNCw5MS42TDUzLjQsOTEuNnoiPjwvcGF0aD48cGF0aCBkPSJNNTkuNiw4OC43djIwLjNjMCwzLjUtMi44LDYuMi02LjIsNi4yYzEtMS4yLDEuNC0yLjMsMS40LTMuNlY5MC45TDU5LjYsODguN0w1OS42LDg4Ljd6Ij48L3BhdGg+PHBhdGggZD0iTTEwMi44LDQyLjZjMy44LDMuNCw2LjIsMy4zLDYuMiwzLjNjLTEwLjcsMy4zLTEyLjEtNi41LTEyLjEtNi41bC0zLjQtMS45Yy0wLjctMC40LTAuOS0xLjQtMC4zLTImI3hBO2MwLjQtMC40LDEuMi0wLjUsMS43LTAuMmMwLjEsMC4xLDAuMywwLjIsMC41LDAuM2M3LjIsMy40LDEyLjcsMC44LDE1LjQtMC4yYy0xLjcsMy42LTYsNC02LDRjMS44LDEuNCwzLjYsMS4xLDUuOSwxLjMmI3hBO0MxMDgsNDIuOSwxMDQuNiw0Mi43LDEwMi44LDQyLjZ6Ij48L3BhdGg+PHBhdGggZD0iTTE0Ny4yLDU1LjRjLTAuNi0zLjctMi4zLTYuNi01LjktOS4yYy02LjItNC4zLTExLjItMS40LTEzLjksMS41Yy0yLjYsMi45LTEsNy4xLTAuNyw4LjdjMC4zLDMtMC42LDYuNi02LjgsNy4xJiN4QTtjLTguMSwwLjUtMTAuNy03LjQtMTEuNi05LjljLTUuMywxLjEtOC40LTAuNi04LjQtMC42bC0xLjIsNy41YzAuMS0wLjEsMC4yLTAuMiwwLjMtMC4zYzAuNC0wLjMsMC45LTAuNSwxLjQtMC41bDEuMSwwJiN4QTtjMC40LDAsMC45LDAuMSwxLjIsMC40YzAuNSwwLjQsMSwwLjksMS42LDEuNmMzLjQsMy42LDEwLjMsMTEsMjYuNSwxNC4ybDAtMi41Yy0yLjMtMC40LTQuOS0xLjUtNy42LTMuOGMyLDAuOSwzLjgsMS40LDUuNCwxLjYmI3hBO2MzLjEsMC4yLDQuNi0wLjMsNi43LTEuMWMwLjUtMC4yLDEuMi0wLjcsMS40LTAuOGMtMi43LTAuNi02LTIuMi05LjEtNS40YzYuNyw0LDExLjUsMy4xLDEzLjksMi4xYy0zLjItMC43LTcuMS0zLjEtOS45LTcuNyYjeEE7YzQuNCwzLjcsOC41LDQuNiwxMS42LDQuNWMtMi4yLTIuMS00LjMtNS42LTUuMy0xMC40YzIuMiw0LjQsNC43LDYuOSw3LDguM2wzLjMsMS41YzAsMCwwLDAsMC4xLDBjMC41LDAuMSwxLDAuMiwxLjQsMC4zJiN4QTtDMTQ5LjMsNjEuOCwxNDcuNiw1OS40LDE0Ny4yLDU1LjR6IE0xMzYuOSw4OC4xbC0yLjMtMS4xYzAuMS0xLjIsMC4zLTIuMywwLjMtMy42YzEsMC42LDIuMSwxLDMuNCwxYy0xLTEuMi0xLjQtMi40LTEuNC0zLjYmI3hBO3YtOS40Yy0wLjgsMC40LTEuNiwwLjctMi4zLDAuOWMwLDAtMC4xLDAtMC4xLDAuMWMtMC44LDAuMy0xLjUsMC41LTIuMSwwLjVjLTAuMSwwLTAuMSwwLTAuMSwwbDAsNC45Yy0wLjktMC4xLTEuOS0wLjMtMi4yLTAuNCYjeEE7Yy0xNi4zLTMuNC0yMy4zLTEwLjktMjYuOC0xNC42Yy0wLjYtMC42LTEtMS4xLTEuNC0xLjRjMCwwLTAuMi0wLjEtMC4zLTAuMWwtMS4xLDBjLTAuMiwwLTAuMywwLTAuNCwwLjEmI3hBO2MtMS41LDEuNi0zLjUsMy41LTQuMyw0LjJjMCwwLTIuNi0xLjQtMi42LTEuNWMtMC40LTAuMi0wLjktMC4xLTEuMSwwLjNjLTAuMiwwLjMtMC42LDAuOS0wLjksMS4zYy0wLjMsMC40LTAuNiwwLjctMC45LDEmI3hBO2MtNC4zLDMuMy0xMS40LDguMS0xOS44LDEwYy0wLjksMC4yLTQuMywwLjgtNC41LDAuOGwwLTQuN2MtMS40LTAuMS0zLjEtMC43LTQuNy0xLjl2OS44YzAsMS4zLTAuNCwyLjQtMS40LDMuNiYjeEE7YzEuMiwwLDIuMy0wLjMsMy4zLTAuOWMwLjEsMS4yLDAuMiwyLjQsMC4zLDMuNWwtMi4yLDF2MjAuN2MwLDEuMy0wLjQsMi40LTEuNCwzLjZjMy4zLDAuMSw2LjItMi43LDYuMi02LjJ2LTQuMSYjeEE7YzAuOSwzLjYsMS45LDcsMy4yLDEwLjJsLTEuOCwwLjhsMCwyMi42YzAsMS40LDEuMywyLjYsMi43LDIuNGMxLjItMC4yLDItMS4zLDItMi41di0xNi42YzAuNCwwLjksMC45LDEuOCwxLjQsMi42djExLjImI3hBO2MwLDEuMywxLjEsMi40LDIuNSwyLjRjMS40LDAsMi41LTEuMSwyLjUtMi40di0zLjVjMi45LDMuOCw2LjIsNy41LDEwLDExLjFjLTAuMiwwLjUtMC40LDEuMS0wLjQsMS4yJiN4QTtjLTEuNSw0LjEtNC42LDkuOC05LjgsMTIuMmMyLjEsMi4xLDQuNSw0LjIsNy4yLDYuMmw1LjMtMTQuN2MwLjQtMS4xLDEuNi0wLjQsMS4yLDAuN2wtNS4xLDE1YzEuNiwxLjEsMy4yLDIuMiw1LDMuM2wzLjgtMTQuNyYjeEE7YzAuNC0xLjQsMS41LTAuOCwxLjQsMGwtMy4xLDE2bC0wLjQsMS42bDEwLjktMC4xbC0wLjMtMS41bC0zLjEtMTYuMWMtMC4xLTAuOCwxLTEuNCwxLjQsMGwzLjgsMTQuOGMxLjctMS4xLDMuNC0yLjIsNS0zLjMmI3hBO2wtNS4yLTE1LjFjLTAuNC0xLjEsMC44LTEuOCwxLjItMC43bDUuNCwxNC44YzIuNy0yLDUuMS00LDcuMy02LjJjLTUuNC0yLjQtOC41LTguNC0xMC0xMi42bC0wLjMtMC43JiN4QTtjMy45LTMuNyw3LjMtNy40LDEwLjItMTEuM3YzLjdjMCwxLjMsMS4xLDIuNCwyLjUsMi40YzEuNCwwLDIuNS0xLjEsMi41LTIuNHYtMTEuNGMwLjUtMC45LDEtMS43LDEuNC0yLjd2MTYuOCYjeEE7YzAsMS4yLDAuOCwyLjMsMiwyLjVjMS41LDAuMiwyLjctMC45LDIuNy0yLjR2LTIyLjZsLTEuOS0wLjljMS4zLTMuNCwyLjQtNi45LDMuMy0xMC42djQuNWMwLDMuNSwyLjgsNi4yLDYuMiw2LjImI3hBO2MtMS0xLjItMS40LTIuMy0xLjQtMy42Vjg4LjF6IE0xMzMuNSw4Mi4yYy0wLjEsMS40LTAuMiwyLjgtMC40LDQuMmMtMC4zLDIuNy0wLjYsNS4yLTEsNy43Yy0xLDYuNC0yLjYsMTIuMy00LjYsMTcuNiYjeEE7Yy0wLjUsMS4yLTEsMi41LTEuNSwzLjZjLTAuNCwxLTAuOSwyLTEuNCwyLjljLTEuNSwyLjktMy4xLDUuNy01LDguNGMtNS4yLDcuNC0xMiwxNC4xLTIwLjcsMjAuOGMtOC42LTYuNi0xNS40LTEzLjMtMjAuNi0yMC42JiN4QTtjLTEuOS0yLjctMy42LTUuNC01LTguM2MtMC41LTEtMS0xLjktMS40LTIuOWMtMC42LTEuMi0xLjEtMi41LTEuNi0zLjhjLTItNS4yLTMuNS0xMC44LTQuNS0xNi45Yy0wLjQtMi43LTAuOC01LjUtMS4xLTguNCYjeEE7Yy0wLjEtMS4zLTAuMy0yLjctMC40LTQuMWMwLTAuNC0wLjEtMC44LTAuMS0xLjFjMC4zLDAsMC42LTAuMSwwLjktMC4xYzEzLjMtMiwyNC43LTYuOSwzMy44LTE2LjNjOS4xLDkuMywyMC44LDEzLjksMzMuOSwxNi4zJiN4QTtjMC4zLDAuMSwwLjUsMC4xLDAuOCwwLjFDMTMzLjYsODEuNSwxMzMuNiw4MS45LDEzMy41LDgyLjJ6IE0xMDcuNSw0OC41YzAsMC0xMC4zLDEuOS0xMi4zLTcuNmMtMS45LTEtMy4zLTEuNi0zLjMtMS42JiN4QTtsLTAuNCwwLjljMCwwLTEuMi0wLjctMy0wLjZjLTIuNy0wLjEtNC44LDIuNC00LjMsNC44YzAsMCwxLjItMC45LDIuNy0xYzAsMC41LDAsMS4xLDAuMywxLjhjMC40LDEuMywyLjQsMi45LDQuMyw0JiN4QTtjLTAuMiwyLTAuNiw0LjUtMS42LDYuN2MwLDAuMS0wLjgsMS43LTAuOCwxLjhjLTEuNSwyLjctNSw3LjctMTEuMiw1LjljLTIuNS0wLjctNS4xLTQuMy02LjctNy4yYzAuMy0xLjYsMi01LjgtMC42LTguNyYjeEE7Yy0yLjYtMy03LjYtNS45LTEzLjktMS42Yy0zLjYsMi42LTUuNCw1LjUtNiw5LjJjLTAuNCwzLjMtMS42LDUuNS0yLjQsNi43YzAuNywwLDEuOC0wLjEsMy4xLTAuNmwxLjQtMC42JiN4QTtjMi41LTEuMiw1LjYtMy44LDguMS04LjhjLTEuMSw1LjMtMy42LDguOS02LDEwLjljMy4yLDAuMiw3LjQtMC43LDExLjktNC40Yy0yLjgsNC42LTYuNyw2LjktOS45LDcuNmMyLjQsMSw3LjIsMiwxMy45LTImI3hBO2MtMy4xLDMuMi02LjQsNC44LTkuMSw1LjNjMC40LDAuMywxLjIsMC45LDIuNSwxLjRjMC4zLDAuMSwwLjYsMC4yLDAuOSwwLjNjMCwwLDAuMSwwLDAuMSwwYzIuMywwLjYsNS42LDAuNiw5LjktMS40JiN4QTtjLTEuMSwwLjktMi4yLDEuNy0zLjMsMi4yYy0xLjYsMC45LTMuMywxLjMtNC43LDEuNWwwLDBsMCwwbDAsMi40YzkuMi0xLjMsMTcuNS02LjgsMjIuMi0xMC40YzAuMy0wLjIsMC42LTAuNSwwLjgtMC44JiN4QTtjMC41LTAuNiwxLjMtMS43LDEuNi0yLjJjMC4zLTAuNSwxLTAuNiwxLjQtMC4ybDMsMS44YzEuMS01LjEsMi4yLTEzLjUsMi4yLTEzLjVzNC45LDQuMSwxMi4yLDAuMSYjeEE7QzEwOC44LDQ5LjgsMTA3LjUsNDguNSwxMDcuNSw0OC41eiI+PC9wYXRoPjxwYXRoIGQ9Ik0xMjUuNCw4Ni42Yy0xMC4xLTIuOC0xOC42LTYuNy0yNi0xMS43bC0wLjUtMC4zbC0wLjUsMC4zYy03LjQsNS0xNS45LDguOC0yNiwxMS43bC0wLjcsMC4ybDAuMSwwLjcmI3hBO2MyLDI4LjUsMTQsNDAuOSwyNi42LDUwLjFsMC41LDAuNGwwLjUtMC40QzExMiwxMjguNCwxMjQsMTE2LDEyNiw4Ny41bDAuMS0wLjdMMTI1LjQsODYuNnogTTkwLDgxLjljMy4xLTEuNSw2LjEtMy4yLDguOS01LjEmI3hBO2MyLjUsMS43LDUsMy4yLDcuOCw0LjV2NS4xYy0wLjYtMC4xLTEuMi0wLjEtMS44LTAuMWMtMi4yLDAtNC4xLDAuNS01LjgsMS42bC0wLjEsMGwtMC4xLDBjLTEuNy0xLTMuNi0xLjYtNS44LTEuNiYjeEE7Yy0xLDAtMiwwLjEtMywwLjNWODEuOXogTTg4LjIsMTI2LjNjLTcuNC04LjItMTMuMi0xOS43LTE0LjctMzguMmM1LjMtMS41LDEwLjItMy4zLDE0LjctNS40djQuMWMwLDAtMC4xLDAtMC4xLDAmI3hBO2MtMS4zLDAuMi0yLjUsMC40LTMuNiwwLjRjLTEuOCwwLTIuOS0wLjUtMi45LTAuNXYyOGMwLDAsMy40LDAuOSw1LDAuOWMwLjUsMCwxLjEsMCwxLjctMC4xVjEyNi4zeiBNODguMiwxMTIuNiYjeEE7Yy0wLjYsMC0xLjEsMC4xLTEuNywwLjFjLTEuMiwwLTIuNC0wLjEtMy40LTAuNVY4OC42YzAuNSwwLjEsMC45LDAuMSwxLjQsMC4xYzEuMSwwLDIuNC0wLjIsMy43LTAuNGMwLjYtMC4xLDEuMi0wLjIsMS44LTAuMyYjeEE7YzEtMC4xLDItMC4zLDMtMC4zYzEuNywwLDMuNCwwLjMsNSwxLjN2MjMuOGMtMC4zLTAuMS0wLjctMC4zLTEuMS0wLjNjLTAuMiwwLTAuNC0wLjEtMC41LTAuMWMtMC4yLDAtMC41LTAuMS0wLjctMC4xJiN4QTtjLTAuMiwwLTAuNC0wLjEtMC43LTAuMUg5NWMtMC4xLDAtMC4zLDAtMC40LDBjMCwwLTAuMSwwLTAuMSwwaDBjLTAuMSwwLTAuMiwwLTAuMywwYzAsMCwwLDAsMCwwYy0wLjEsMC0wLjMsMC0wLjQsMCYjeEE7Yy0wLjEsMC0wLjIsMC0wLjMsMGgtMC4xYy0wLjEsMC0wLjEsMC0wLjIsMGMtMSwwLTIsMC4xLTMsMC4ySDkwQzg5LjQsMTEyLjUsODguOCwxMTIuNSw4OC4yLDExMi42eiBNMTA2LjYsMTI5LjMmI3hBO2MtMi41LDIuNC01LjEsNC41LTcuOCw2LjRjLTMtMi4yLTYuMS00LjctOC45LTcuNXYtMTIuN2MwLDAsMC4xLDAsMC4xLDBjMS4yLTAuMSwyLjQtMC4yLDMuNS0wLjJjMS45LDAsMy4yLDAuMyw0LDAuNyYjeEE7YzAuOCwwLjMsMS44LDAuNCwyLjYsMGMwLjktMC40LDIuMi0wLjcsMy45LTAuN2MwLjgsMCwxLjYsMCwyLjQsMC4xVjEyOS4zeiBNMTA2LjYsMTEyLjNjLTAuMSwwLTAuMywwLTAuNCwwJiN4QTtjLTAuMSwwLTAuMiwwLTAuMiwwaC0wLjJjLTAuMSwwLTAuMywwLTAuNCwwYy0wLjEsMC0wLjMsMC0wLjUsMGMtMC4xLDAtMC4yLDAtMC40LDBzLTAuMiwwLTAuNCwwYy0wLjIsMC0wLjQsMC0wLjYsMCYjeEE7Yy0wLjIsMC0wLjQsMC0wLjYsMGMtMC4yLDAtMC40LDAtMC42LDBjLTAuMiwwLTAuNCwwLTAuNiwwLjFjLTAuMiwwLTAuNCwwLTAuNSwwLjFjLTAuMiwwLTAuNCwwLjEtMC41LDAuMSYjeEE7Yy0wLjQsMC4xLTAuNywwLjItMS4xLDAuM1Y4OS4xYzEuNi0xLDMuMy0xLjMsNS0xLjNjMC42LDAsMS4yLDAsMS44LDAuMWgwLjFjMC4xLDAsMC4xLDAsMC4yLDBjMC40LDAsMC45LDAuMSwxLjMsMC4yJiN4QTtjMC4xLDAsMC4xLDAsMC4yLDBjMC45LDAuMSwxLjksMC4zLDIuNywwLjRjMC4xLDAsMC4zLDAsMC40LDBjMC4zLDAsMC41LDAuMSwwLjgsMC4xYzAuMywwLDAuNiwwLDAuOSwwYzAuNSwwLDEsMCwxLjQtMC4xdjIzLjUmI3hBO2MtMSwwLjQtMi4yLDAuNS0zLjQsMC41aDBjLTAuNSwwLTAuOSwwLTEuNCwwYy0wLjEsMC0wLjIsMC0wLjMsMGMtMC40LDAtMC44LTAuMS0xLjItMC4xYy0wLjIsMC0wLjQsMC0wLjYsMCYjeEE7QzEwNy40LDExMi40LDEwNywxMTIuNCwxMDYuNiwxMTIuM3ogTTEwOC40LDEyNy41di0xMmMxLDAuMSwxLjksMC4xLDIuOSwwLjFjMi45LDAsNS0xLDUtMVY4Ni43YzAsMC0xLjIsMC41LTMsMC41JiN4QTtjLTEsMC0yLjMtMC4yLTMuNi0wLjRjLTAuNC0wLjEtMC45LTAuMS0xLjMtMC4ydi00LjRjNC44LDIuMywxMCw0LjMsMTUuOCw1LjlDMTIyLjcsMTA3LjYsMTE2LjMsMTE5LjIsMTA4LjQsMTI3LjV6Ij48L3BhdGg+PHBhdGggZD0iTTY5LDgyLjFsLTEsMC4ybDAuNSwyLjJjMC4xLDAuNS0wLjEsMC44LTAuNSwwLjljLTAuNSwwLjEtMC44LTAuMS0wLjktMC42bC0wLjUtMi4ybC0xLDAuMmwwLjUsMi4yYzAuMywxLDEuMSwxLjIsMiwxJiN4QTtjMC45LTAuMiwxLjYtMC44LDEuMy0xLjhMNjksODIuMXoiPjwvcGF0aD48cG9seWdvbiBwb2ludHM9IjcwLjYsODIuNiA3Mi41LDg1IDczLjksODQuNiA3Mi45LDgxLjEgNzIsODEuMyA3Mi43LDgzLjkgNzIuNyw4My45IDcwLjgsODEuNiA2OS41LDgyIDcwLjUsODUuNSA3MS4zLDg1LjMgJiN4QTs3MC42LDgyLjYgIj48L3BvbHlnb24+PHBvbHlnb24gcG9pbnRzPSI3NS40LDg0LjEgNzQuMyw4MC42IDczLjQsODAuOSA3NC40LDg0LjQgIj48L3BvbHlnb24+PHBvbHlnb24gcG9pbnRzPSI3OC4xLDgzLjIgNzguMiw3OS4zIDc3LjIsNzkuNyA3Ny4yLDgyLjQgNzcuMiw4Mi40IDc1LjYsODAuMiA3NC42LDgwLjUgNzYuOSw4My42ICI+PC9wb2x5Z29uPjxwb2x5Z29uIHBvaW50cz0iODIuMiw4MS43IDgyLDgxLjEgODAuMyw4MS43IDgwLDgwLjkgODEuNiw4MC40IDgxLjMsNzkuNyA3OS44LDgwLjMgNzkuNSw3OS42IDgxLjIsNzkgODAuOSw3OC4zIDc4LjQsNzkuMyAmI3hBOzc5LjYsODIuNyAiPjwvcG9seWdvbj48cGF0aCBkPSJNODUuMSw3OS41Qzg0LjksNzksODQuNiw3OC44LDg0LDc5djBjMC40LTAuMiwwLjctMC43LDAuNS0xLjJjLTAuMy0wLjctMS4xLTAuNi0xLjctMC4zbC0xLjYsMC42bDEuNCwzLjRsMC45LTAuNCYjeEE7bC0wLjUtMS4zbDAuNC0wLjFjMC41LTAuMiwwLjYsMCwwLjgsMC4zYzAuMSwwLjIsMC4yLDAuNSwwLjQsMC43bDEtMC40Qzg1LjQsODAuMSw4NS4zLDc5LjgsODUuMSw3OS41eiBNODMuMiw3OWwtMC40LDAuMSYjeEE7bC0wLjMtMC44bDAuNC0wLjFjMC4zLTAuMSwwLjYtMC4yLDAuOCwwLjFDODMuOCw3OC43LDgzLjUsNzguOSw4My4yLDc5eiI+PC9wYXRoPjxwYXRoIGQ9Ik04NS43LDc4LjRjMC45LDAsMS41LTAuNCwxLjcsMGMwLjEsMC4yLTAuMSwwLjUtMC4zLDAuNmMtMC4zLDAuMi0wLjYsMC4xLTAuOC0wLjJsLTAuOSwwLjRjMC40LDAuOSwxLjIsMC44LDIsMC41JiN4QTtjMC44LTAuMywxLjMtMSwxLTEuN2MtMC40LTAuOS0xLjItMC42LTEuOC0wLjVjLTAuMywwLTAuNiwwLjEtMC43LTAuMWMtMC4xLTAuMiwwLTAuNCwwLjMtMC41YzAuMi0wLjEsMC4zLTAuMSwwLjQtMC4xJiN4QTtjMC4xLDAsMC4yLDAuMSwwLjMsMC4ybDAuOS0wLjRjLTAuMy0wLjgtMS4xLTAuNy0xLjgtMC40Yy0wLjcsMC4zLTEuMywwLjgtMSwxLjZDODUsNzguMSw4NS4zLDc4LjQsODUuNyw3OC40eiI+PC9wYXRoPjxwb2x5Z29uIHBvaW50cz0iOTAuMiw3OC4yIDg4LjYsNzQuOSA4Ny43LDc1LjMgODkuMyw3OC42ICI+PC9wb2x5Z29uPjxwYXRoIGQ9Ik05Myw3NC42Yy0wLjYtMS4yLTEuNi0xLjItMi43LTAuNkw4OSw3NC43bDEuNywzLjJsMS4zLTAuN0M5My4yLDc2LjYsOTMuNyw3NS44LDkzLDc0LjZ6IE05MS43LDc2LjZsLTAuNCwwLjJsLTEuMS0yJiN4QTtsMC40LTAuMmMwLjUtMC4zLDEuMS0wLjIsMS41LDAuNUM5Mi40LDc1LjgsOTIuMSw3Ni4zLDkxLjcsNzYuNnoiPjwvcGF0aD48cGF0aCBkPSJNOTQuMiw3MS43bC0xLjEsMC42bDAuNiwzLjlsMC45LTAuNUw5NC41LDc1bDEuMy0wLjdsMC42LDAuNWwxLTAuNkw5NC4yLDcxLjd6IE05NC4zLDc0LjJMOTQsNzIuN2wwLDBsMS4yLDEuMSYjeEE7TDk0LjMsNzQuMnoiPjwvcGF0aD48cGF0aCBkPSJNOTkuNSw3MC41Yy0wLjgtMS4xLTEuNy0xLTIuNy0wLjNMOTUuNSw3MWwyLDNsMS4zLTAuOUM5OS44LDcyLjQsMTAwLjIsNzEuNiw5OS41LDcwLjV6IE05OC4zLDcyLjZsLTAuNCwwLjNMOTYuNyw3MSYjeEE7bDAuNC0wLjNjMC41LTAuMywxLjEtMC4zLDEuNSwwLjNDOTksNzEuNyw5OC44LDcyLjMsOTguMyw3Mi42eiI+PC9wYXRoPjxwYXRoIGQ9Ik0xMDQuMyw3MmwtMS4zLTAuOGwtMS44LDMuMmwxLjMsMC44YzEuMSwwLjYsMiwwLjYsMi43LTAuNUMxMDUuOSw3My40LDEwNS40LDcyLjYsMTA0LjMsNzJ6IE0xMDQuMyw3NC4xJiN4QTtjLTAuNCwwLjYtMSwwLjctMS41LDAuNGwtMC40LTAuMmwxLjEtMS45bDAuNCwwLjJDMTA0LjQsNzIuOCwxMDQuNyw3My40LDEwNC4zLDc0LjF6Ij48L3BhdGg+PHBvbHlnb24gcG9pbnRzPSIxMDcuMyw3Ny44IDEwNy43LDc3LjIgMTA2LjEsNzYuMyAxMDYuNSw3NS43IDEwNy45LDc2LjQgMTA4LjIsNzUuOCAxMDYuOCw3NSAxMDcuMiw3NC40IDEwOC43LDc1LjIgMTA5LDc0LjYgJiN4QTsxMDYuNiw3My4zIDEwNC45LDc2LjUgIj48L3BvbHlnb24+PHBhdGggZD0iTTExMC42LDc5LjVjMC44LDAuNCwxLjcsMC41LDIuMS0wLjRsLTEtMC41Yy0wLjIsMC4zLTAuNSwwLjQtMC44LDAuMmMtMC41LTAuMi0wLjQtMC45LTAuMS0xLjMmI3hBO2MwLjItMC41LDAuNi0xLjEsMS4xLTAuOGMwLjQsMC4yLDAuNSwwLjUsMC40LDAuOGwxLDAuNWMwLjQtMC44LTAuMy0xLjUtMS4xLTEuOWMtMS0wLjUtMS45LTAuMS0yLjQsMSYjeEE7QzEwOS4zLDc4LjEsMTA5LjYsNzksMTEwLjYsNzkuNXoiPjwvcGF0aD48cGF0aCBkPSJNMTE1LjgsNzcuN2MtMS4xLTAuNS0yLTAuMS0yLjUsMWMtMC41LDEuMS0wLjEsMiwxLDIuNWMxLjEsMC41LDIsMC4xLDIuNS0xQzExNy4zLDc5LjEsMTE3LDc4LjEsMTE1LjgsNzcuN3omI3hBOyBNMTE1LjksNzkuOGMtMC4yLDAuNS0wLjYsMS0xLjIsMC44Yy0wLjYtMC4zLTAuNS0wLjktMC4zLTEuNGMwLjItMC41LDAuNi0xLjEsMS4yLTAuOEMxMTYuMiw3OC42LDExNi4xLDc5LjIsMTE1LjksNzkuOHoiPjwvcGF0aD48cG9seWdvbiBwb2ludHM9IjExOS4yLDgzIDExOS40LDgyLjQgMTE3LjksODEuOCAxMTksNzkgMTE4LDc4LjcgMTE2LjcsODIuMSAiPjwvcG9seWdvbj48cG9seWdvbiBwb2ludHM9IjEyMS44LDgwLjEgMTIwLjksNzkuOCAxMTkuNiw4My4yIDEyMC42LDgzLjUgIj48L3BvbHlnb24+PHBvbHlnb24gcG9pbnRzPSIxMjIuMSw4NC4xIDEyMyw4MS4xIDEyMyw4MS4xIDEyMi44LDg0LjMgMTIzLjcsODQuNiAxMjUuNSw4MiAxMjUuNSw4MiAxMjQuNSw4NC45IDEyNS4zLDg1LjIgMTI2LjUsODEuNyAmI3hBOzEyNSw4MS4yIDEyMy43LDgzLjQgMTIzLjcsODMuNCAxMjMuOSw4MC44IDEyMi40LDgwLjMgMTIxLjIsODMuOCAiPjwvcG9seWdvbj48cGF0aCBkPSJNMTI5LjMsODIuNmwtMS4yLTAuM2wtMi40LDMuMWwxLDAuM2wwLjQtMC42bDEuNCwwLjRsMCwwLjdsMS4xLDAuM0wxMjkuMyw4Mi42eiBNMTI3LjYsODQuNGwwLjktMS4zbDAsMGwwLDEuNiYjeEE7TDEyNy42LDg0LjR6Ij48L3BhdGg+PHBvbHlnb24gcG9pbnRzPSIxMTEuMiwxMDEuNCAxMTEuMiwxMDEuNCAxMTEuMiwxMDEuNCAiPjwvcG9seWdvbj48cGF0aCBkPSJNNTkuNiw3MC43djEwLjRjMCwzLjUtMi44LDYuMi02LjIsNi4yYzEtMS4yLDEuNC0yLjMsMS40LTMuNlY2Ni41QzU2LjEsNjguNCw1Ny44LDY5LjgsNTkuNiw3MC43eiI+PC9wYXRoPjxwYXRoIGQ9Ik01My40LDY1LjFWODRjMCwzLjUtMi44LDYuMi02LjIsNi4yYzAsMCwwLDAsMCwwYzEtMS4yLDEuNC0yLjMsMS40LTMuNlY2NS42bDQuNy0yLjJ2MGwwLDBMNTMuNCw2NS4xeiI+PC9wYXRoPjxwYXRoIGQ9Ik05NS43LDEwOC4xYy0wLjEtMC4yLTAuMy0wLjMtMC41LTAuNGwtMi42LTUuNGMwLjMtMC40LDAuNS0wLjgsMC41LTEuMmMwLTAuMiwwLTAuMy0wLjEtMC41Yy0wLjMtMC42LTAuOC0wLjgtMS41LTAuNiYjeEE7bC0wLjEtMC4zYzAuNC0wLjUsMC41LTEuMSwwLjMtMS41Yy0wLjItMC4zLTAuNC0wLjQtMC43LTAuNmMwLjQtMC42LDAuOS0xLjQsMC45LTIuOWMwLTAuNS0wLjItMS0wLjMtMS41Yy0wLjMtMS4yLTAuNC0yLTAuMi0zJiN4QTtjLTEuNSwwLjMtMi40LDEuMi0yLjksMS45Yy0wLjItMC42LTAuMi0xLTAuMi0xYy0xLjMsMC44LTIuNCwyLjEtMi42LDMuNWMtMC41LDMuMywwLjgsNC4zLDEuNSw0LjljLTAuMiwwLjQtMC4xLDAuNywwLjEsMS4xJiN4QTtjMC4yLDAuMywwLjYsMC41LDEuMiwwLjVjMCwwLDAuMSwwLDAuMSwwYzAuMSwwLDAuMSwwLDAuMiwwbDAuMiwwLjNjLTAuNSwwLjUtMC42LDEuMS0wLjMsMS42YzAuMiwwLjMsMC42LDAuNSwxLjIsMC41JiN4QTtjMC4xLDAsMC4zLDAsMC40LTAuMWwzLjIsNS4xYzAsMC4xLDAsMC4xLDAsMC4yYzAsMC4zLDAuMSwwLjYsMC4zLDAuOWMwLjIsMC4yLDAuNSwwLjQsMC44LDAuNGgwLjFjMC4zLDAsMC42LTAuMSwwLjgtMC4zJiN4QTtjMC4zLTAuMiwwLjQtMC42LDAuNC0wLjlDOTYsMTA4LjcsOTUuOSwxMDguNCw5NS43LDEwOC4xeiBNODYuNSw5Ny4yYy0wLjMtMC43LTAuNC0zLjcsMS40LTQuOGMtMC4xLDEuNiwwLjIsMi4zLDAuMiwyLjMmI3hBO3MwLjUtMi4xLDIuMi0zLjJjMC4xLTAuMSwwLjMtMC4xLDAuNC0wLjJjLTAuNSwxLjksMS4xLDIuOSwwLjIsNS4xYy0wLjMsMC43LTEuNSwxLTEuNy0xLjdjLTAuMiwwLjItMC43LDIuMiwwLjksMy4zJiN4QTtjLTAuMywwLjMtMC44LDAuNS0xLjEsMC4zYy0xLjctMS4zLTEuNS00LTEuNS00cy0xLjIsMy4xLDEuMiw0LjdDODcuNCw5OS4zLDg2LjgsOTcuOSw4Ni41LDk3LjJ6IE04OC45LDEwMC41JiN4QTtjLTAuNSwwLjEtMC44LDAtMC45LTAuMmMtMC4xLTAuMi0wLjEtMC40LDAtMC43YzAuMiwwLDAuOSwwLDEuNS0wLjRjMC42LTAuMywwLjktMC45LDEtMS4xYzAuMywwLDAuNCwwLjEsMC42LDAuMyYjeEE7YzAuMSwwLjIsMCwwLjYtMC40LDAuOWMtMC4yLDAuMy0wLjUsMC41LTAuOSwwLjdDODkuNSwxMDAuNCw4OS4yLDEwMC41LDg4LjksMTAwLjV6IE05MS4yLDEwMS4xYy0wLjIsMC4yLTAuNCwwLjMtMC42LDAuNCYjeEE7Yy0wLjIsMC4xLTAuNSwwLjItMC43LDAuM2wtMC40LTAuN2MwLjMtMC4xLDAuNS0wLjIsMC44LTAuM2MwLjMtMC4xLDAuNS0wLjMsMC43LTAuNUw5MS4yLDEwMS4xeiBNOTAuMywxMDNMOTAuMywxMDMmI3hBO2MtMC4xLDAtMC4yLDAtMC4zLDBjLTAuNCwwLTAuNywwLTAuOC0wLjJjMC0wLjEtMC4xLTAuMi0wLjEtMC4zYzAtMC4xLDAtMC4zLDAuMi0wLjRsMC4zLDAuNWwwLDBjMCwwLDAuNC0wLjEsMC41LTAuMSYjeEE7YzAuMy0wLjEsMC41LTAuMiwwLjctMC4zYzAuNi0wLjMsMS0wLjgsMS0wLjhsMCwwdjBsLTAuMi0wLjVjMCwwLDAuMSwwLDAuMSwwYzAuMiwwLDAuNCwwLjEsMC41LDAuM2MwLjEsMC4yLDAsMC41LTAuMywwLjgmI3hBO2MwLDAuMS0wLjEsMC4xLTAuMSwwLjJjLTAuMSwwLjEtMC4xLDAuMS0wLjIsMC4yYy0wLjIsMC4xLTAuNCwwLjMtMC42LDAuNGMtMC4yLDAuMS0wLjUsMC4yLTAuNywwLjMmI3hBO0M5MC41LDEwMi45LDkwLjQsMTAzLDkwLjMsMTAzeiBNOTMuOSwxMDguMWwtMi44LTQuNWMwLjItMC4xLDAuNC0wLjIsMC42LTAuM2MwLjItMC4xLDAuNC0wLjIsMC41LTAuM2wyLjIsNC44JiN4QTtDOTQuMiwxMDcuOCw5NC4xLDEwNy45LDkzLjksMTA4LjFDOTMuOSwxMDgsOTMuOSwxMDguMSw5My45LDEwOC4xeiBNOTUuMSwxMDkuNGMtMC4xLDAuMS0wLjMsMC4yLTAuNCwwLjFjMCwwLDAsMCwwLDAmI3hBO2MtMC4xLDAtMC4zLTAuMS0wLjQtMC4ydjBjMCwwLDAsMCwwLDB2MGwwLDBjLTAuMS0wLjEtMC4xLTAuMi0wLjEtMC4zYzAtMC4xLDAtMC4yLDAuMS0wLjNjMC0wLjEsMC4xLTAuMSwwLjEtMC4yJiN4QTtjMC4xLTAuMSwwLjMtMC4xLDAuNC0wLjFoMC4xYzAuMSwwLDAuMSwwLDAuMiwwLjFsMCwwYzAuMSwwLDAuMSwwLjEsMC4xLDAuMWMwLDAsMC4xLDAuMSwwLjEsMC4xJiN4QTtDOTUuNCwxMDguOSw5NS4zLDEwOS4yLDk1LjEsMTA5LjR6Ij48L3BhdGg+PHBhdGggZD0iTTExMy44LDEwMC41TDExMy44LDEwMC41YzAuMi0wLjEsMC4zLTAuMywwLjQtMC40YzAtMC4xLDAtMC4xLDAtMC4yYzAuMS0wLjEsMC4yLTAuMywwLjEtMC42Yy0wLjEtMC4zLTAuNC0wLjMtMC43LTAuMyYjeEE7bC0wLjEsMGMwLTAuMS0wLjEtMC4xLTAuMi0wLjFjLTAuMS0wLjEtMC40LDAtMC43LDBjLTEsMC4yLTEuNSwwLjgtMS43LDEuMWMtMC4xLDAuMS0wLjEsMC4yLTAuMywwLjNjLTAuMiwwLjItMC40LDAuNy0wLjQsMC45JiN4QTtjMCwwLDAsMCwwLDAuMWwtMC4xLDBjLTAuMywwLjEtMC41LDAuMi0wLjYsMC4zYy0wLjEsMC4xLTAuMiwwLjEtMC40LDAuMmMtMC4yLDAuMS0wLjQsMC4yLTAuNSwwLjRjLTAuMywwLjEtMC44LDAuMy0xLjEsMC4zJiN4QTtjLTAuMSwwLTAuMiwwLjEtMC4zLDAuMWMtMC4zLDAuMS0wLjQsMC4yLTAuNCwwLjJjLTAuMS0wLjEtMC4yLTAuNy0wLjItMWMwLTAuMy0wLjEtMC41LTAuMi0wLjhjMC4yLDAsMC4zLDAsMC41LDAuMSYjeEE7YzAuMSwwLDAuMiwwLDAuMywwYzAuMywwLjEsMC42LDAsMC44LTAuMWMwLjIsMC4zLDAuNiwwLjQsMSwwLjJjMC4yLTAuMSwwLjQtMC4yLDAuNS0wLjVjMC4xLTAuMiwwLjEtMC41LDAtMC43JiN4QTtjLTAuMS0wLjItMC4zLTAuNC0wLjUtMC40Yy0wLjIsMC0wLjQsMC0wLjYsMC4xYy0wLjEsMC0wLjIsMC4xLTAuMiwwLjFjMC0wLjEtMC4xLTAuMS0wLjItMC4yYy0wLjEtMC4xLTAuMy0wLjItMC4zLTAuMyYjeEE7YzAuMi0wLjEsMC41LTAuMiwwLjYtMC4zYzAuMS0wLjEsMC4yLTAuMiwwLjMtMC4zYzAuMS0wLjEsMC4xLTAuMSwwLjItMC4yYzAsMCwwLDAsMCwwYzAuNiwwLjIsMS40LTAuMSwxLjgtMC42JiN4QTtjMC4xLTAuMiwwLjQtMC43LDAuNC0xYzAuMS0wLjIsMC4zLTAuNCwwLjItMC42Yy0wLjEtMC4xLTAuMS0wLjEtMC4zLTAuMWMtMC4xLDAtMC4yLDAtMC4zLDBsLTAuMiwwYy0wLjUsMC4xLTEuMiwwLjEtMS42LDAuNCYjeEE7Yy0wLjMsMC4yLTAuNSwwLjQtMC42LDAuN2MtMC4xLDAtMC4yLDAtMC4zLDBjLTAuMSwwLTAuMiwwLTAuMy0wLjFoMGMtMC4xLDAtMC40LTAuMS0wLjYtMC4yYy0wLjItMC4xLTAuMy0wLjItMC40LTAuMyYjeEE7YzAsMC0wLjEtMC4xLTAuMS0wLjFjMC40LTAuMiwwLjYtMC41LDAuOC0wLjhjMC4yLDAuMSwwLjQsMC4xLDAuNiwwYzAuMy0wLjEsMC41LTAuMiwwLjctMC41YzAuMi0wLjIsMC4yLTAuNSwwLjEtMC43JiN4QTtjLTAuMS0wLjMtMC4yLTAuNC0wLjUtMC41Yy0wLjItMC4xLTAuNC0wLjEtMC43LDBjLTAuMywwLjEtMC41LDAuMi0wLjYsMC40YzAsMC4xLTAuMSwwLjEtMC4xLDAuMmMtMC4zLDAtMC42LDAtMC44LDAuMSYjeEE7bC0wLjMsMC4xYy0wLjQsMC4xLTAuNywwLjEtMS4yLDAuMWwtMC4xLDBjLTAuNy0wLjEtMS4zLTAuMi0yLjIsMC4yYy0wLjgsMC40LTEuMiwxLTEuNSwxLjhsMCwwLjFjMCwwLDAsMC4xLDAsMC4xJiN4QTtjLTAuMiwwLjQtMC4zLDEuMywwLDEuOWMwLjMsMC43LDEuNSwwLjIsMS41LDAuMmwwLDBjMC4xLDAuMiwwLjIsMC4zLDAuMiwwLjRjMCwwLDAsMCwwLDAuMWMwLjEsMC4xLDAuMSwwLjMsMC4yLDAuNWwwLDAmI3hBO2MwLDAuMSwwLDAuMSwwLDAuMWwwLjMsMC44YzAuMSwwLjMsMC4zLDAuNiwwLjQsMWwwLjEsMC4yYzAuMSwwLjIsMC4xLDAuMywwLjEsMC40YzAsMC4xLDAuMSwwLjMsMC4yLDAuNSYjeEE7YzAuMywwLjksMC43LDIuMSwxLjQsMi44YzAuMywwLjMsMC43LDAuNSwxLjEsMC41YzAuMSwwLDAuMiwwLDAuMywwYzAuNC0wLjEsMC43LTAuMywwLjgtMC40YzAuNi0wLjQsMS45LTEuMiwyLjUtMS41JiN4QTtjMC4xLDAuMSwwLjIsMCwwLjUtMC4xYzAuMS0wLjEsMC4zLTAuMiwwLjQtMC4zYzAuMS0wLjEsMC4zLTAuMiwwLjQtMC4zYzAuMS0wLjEsMC4xLTAuMSwwLjItMC4yYzAsMCwwLjEtMC4xLDAuMi0wLjImI3hBO2MwLjEtMC4xLDAuMi0wLjEsMC4yLTAuMmMwLjEsMCwwLjItMC4xLDAuMy0wLjFjMC4xLDAsMC4xLDAsMC4yLTAuMWMwLjQtMC4xLDAuNy0wLjMsMS0wLjZjMC4xLTAuMSwwLjMtMC40LDAuNS0wLjcmI3hBO2MwLjEtMC4xLDAuMi0wLjIsMC4zLTAuM2MwLjEtMC4xLDAuMy0wLjMsMC40LTAuNWMwLTAuMSwwLTAuMy0wLjEtMC40QzExNCwxMDAuNiwxMTMuOSwxMDAuNSwxMTMuOCwxMDAuNXogTTEwOC4yLDEwMC40JiN4QTtDMTA4LjIsMTAwLjQsMTA4LjIsMTAwLjMsMTA4LjIsMTAwLjRjMC4xLTAuMSwwLjEtMC4yLDAuMS0wLjJjMCwwLDAuMSwwLDAuMS0wLjFjMC4xLDAsMC4yLTAuMSwwLjMtMC4xYzAsMCwwLDAsMC4xLDAmI3hBO2MwLjEsMCwwLjEsMCwwLjEsMC4xYzAsMCwwLDAuMSwwLDAuMmMtMC4xLDAuMS0wLjEsMC4yLTAuMywwLjNjLTAuMiwwLjEtMC40LDAtMC40LTAuMUMxMDguMiwxMDAuNSwxMDguMiwxMDAuNCwxMDguMiwxMDAuNCYjeEE7TDEwOC4yLDEwMC40eiBNMTA4LjUsOTcuN2MtMC4xLTAuMiwwLjItMC40LDAuNC0wLjZjMC40LTAuMiwxLTAuMywxLjQtMC4zbDAuMSwwbDAsMGwwLDBjMCwwLjItMC4yLDAuNi0wLjMsMC43JiN4QTtjLTAuMywwLjMtMC45LDAuNS0xLjMsMC40YzAsMC0wLjEsMC0wLjEtMC4xYzAsMCwwLDAsMCwwQzEwOC41LDk3LjksMTA4LjUsOTcuOCwxMDguNSw5Ny43QzEwOC41LDk3LjgsMTA4LjUsOTcuOCwxMDguNSw5Ny43JiN4QTtDMTA4LjUsOTcuNywxMDguNSw5Ny43LDEwOC41LDk3Ljd6IE0xMDcsOTUuMWMwLDAsMC0wLjEsMC0wLjFjMCwwLDAtMC4xLDAuMS0wLjFjMC4xLTAuMSwwLjItMC4yLDAuMy0wLjJjMC4yLDAsMC4zLDAsMC40LDAmI3hBO2MwLjEsMCwwLjEsMC4xLDAuMSwwLjFjMCwwLjEsMCwwLjItMC4xLDAuM2MtMC4xLDAuMS0wLjIsMC4yLTAuNCwwLjJjLTAuMSwwLTAuMywwLTAuNCwwYzAsMC0wLjEtMC4xLTAuMS0wLjEmI3hBO0MxMDcsOTUuMiwxMDcsOTUuMiwxMDcsOTUuMUMxMDcsOTUuMSwxMDcsOTUuMSwxMDcsOTUuMXogTTEwNy42LDEwMGMwLjEsMCwwLjEsMC4xLDAuMiwwLjFjMCwwLjEsMCwwLjEsMCwwLjJjMCwwLDAsMCwwLDAmI3hBO2MtMC4xLDAuMS0wLjQsMC4yLTAuNiwwLjJjLTAuMSwwLTAuMiwwLTAuMywwYy0wLjMsMC0wLjUsMC0wLjctMC4ybC0wLjItMC43YzAuMSwwLjEsMC4yLDAuMiwwLjMsMC4zYzAuMSwwLjEsMC4zLDAuMiwwLjQsMC4zJiN4QTtjMC4xLDAsMC4yLDAuMSwwLjIsMC4xYzAuMSwwLDAuMiwwLDAuMywwYzAuMS0wLjEsMC4xLTAuMSwwLTAuMmMwLTAuMS0wLjEtMC4xLTAuMi0wLjFjMCwwLDAsMCwwLDBsLTAuMSwwYzAsMC0wLjEsMC0wLjEsMCYjeEE7Yy0wLjEsMC0wLjItMC4xLTAuMy0wLjJjMCwwLTAuMS0wLjEtMC4xLTAuMWMtMC4zLTAuMy0wLjQtMC42LTAuNi0wLjljMCwwLTAuMS0wLjEtMC4xLTAuMWMtMC4xLTAuMi0wLjEtMC4zLTAuMS0wLjQmI3hBO2MwLjQsMC4zLDAuNSwwLjQsMC43LDAuNGMwLDAsMC4xLDAsMC4xLDAuMWMwLjEsMC4xLDAuNCwwLjMsMC41LDAuNmMwLDAsMC4xLDAuMSwwLjEsMC4xYzAsMCwwLjEsMC4xLDAuMSwwLjEmI3hBO0MxMDcuMSw5OS43LDEwNy40LDk5LjgsMTA3LjYsMTAweiBNMTA2LjUsOTcuNWMwLjMsMC4xLDAuNiwwLjIsMC44LDAuM2wwLDBjMC4xLDAsMC4yLDAsMC40LDBjMC4xLDAsMC4zLDAsMC40LDAuMWwwLDAuMSYjeEE7YzAsMCwwLjEsMC4xLDAuMSwwLjFjMCwwLDAsMC4xLTAuMSwwLjFjLTAuMSwwLjEtMC4xLDAuMS0wLjIsMC4yYy0wLjEsMC4xLTAuNCwwLjMtMC43LDAuM2MtMC4xLTAuMS0wLjItMC4zLTAuMy0wLjQmI3hBO2MwLjEsMCwwLjEsMCwwLjEsMGMwLDAsMCwwLDAsMGMwLjEsMCwwLjItMC4xLDAuMi0wLjFjMC0wLjEsMC0wLjEsMC0wLjJjMC0wLjEtMC4xLTAuMS0wLjItMC4xbDAsMGgtMC4xYy0wLjEsMC0wLjIsMC0wLjMtMC4xJiN4QTtjMCwwLTAuMSwwLTAuMSwwYy0wLjMtMC4xLTAuOS0wLjUtMS4xLTAuN2MwLDAsMCwwLDAsMGMwLjItMC4xLDAuMy0wLjEsMC40LTAuMmMwLjEsMC4xLDAuMiwwLjIsMC4zLDAuMiYjeEE7QzEwNi4xLDk3LjMsMTA2LjMsOTcuNCwxMDYuNSw5Ny41eiBNMTAyLjQsOThjMCwwLTAuMywwLjMtMC40LDAuM2MwLDAtMC4yLDAuMi0wLjUsMC41Yy0wLjcsMC4zLTEtMC45LTAuNi0xLjZsMC0wLjEmI3hBO2MwLjItMC43LDAuNS0xLjIsMS4yLTEuNWMwLjQtMC4yLDAuNy0wLjMsMS4xLTAuM2MwLjIsMCwwLjQsMCwwLjcsMC4xbDAuMSwwYzAuNiwwLjEsMSwwLDEuNC0wLjFjMC4xLDAsMC4yLDAsMC4zLDAmI3hBO2MwLjIsMCwwLjUtMC4xLDAuNy0wLjFjMCwwLjEsMC4xLDAuMiwwLjEsMC4zYy0wLjEsMC4yLTAuNCwwLjYtMC45LDAuOGMtMC4yLDAuMS0xLDAuMy0xLjEsMC40Yy0wLjEsMC0wLjYsMC4yLTAuNywwLjImI3hBO0MxMDMuNSw5Ny4yLDEwMi40LDk4LDEwMi40LDk4eiBNMTA2LjgsMTA1LjdjLTAuMywwLjItMC45LDAuNi0xLjUsMGMtMC42LTAuNi0xLTEuOC0xLjMtMi42bDAsMGMtMC4xLTAuMi0wLjEtMC40LTAuMi0wLjUmI3hBO2MwLTAuMS0wLjEtMC4zLTAuMi0wLjZjLTAuMi0wLjUtMC41LTEuMi0wLjYtMS40YzAsMCwwLTAuMS0wLjEtMC4ybC0wLjItMC40Yy0wLjEtMC4zLTAuMy0wLjYtMC40LTAuOWMwLjMtMC4zLDEuNC0xLjIsMi40LTEuNCYjeEE7YzAuMSwwLjEsMC4xLDAuMywwLjIsMC42YzAsMC4yLDAuMSwwLjUsMC4yLDAuOGMwLjEsMC4zLDAuMiwwLjYsMC4zLDFsMC4yLDAuNmMwLjEsMC40LDAuMiwwLjksMC4zLDEuMyYjeEE7YzAuMSwwLjcsMC4yLDEuMSwwLjMsMS4yYzAuMywwLjMsMC43LDAuMSwxLjEsMGMwLjEsMCwwLjEtMC4xLDAuMi0wLjFjMC4yLDAsMC41LTAuMSwwLjktMC4zYzAsMCwwLDAuMSwwLjEsMC4xJiN4QTtjMC4xLDAuMSwwLjIsMC4zLDAuMiwwLjRjMC4xLDAuMiwwLjMsMC43LDAuNSwxQzEwOC43LDEwNC42LDEwNy41LDEwNS4zLDEwNi44LDEwNS43eiBNMTEwLDEwNGMtMC4xLDAtMC4xLDAuMS0wLjIsMC4xJiN4QTtjMCwwLDAsMC0wLjEsMGMtMC4xLTAuMi0wLjQtMC42LTAuNS0xLjFjLTAuMS0wLjItMC4yLTAuNC0wLjMtMC41YzAsMC0wLjEtMC4xLTAuMS0wLjFjMCwwLDAuMSwwLDAuMS0wLjFsMCwwJiN4QTtjMCwwLDAuMSwwLDAuMS0wLjFsMC4xLDBjMC4xLDAuMSwwLjEsMC4zLDAuMiwwLjRjMC4xLDAuMywwLjQsMC45LDAuNiwxLjJjMCwwLDAsMCwwLDBDMTEwLjEsMTAzLjksMTEwLjEsMTA0LDExMCwxMDR6JiN4QTsgTTExMC44LDEwMy40Yy0wLjEsMC0wLjEsMC4xLTAuMiwwLjFjMCwwLDAsMCwwLDBjLTAuMS0wLjItMC40LTAuNy0wLjYtMS4yYy0wLjEtMC4yLTAuMS0wLjMtMC4yLTAuNGMwLDAsMCwwLDAuMSwwbDAsMCYjeEE7YzAsMCwwLjEsMCwwLjEsMGwwLjItMC4xYzAsMCwwLDAsMC4yLDAuMmMwLjMsMC4zLDAuNCwwLjUsMC42LDAuOGMwLjEsMC4yLDAuMSwwLjMsMC4xLDAuM0wxMTAuOCwxMDMuNHogTTExMy43LDEwMC4xbC0wLjEsMC4xJiN4QTtjLTAuMSwwLjEtMC4xLDAuMS0wLjQsMC4yYy0wLjQsMC4zLTAuOSwxLTAuOSwxLjJjMCwwLjEsMCwwLjIsMC4xLDAuMmMwLjEsMC4xLDAuMSwwLjEsMC4yLDAuMWMwLjEsMCwwLjMtMC4yLDAuNC0wLjQmI3hBO2MwLDAsMCwwLDAsMGMwLjMtMC4zLDAuNS0wLjUsMC43LTAuNWMwLDAsMC4xLDAsMC4xLDBsMCwwYzAsMC4xLTAuMSwwLjEtMC4yLDAuMmMtMC4xLDAuMS0wLjMsMC4yLTAuNCwwLjRsMCwwJiN4QTtjLTAuMSwwLjEtMC4zLDAuNS0wLjQsMC42Yy0wLjMsMC4zLTAuNSwwLjQtMC44LDAuNWwtMC4yLDBjMCwwLTAuMSwwLTAuMiwwLjFjMC0wLjEtMC4xLTAuMi0wLjItMC4zYy0wLjItMC40LTAuMy0wLjYtMC42LTAuOSYjeEE7YzAtMC4xLTAuMS0wLjEtMC4yLTAuMmMwLDAsMC4xLTAuNiwwLjctMS4zYzAuNS0wLjYsMS4zLTAuOSwxLjUtMC44YzAsMCwwLDAsMCwwYy0wLjQsMC4xLTAuNywwLjMtMC45LDAuNmwtMC4xLDAuMSYjeEE7Yy0wLjEsMC4xLTAuMiwwLjItMC4zLDAuM2MtMC4xLDAuMi0wLjEsMC4yLTAuMSwwLjNjMCwwLDAuMSwwLjEsMC4xLDAuMWgwYzAuMSwwLDAuMSwwLDAuMS0wLjFjMC4zLTAuNCwxLjEtMS4xLDEuNi0xLjJsMC4xLDAmI3hBO2MwLjMtMC4xLDAuNCwwLjEsMC40LDAuMWMtMC40LDAtMC44LDAuMy0xLjEsMC42Yy0wLjEsMC0wLjEsMC4xLTAuMSwwLjFjLTAuMSwwLjEtMC4zLDAuMy0wLjQsMC40YzAsMCwwLDAtMC4xLDAuMWwwLDAuMSYjeEE7Yy0wLjEsMC4xLDAsMC4xLDAsMC4yYzAuMSwwLDAuMiwwLDAuMiwwbDAtMC4xYzAsMCwwLTAuMSwwLTAuMWMwLjEtMC4xLDAuMy0wLjMsMC4zLTAuM2MwLDAsMC4xLTAuMSwwLjEtMC4xbDAsMCYjeEE7YzAuMi0wLjEsMC41LTAuNCwwLjgtMC41QzExMy44LDk5LjgsMTEzLjgsMTAwLDExMy43LDEwMC4xeiI+PC9wYXRoPjxwb2x5Z29uIHBvaW50cz0iNzQuMywxMTMuNyA3NC45LDExMy40IDc0LjMsMTEyIDc1LDExMS43IDc1LjYsMTEzLjMgNzYuMiwxMTMgNzUuMiwxMTAuNiA3MiwxMTIgNzMsMTE0LjQgNzMuNiwxMTQuMSA3MywxMTIuNiAmI3hBOzczLjcsMTEyLjMgIj48L3BvbHlnb24+PHBhdGggZD0iTTc2LjEsMTE1LjhjMC0wLjMtMC4xLTAuNiwwLjEtMC43YzAuMi0wLjEsMC40LDAsMC41LDAuMmMwLjEsMC4xLDAuMSwwLjMsMC4xLDAuNGMwLDAuMS0wLjEsMC4yLTAuMiwwLjJsMC40LDAuOCYjeEE7YzAuOC0wLjMsMC43LTEuMSwwLjQtMS43Yy0wLjMtMC42LTAuOC0xLjItMS42LTAuOGMtMC4zLDAuMi0wLjYsMC41LTAuNSwwLjhjMCwwLjgsMC40LDEuNCwwLDEuNmMtMC4yLDAuMS0wLjQtMC4xLTAuNS0wLjMmI3hBO2MtMC4xLTAuMy0wLjEtMC42LDAuMi0wLjdsLTAuNC0wLjhjLTAuOSwwLjQtMC44LDEuMi0wLjQsMS45YzAuMywwLjcsMSwxLjIsMS42LDAuOUM3Ni41LDExNy4yLDc2LjIsMTE2LjQsNzYuMSwxMTUuOHoiPjwvcGF0aD48cG9seWdvbiBwb2ludHM9Ijc5LjEsMTIwIDc5LjcsMTE5LjcgNzguMiwxMTcgNzcuNiwxMTcuNCA3OC4xLDExOC4zIDc1LjYsMTE5LjcgNzYuMSwxMjAuNSA3OC42LDExOS4xICI+PC9wb2x5Z29uPjxwYXRoIGQ9Ik04MS44LDEyMy4xbC0wLjUtMC44bC0xLjgsMS4yYy0wLjQsMC4yLTAuNywwLjItMS0wLjJjLTAuMi0wLjQtMC4xLTAuNywwLjItMWwxLjgtMS4ybC0wLjUtMC44bC0xLjksMS4yJiN4QTtjLTAuOCwwLjYtMC43LDEuNC0wLjMsMi4xYzAuNSwwLjcsMS4yLDEuMSwyLDAuNkw4MS44LDEyMy4xeiI+PC9wYXRoPjxwYXRoIGQ9Ik04My4zLDEyNS4xbC0wLjktMS4xbC0yLjgsMi4xbDAuOSwxLjJjMC43LDAuOSwxLjUsMS4zLDIuNiwwLjVDODQuMSwxMjYuOSw4NCwxMjYsODMuMywxMjUuMXogTTgyLjUsMTI2LjkmI3hBO2MtMC42LDAuNC0xLjIsMC4zLTEuNS0wLjFsLTAuMy0wLjNsMS43LTEuM2wwLjMsMC4zQzgzLDEyNS45LDgzLDEyNi41LDgyLjUsMTI2Ljl6Ij48L3BhdGg+PHBvbHlnb24gcG9pbnRzPSI4NS4xLDEyNy4zIDgyLjQsMTI5LjYgODMsMTMwLjMgODUuNywxMjguMSAiPjwvcG9seWdvbj48cGF0aCBkPSJNODcuMSwxMjkuN2wtMy41LDEuNGwwLjYsMC43bDAuNy0wLjNsMC45LDFsLTAuNCwwLjZsMC43LDAuOGwxLjctMy40TDg3LjEsMTI5Ljd6IE04Ni45LDEzMC41bC0wLjgsMS4zbC0wLjYtMC43JiN4QTtMODYuOSwxMzAuNUw4Ni45LDEzMC41eiI+PC9wYXRoPjxwb2x5Z29uIHBvaW50cz0iOTIuNiwxMzUuMyA5MC4yLDEzNy45IDkyLDEzOS42IDkyLjUsMTM5LjEgOTEuMywxMzggOTMuMywxMzUuOSAiPjwvcG9seWdvbj48cGF0aCBkPSJNOTUuNiwxNDAuM2MtMC4yLDAuNC0wLjUsMC42LTAuOSwwLjRjLTAuNC0wLjItMC41LTAuNi0wLjMtMWwxLTJsLTAuOC0wLjRsLTEsMmMtMC40LDAuOSwwLjEsMS42LDAuOCwyJiN4QTtjMC44LDAuNCwxLjYsMC40LDIuMS0wLjVsMS0ybC0wLjgtMC40TDk1LjYsMTQwLjN6Ij48L3BhdGg+PHBhdGggZD0iTTk5LjMsMTQxLjljLTAuNSwwLTAuNy0wLjYtMC43LTEuMWMwLTAuNSwwLjEtMS4yLDAuNi0xLjJjMC40LDAsMC42LDAuMiwwLjcsMC41bDEsMGMwLTAuOS0wLjgtMS4yLTEuNy0xLjEmI3hBO2MtMSwwLjEtMS42LDAuNy0xLjUsMS45YzAsMS4yLDAuNiwxLjgsMS43LDEuOGMwLjgsMCwxLjYtMC40LDEuNi0xLjNsLTEsMEM5OS45LDE0MS42LDk5LjcsMTQxLjgsOTkuMywxNDEuOXoiPjwvcGF0aD48cG9seWdvbiBwb2ludHM9IjEwMywxMzcuNiAxMDMuNywxMzguOCAxMDIuNywxMzkuNCAxMDIsMTM4LjIgMTAxLjIsMTM4LjYgMTAzLDE0MS43IDEwMy44LDE0MS4yIDEwMywxNDAgMTA0LDEzOS40ICYjeEE7MTA0LjgsMTQwLjcgMTA1LjYsMTQwLjIgMTAzLjgsMTM3LjEgIj48L3BvbHlnb24+PHBhdGggZD0iTTEwNS44LDEzNS4xbC0wLjgsMC44bDEuNCwzLjVsMC43LTAuNmwtMC4zLTAuN2wxLTAuOWwwLjYsMC40bDAuOC0wLjdMMTA1LjgsMTM1LjF6IE0xMDYuNCwxMzcuNGwtMC43LTEuNHYwbDEuMywwLjgmI3hBO0wxMDYuNCwxMzcuNHoiPjwvcGF0aD48cG9seWdvbiBwb2ludHM9IjExMi42LDEyOC44IDExMi4xLDEyOC40IDExMC4xLDEzMC43IDExMC42LDEzMS4xIDExMS4zLDEzMC40IDExMy41LDEzMi4zIDExNC4xLDEzMS41IDExMS45LDEyOS42ICI+PC9wb2x5Z29uPjxwYXRoIGQ9Ik0xMTUuOCwxMjguM2MwLjIsMC4xLDAuNCwwLjMsMC43LDAuNGwwLjYtMC44Yy0wLjMtMC4xLTAuNS0wLjMtMC44LTAuNGMtMC41LTAuMy0wLjgtMC40LTEuMiwwLjFsMCwwJiN4QTtjMC4yLTAuNCwwLjMtMC45LTAuMS0xLjJjLTAuNi0wLjUtMS4yLDAtMS41LDAuNWwtMSwxLjJsMi44LDIuMmwwLjYtMC43bC0xLjEtMC45bDAuMi0wLjNDMTE1LjMsMTI4LDExNS40LDEyOC4xLDExNS44LDEyOC4zeiYjeEE7IE0xMTQuNCwxMjcuOWwtMC4yLDAuM2wtMC42LTAuNWwwLjItMC4zYzAuMi0wLjIsMC40LTAuNCwwLjctMC4yQzExNC44LDEyNy40LDExNC42LDEyNy43LDExNC40LDEyNy45eiI+PC9wYXRoPjxwYXRoIGQ9Ik0xMTUuOSwxMjMuNGwtMC43LDAuOWwyLjEsMy4xbDAuNS0wLjhsLTAuNC0wLjZsMC44LTEuMWwwLjcsMC4ybDAuNi0wLjlMMTE1LjksMTIzLjR6IE0xMTcuMSwxMjUuNWwtMC45LTEuMmwwLDAmI3hBO2wxLjQsMC41TDExNy4xLDEyNS41eiI+PC9wYXRoPjxwYXRoIGQ9Ik0xMjAuNiwxMjAuN2MtMC40LTAuMy0wLjktMC4xLTEuMiwwLjJoMGMwLjEtMC40LDAuMS0wLjgtMC4zLTFjLTAuNS0wLjMtMS4xLDAtMS40LDAuNWwtMC44LDEuNGwzLDEuOWwwLjgtMS40JiN4QTtDMTIwLjgsMTIyLjIsMTIxLjUsMTIxLjIsMTIwLjYsMTIwLjd6IE0xMTguOSwxMjEuM2wtMC4zLDAuNGwtMC42LTAuNGwwLjMtMC40YzAuMS0wLjIsMC4zLTAuMywwLjUtMC4xJiN4QTtDMTE5LDEyMC45LDExOSwxMjEuMSwxMTguOSwxMjEuM3ogTTEyMC4xLDEyMmwtMC4zLDAuNWwtMC43LTAuNGwwLjMtMC41YzAuMS0wLjIsMC4zLTAuMiwwLjUtMC4xJiN4QTtDMTIwLjIsMTIxLjYsMTIwLjMsMTIxLjgsMTIwLjEsMTIyeiI+PC9wYXRoPjxwYXRoIGQ9Ik0xMTkuNywxMTYuOGwtMC41LDFsMi41LDIuOGwwLjQtMC44bC0wLjUtMC41bDAuNi0xLjJsMC43LDAuMWwwLjUtMC45TDExOS43LDExNi44eiBNMTIxLjIsMTE4LjhsLTEuMS0xLjFsMCwwbDEuNSwwLjMmI3hBO0wxMjEuMiwxMTguOHoiPjwvcGF0aD48cGF0aCBkPSJNMTIzLjcsMTE0LjFsLTIuMy0xbC0wLjQsMC45bDIuMiwxYzAuMSwwLDAuNSwwLjIsMC4zLDAuNWMtMC4xLDAuMi0wLjQsMC4yLTAuNiwwLjFsLTAuNCwwLjljMC44LDAuNCwxLjMsMC4xLDEuNi0wLjYmI3hBO0MxMjQuNSwxMTUuMSwxMjQuNSwxMTQuNCwxMjMuNywxMTQuMXoiPjwvcGF0aD48cGF0aCBkPSJNMTI2LDExMS4ybDAuNC0xaC0zLjhsLTAuNCwxLjFsMi44LDIuNWwwLjMtMC45bC0wLjYtMC41bDAuNS0xLjNMMTI2LDExMS4yeiBNMTI0LjIsMTEybC0xLjItMXYwbDEuNSwwLjFMMTI0LjIsMTEyeiI+PC9wYXRoPjxwYXRoIGQ9Ik04OS4yLDEzNC4xYy0wLjQsMC0wLjcsMC4zLTAuNywwLjdjMCwwLjQsMC4zLDAuNywwLjcsMC43YzAuNCwwLDAuNy0wLjMsMC43LTAuN0M4OS45LDEzNC40LDg5LjYsMTM0LjEsODkuMiwxMzQuMXoiPjwvcGF0aD48cGF0aCBkPSJNMTA5LjcsMTMzLjdjLTAuNCwwLTAuNywwLjMtMC43LDAuN2MwLDAuNCwwLjMsMC43LDAuNywwLjdzMC43LTAuMywwLjctMC43QzExMC40LDEzNCwxMTAuMSwxMzMuNywxMDkuNywxMzMuN3oiPjwvcGF0aD48L2c+PC9nPjwvZz48Zz48Zz48Zz48cGF0aCBkPSJNMTk5LjgsMzQuNmg3LjNsMC4yLDM5LjJjMCwyLjYsMC45LDQuNSwyLjYsNS43YzEuOCwxLjIsNC4zLDEuOSw3LjUsMS45YzIuNiwwLDQuNi0wLjgsNi4yLTIuMiYjeEE7YzEuNy0xLjUsMi41LTMuOSwyLjUtNy4yVjM0LjZoNS4zdjM4LjVjMCw0LTEuNCw3LjEtNC40LDkuM2MtMi45LDIuMi03LDMuMy0xMi4zLDMuM2MtNS4xLDAtOS0xLjEtMTEuNi0zLjQmI3hBO2MtMi42LTIuMy0yLjktNS0yLjktOS40TDE5OS44LDM0LjZ6Ij48L3BhdGg+PHBhdGggZD0iTTIzOC4zLDQyLjFoNC4zbDIyLjMsMzJ2LTMyaDQuM3Y0M2gtNC4zbC0yMi4zLTMyLjN2MzEuN2gtNC4zVjQyLjF6Ij48L3BhdGg+PHBhdGggZD0iTTI4MC4xLDg0LjZWNDIuMWg1LjZ2NDIuNEgyODAuMXoiPjwvcGF0aD48cGF0aCBkPSJNMzI2LjQsNDIuMWwtMTQuMiw0My40aC0zLjhMMjk0LDQyLjFoNi41TDMxMS4zLDc3bDExLjMtMzQuOUgzMjYuNHoiPjwvcGF0aD48cGF0aCBkPSJNMzU4LjUsNDIuMXY5LjRoLTIuNWMwLTIuNy0wLjgtNC41LTIuNC01LjRjLTEuNi0wLjktNC4zLTEuNC04LjEtMS40aC01LjJ2MTAuOGgxMHYzLjFoLTEwdjIzLjRoNS43JiN4QTtjMy42LDAsNi4xLTAuNSw3LjYtMS41YzEuNi0xLDIuNC0yLjksMi40LTUuN2gyLjV2OS44aC0yMy44VjQyLjFIMzU4LjV6Ij48L3BhdGg+PHBhdGggZD0iTTM2OSw4NC42VjQyLjFoNS4xdjIuN2MxLjctMS4yLDMuNC0yLjEsNS0yLjdjMS43LTAuNiwzLjQtMC45LDUuMi0wLjljNC41LDAsOC4zLDEuNywxMS41LDUuMSYjeEE7YzMuMiwzLjQsNC44LDcuNCw0LjgsMTIuMWMwLDUtMS40LDkuMS00LjIsMTIuNGMtMi44LDMuMi02LjUsNS0xMS4yLDUuM2w3LjgsNC41YzguMyw0LjcsMTQuMiw3LjUsMTgsOC42JiN4QTtjMy42LDEsNS43LDEuNCwxMC42LDEuMWM1LjMsMCw5LjctMi4xLDEzLjYtNmwtMC4xLDIuNGMtNC4xLDUuNC05LjEsNi43LTE5LjEsNi43Yy01LjQsMC0xMC43LTIuNS0xOC45LTYuNSYjeEE7Yy04LjItNC0xNS44LTguNC0yMy0xM3YxMC42SDM2OXogTTM3NC4xLDQ4djIzLjRsMS4zLTIuMWMyLjEsMS41LDMuOSwyLjUsNS4zLDMuMWMxLjUsMC42LDIuOSwwLjksNC4yLDAuOSYjeEE7YzMuMiwwLDUuOC0xLjIsNy44LTMuNWMyLjEtMi40LDMuMS01LjQsMy4xLTkuMmMwLTQuNC0xLjMtOC4yLTQtMTEuNGMtMi43LTMuMi01LjgtNC44LTkuNC00LjhjLTEuNSwwLTMsMC4zLTQuNCwwLjkmI3hBO0MzNzYuNiw0NS44LDM3NS4zLDQ2LjcsMzc0LjEsNDh6Ij48L3BhdGg+PHBhdGggZD0iTTQyNi43LDUwLjdjMC0yLjUtMC41LTQuMi0xLjQtNS4yYy0xLTEuMS0yLjQtMS42LTQuMy0xLjZjLTEuNiwwLTIuOSwwLjQtMy45LDEuMWMtMSwwLjctMS42LDEuOC0xLjYsMy4zJiN4QTtjMCwxLjMsMC41LDIuNSwxLjUsMy42YzEsMS4xLDMuMSwyLjUsNi4zLDQuMmMwLjQsMC4yLDAuOCwwLjUsMS41LDAuOGM3LjgsNC4yLDExLjcsOC43LDExLjcsMTMuNWMwLDQuNS0xLjYsOC4xLTQuNywxMC45JiN4QTtjLTMuMSwyLjgtNy4zLDQuMS0xMi42LDQuMWMtNC40LDAtOC4xLTEuMi0xMS0zLjdjLTIuOS0yLjUtNC40LTUuNS00LjQtOS4xYzAtMy4xLDEtNS43LDMtNy44YzItMi4xLDQuNS0zLjEsNy41LTMuMSYjeEE7YzIuNiwwLDQuOCwwLjYsNi41LDJjMS44LDEuNCwyLjcsMywyLjcsNWMwLDEuNC0wLjUsMi42LTEuNCwzLjRjLTAuOSwwLjgtMi4yLDEuMy0zLjgsMS4zYy0wLjUsMC0wLjksMC0xLjItMC4xJiN4QTtjLTAuMy0wLjEtMC42LTAuMi0wLjktMC40bDAuMS0xLjFjMS4xLTAuMSwxLjktMC41LDIuNi0xLjJjMC43LTAuNywxLTEuNywxLTIuOGMwLTEuMy0wLjUtMi4yLTEuNS0yLjdjLTEtMC41LTIuMy0wLjgtMy45LTAuOCYjeEE7Yy0yLjEsMC0zLjksMC42LTUuMywxLjhjLTEuNCwxLjItMi4xLDMtMi4xLDUuNGMwLDMuMiwxLjMsNS43LDMuOSw3LjdjMi42LDEuOSw1LjcsMi45LDkuMywyLjljMy41LDAsNi40LTAuOSw4LjctMi42JiN4QTtjMi4zLTEuOCwzLjQtNC4yLDMuNC03LjNjMC0xLjktMC41LTMuNS0xLjYtNC45Yy0xLjEtMS40LTMuNC0zLTctNWMtMC40LTAuMi0xLTAuNi0xLjgtMWMtNi41LTMuNy05LjgtNy40LTkuOC0xMS4yJiN4QTtjMC0yLjYsMC45LTQuNywyLjctNi41YzEuOC0xLjgsNC0yLjcsNi41LTIuN2MxLDAsMS45LDAuMSwyLjgsMC40YzAuOCwwLjIsMS44LDAuNiwyLjcsMS4yaDEuOXY4SDQyNi43eiI+PC9wYXRoPjxwYXRoIGQ9Ik00NDUuNyw4NC42VjQyLjFoNS42djQyLjRINDQ1Ljd6Ij48L3BhdGg+PHBhdGggZD0iTTQ2MS44LDg0LjZWNDIuMWgzLjZjMS4yLDAsMi45LTAuMSw1LjItMC4yYzIuMi0wLjEsMy44LTAuMiw0LjgtMC4yYzYsMCwxMC45LDEuOSwxNC43LDUuOWMzLjgsNCw1LjgsOSw1LjgsMTUuMSYjeEE7YzAsNi4zLTIsMTEuNi02LjIsMTUuOGMtNC4xLDQuMi05LjQsNi4zLTE1LjcsNi4zYy0wLjgsMC0yLjMtMC4xLTQuMy0wLjJjLTItMC4xLTMuNi0wLjItNC44LTAuMkg0NjEuOHogTTQ2Ni42LDgwLjUmI3hBO2MxLjMsMC41LDIuNSwwLjgsMy43LDEuMWMxLjIsMC4yLDIuMywwLjQsMy40LDAuNGM1LDAuNCw5LjEtMS4xLDEyLjMtNC43YzMuMi0zLjYsNC44LTguMSw0LjgtMTMuNmMwLTUuNS0xLjYtMTAtNC45LTEzLjcmI3hBO2MtMy4zLTMuNy03LjMtNS4zLTEyLjItNC45Yy0xLDAtMi4xLDAuMS0zLjMsMC40Yy0xLjIsMC4zLTIuNCwwLjYtMy44LDEuMVY4MC41eiI+PC9wYXRoPjxwYXRoIGQ9Ik01MzMuNyw4NC42VjQyLjFoMy42YzEuMiwwLDIuOS0wLjEsNS4yLTAuMmMyLjItMC4xLDMuOC0wLjIsNC44LTAuMmM2LDAsMTAuOSwxLjksMTQuNyw1LjljMy44LDQsNS44LDksNS44LDE1LjEmI3hBO2MwLDYuMy0yLDExLjYtNi4yLDE1LjhjLTQuMSw0LjItOS40LDYuMy0xNS43LDYuM2MtMC44LDAtMi4zLTAuMS00LjMtMC4yYy0yLTAuMS0zLjYtMC4yLTQuOC0wLjJINTMzLjd6IE01MzguNSw4MC41JiN4QTtjMS4zLDAuNSwyLjUsMC44LDMuNywxLjFjMS4yLDAuMiwyLjMsMC40LDMuNCwwLjRjNSwwLjQsOS4xLTEuMSwxMi4zLTQuN2MzLjItMy42LDQuOC04LjEsNC44LTEzLjZjMC01LjUtMS42LTEwLTQuOS0xMy43JiN4QTtjLTMuMy0zLjctNy4zLTUuMy0xMi4yLTQuOWMtMSwwLTIuMSwwLjEtMy4zLDAuNGMtMS4yLDAuMy0yLjQsMC42LTMuOCwxLjFWODAuNXoiPjwvcGF0aD48cGF0aCBkPSJNNDk1LjgsODVsMTUuNS00My4zaDIuNmwxNSw0My4zaC02LjhsLTYuNC0yMC41aC05LjNMNDk5LjMsODVINDk1Ljh6IE01MDcuNSw2MGg2LjlsLTMuMy0xMC44TDUwNy41LDYweiI+PC9wYXRoPjwvZz48L2c+PC9nPjxnPjxnPjxnPjxwYXRoIGQ9Ik0xOTkuOSwxNjMuNFYxMjFoMy42YzEuMiwwLDIuOS0wLjEsNS4yLTAuMmMyLjItMC4xLDMuOC0wLjIsNC44LTAuMmM2LDAsMTAuOSwxLjksMTQuNyw1LjljMy44LDQsNS44LDksNS44LDE1LjEmI3hBO2MwLDYuMy0yLDExLjYtNi4yLDE1LjhjLTQuMSw0LjItOS40LDYuMy0xNS43LDYuM2MtMC44LDAtMi4zLTAuMS00LjMtMC4yYy0yLTAuMS0zLjYtMC4yLTQuOC0wLjJIMTk5Ljl6IE0yMDQuNywxNTkuNCYjeEE7YzEuMywwLjUsMi41LDAuOCwzLjcsMS4xYzEuMiwwLjIsMi4zLDAuNCwzLjQsMC40YzUsMC40LDkuMS0xLjEsMTIuMy00LjdjMy4yLTMuNiw0LjgtOC4xLDQuOC0xMy42YzAtNS41LTEuNi0xMC00LjktMTMuNyYjeEE7Yy0zLjMtMy43LTcuMy01LjMtMTIuMi00LjljLTEsMC0yLjEsMC4xLTMuMywwLjRjLTEuMiwwLjMtMi40LDAuNi0zLjgsMS4xVjE1OS40eiI+PC9wYXRoPjxwYXRoIGQ9Ik0yNjQsMTIxdjkuNGgtMi40YzAtMi43LTAuOC00LjUtMi40LTUuNGMtMS42LTAuOS00LjItMS40LTgtMS40aC01djEwLjhoOS44djMuMWgtOS44djIzLjRoNS41YzMuNSwwLDYtMC41LDcuNS0xLjUmI3hBO2MxLjYtMSwyLjMtMi45LDIuMy01LjdoMi40djkuOGgtMjMuNVYxMjFIMjY0eiI+PC9wYXRoPjwvZz48Zz48cGF0aCBkPSJNMzk4LjksMTIxdjM5LjZoMi4yYzIuOCwwLDYuNC0wLjIsNy45LTAuMmMyLjQsMCw0LjktMy4zLDQuNC03bDMsMC4xdjkuOGgtMjNWMTIxSDM5OC45eiI+PC9wYXRoPjxwYXRoIGQ9Ik00MjUuOSwxNjMuNFYxMjFoNS42djQyLjRINDI1Ljl6Ij48L3BhdGg+PHBhdGggZD0iTTQ0Mi4yLDEyMWgxMC4zbDkuNSwyMC40bDktMjAuNGg5LjV2NDIuNGgtNi44bDAtMzkuNmwtMTMsMjcuNmwtMTQtMjcuNnYzOS42aC00LjVWMTIxeiI+PC9wYXRoPjxwYXRoIGQ9Ik00ODUuMywxNjMuOWwxNS41LTQzLjNoMi42bDE1LDQzLjNoLTYuOGwtNi40LTIwLjVoLTkuM2wtNy4xLDIwLjVINDg1LjN6IE00OTcsMTM4LjloNi45bC0zLjMtMTAuOEw0OTcsMTM4Ljl6Ij48L3BhdGg+PHBhdGggZD0iTTM2MS41LDE2NC43Yy02LjYsMC0xMi0yLjEtMTYuMy02LjJjLTQuMy00LjItNi40LTkuNC02LjQtMTUuOGMwLTYuMSwyLjEtMTEuMyw2LjUtMTUuNWM0LjQtNC4zLDkuNy02LjQsMTUuOS02LjQmI3hBO2M2LjUsMCwxMS45LDIuMSwxNi40LDYuNGM0LjUsNC4zLDYuNyw5LjQsNi43LDE1LjVjMCw2LjItMi4xLDExLjQtNi41LDE1LjZDMzczLjUsMTYyLjUsMzY4LjEsMTY0LjcsMzYxLjUsMTY0Ljd6IE0zNjMuNCwxNjAuMiYjeEE7YzQuNywwLDguNC0xLjQsMTEuMy00LjFjMi45LTIuNyw0LjQtNi4zLDQuNC0xMC42YzAtMi42LTAuNC01LjEtMS40LTcuNmMtMS0yLjQtMi4zLTQuNy00LjItNi43Yy0yLTIuMi00LjItMy45LTYuNi01JiN4QTtjLTIuNC0xLjItNS0xLjctNy45LTEuN2MtNC4zLDAtNy44LDEuMy0xMC41LDQuMmMtMi43LDIuOC00LDYuNS00LDExLjFjMCwyLjcsMC40LDUuMiwxLjMsNy42YzAuOSwyLjQsMi4yLDQuNiwzLjksNi41JiN4QTtjMS45LDIuMSw0LDMuNyw2LjIsNC43QzM1OC4xLDE1OS42LDM2MC42LDE2MC4yLDM2My40LDE2MC4yeiI+PC9wYXRoPjwvZz48L2c+PHBhdGggZD0iTTMzMy42LDE1NS40bDEuOSwyLjNjLTIuNiwyLjMtNS40LDQtOC41LDUuMWMtMy4xLDEuMS02LjQsMS43LTEwLjEsMS43Yy03LjksMC0xNC4zLTIuNC0xOS40LTcuNGMtNS01LTcuNi0xMS4yLTcuNi0xOC43JiN4QTtjMC03LjMsMi42LTEzLjQsNy43LTE4LjRjNS4xLTUuMSwxMS40LTcuNiwxOC44LTcuNmMyLjUsMCw1LDAuMyw3LjUsMWMyLjUsMC43LDUsMS43LDcuNSwzLjFsMi4yLDEuNHY5LjNoLTIuMlYxMjcmI3hBO2MwLTMuMi0xLjUtNS44LTQuNS04Yy0zLjEtMi4yLTctMy4zLTExLjktMy4zYy01LjYsMC0xMC4xLDEuNi0xMy41LDVjLTMuMywzLjQtNSw4LjItNSwxNC40YzAsMy41LDAuNSw2LjgsMS42LDEwJiN4QTtjMS4xLDMuMiwyLjYsNiw0LjcsOC41YzIuMywyLjcsNC43LDQuNyw3LjQsNS44YzIuNywxLjEsNS43LDEuNyw4LjksMS43YzIuOCwwLDUuMy0wLjQsNy43LTEuMiYjeEE7QzMyOS4xLDE1OS4xLDMzMS40LDE1Ny42LDMzMy42LDE1NS40eiI+PC9wYXRoPjwvZz48L2c+PC9zdmc+" alt="Universidad de Colima" style="height:62px;filter:brightness(0) invert(1)">
+    <div style="text-align:right;color:#AEB8CA;font-size:17px">Facultad de Telemática · Ingeniería en Software<br>Programación Distribuida · Grupo H</div>
+  </div>
+  <div style="margin-top:auto;margin-bottom:auto">
+    <div class="k">Unidad III · Sesión 5 · Jueves 12 de noviembre</div>
+    <h1>Cuando su API depende<br>de la API de alguien más</h1>
+    <p class="lead" style="max-width:1000px">Hoy su API también hace peticiones: a una IA, a un servicio de correo, a una API pública. Y ese otro servidor puede tardar, fallar o responder cualquier cosa.</p>
+  </div>
+  <div class="mono" style="position:absolute;right:40px;bottom:30px;font-size:96px;font-weight:700;color:rgba(255,255,255,.05)">504 · 429 · 503</div>
+</section>
+
+<!-- 2 -->
+<section class="s" data-t="Lo que entregaron">
+  <div class="k">Lo que entregaron · sesión 4</div>
+  <h2>Las pruebas pasan. Dos ideas todavía no.</h2>
+  <div class="grid3" style="margin-bottom:14px">
+    <div class="card stat t"><div class="big">20/20</div><span>en todos los PDF revisados, con contraseñas en bcrypt (<code>$2b$</code> / <code>$2y$</code>)</span></div>
+    <div class="card stat r"><div class="big">6 de 10</div><span>fallaron “encargado con inventario 123”: era <b>422</b>. Pasadas las 4 preguntas de seguridad, siguen las reglas de los datos</span></div>
+    <div class="card stat"><div class="big">3 de 10</div><span>respondieron que el token “está cifrado”. No: <b>está firmado</b>. Cualquiera lo lee; nadie lo altera sin la clave</span></div>
+  </div>
+  <div class="ana">Las revisiones de PR mejoraron mucho: Said pidió cambios con lo que revisó punto por punto; Luis encontró un error real (la prueba 20 fallaba en la segunda corrida); Alberto pidió sacar el secreto JWT del código a una <b>variable de entorno</b>. Eso último es justo el tema de hoy.</div>
+  <div class="foot">Fuente: PDF de la Sesión 4 entregados al miércoles 11, 22:00</div>
+</section>
+
+<!-- 3 -->
+<section class="s" data-t="La unidad en el trabajo real">
+  <div class="k">La unidad completa, vista desde una empresa</div>
+  <h2 style="margin-bottom:6px;font-size:32px">Hoy: integraciones, lo que más hace un backend en la vida real</h2>
+  <table class="small mapa">
+    <tr><th style="width:12%">Sesión</th><th style="width:22%">Lo que hacemos</th><th style="width:24%">En una empresa se llama</th><th>Por qué se lo van a pedir</th></tr>
+    <tr><td class="c">1 · 29 oct</td><td>La ficha de endpoints</td><td>Diseño de la API (“API first”)</td><td>Front y back acuerdan el contrato antes de programar</td></tr>
+    <tr><td class="c">2 · 3 nov</td><td>Validación y prueba automática</td><td>Validación de entrada, CI, code review</td><td>Su código no entra si las pruebas no pasan</td></tr>
+    <tr><td class="c">3 · 5 nov</td><td>Base de datos y Swagger</td><td>Persistencia y documentación OpenAPI</td><td>Otros equipos usan su API leyendo el contrato</td></tr>
+    <tr><td class="c">4 · 10 nov</td><td>Login con JWT y roles</td><td>Autenticación y autorización</td><td>API1 y API2 del OWASP API Top 10</td></tr>
+    <tr class="now"><td class="c">5 · hoy</td><td>APIs de terceros y de IA</td><td>Integraciones</td><td>Pagos, correo, mapas, facturación e IA no se programan desde cero: se integran</td></tr>
+    <tr><td class="c">6 · 17 nov</td><td>Front y CORS</td><td>Integración front-back</td><td>Es de los primeros errores al conectar una página con una API</td></tr>
+    <tr><td class="c">7 · 19 nov</td><td>Pruebas y SOAP</td><td>QA automatizado y sistemas heredados</td><td>Bancos y gobierno siguen usando SOAP (SAT)</td></tr>
+    <tr><td class="c">8 · 24 nov</td><td>Despliegue</td><td>Deploy, variables de entorno, README</td><td>“En mi máquina sí funciona” no cuenta</td></tr>
+    <tr><td class="c">9 · 26 nov</td><td>Presentación</td><td>Demo y defensa técnica</td><td>Explicar su código ante el equipo o el cliente</td></tr>
+  </table>
+  <div class="foot">OWASP Foundation (2023), API10:2023 Unsafe Consumption of APIs</div>
+</section>
+
+<!-- 4 -->
+<section class="s" data-t="Los tickets">
+  <div class="k">Así llega el trabajo · los tickets de hoy</div>
+  <div class="tk2">
+    <div class="ticket">
+      <div class="th"><span class="id">INT-401</span><span class="tag r">Incidente</span><span class="tag a">Alta</span></div>
+      <h3>Cuando el servicio de correo tarda, la API se queda colgada… y luego manda el correo dos veces</h3>
+      <p>Un alumno recibió dos avisos del mismo préstamo; mientras tanto, nadie más podía pedir equipo.</p>
+      <ul class="ac">
+        <li>Ninguna llamada externa espera más de unos segundos.</li>
+        <li>Reintentar solo las fallas pasajeras.</li>
+        <li>Nunca dos correos del mismo préstamo.</li>
+      </ul>
+    </div>
+    <div class="ticket b">
+      <div class="th"><span class="id">FEAT-402</span><span class="tag b">Petición</span><span class="tag a">Media</span></div>
+      <h3>Que la IA clasifique la gravedad de cada reporte de falla de un equipo</h3>
+      <p>“Llegan muchos reportes; queremos ver primero los peligrosos.”</p>
+      <ul class="ac">
+        <li><code>POST /reportes</code> regresa gravedad alta, media o baja.</li>
+        <li>Si la IA falla o responde mal: error claro (502/504), no un 500.</li>
+        <li>La API key nunca está en el código.</li>
+      </ul>
+    </div>
+  </div>
+  <p style="margin-top:12px;font-size:20px">Ustedes harán <b>una integración</b> en su proyecto: con una API pública, con la IA o con el servicio de correo simulado.</p>
+  <div class="foot">Tickets de ejemplo con el formato que usan herramientas como Jira o GitHub Issues</div>
+</section>
+
+<!-- 5 -->
+<section class="s" data-t="La clase en un dibujo">
+  <div class="k">El mapa de hoy · si se pierden, regresen a esta slide</div>
+  <h2 style="margin-bottom:8px">Su API ahora también es cliente</h2>
+  <div class="chain">
+    <div class="nd">Usuario<small>app, página, Postman</small></div><div class="ar">→</div>
+    <div class="nd me">Su API<small>atiende al usuario… y mientras, pide a otro</small></div><div class="ar">→</div>
+    <div class="nd ex">Servicio externo<small>IA, correo, pagos, clima, tipo de cambio</small></div>
+  </div>
+  <table class="q4" style="margin-top:6px">
+    <tr><th>Regla</th><th>Qué significa</th><th>Si no la cumplen</th><th>Lo vemos en</th></tr>
+    <tr><td>1 · Timeout siempre</td><td>Esperar al externo unos segundos como máximo</td><td>Su API se cuelga con él</td><td>slides 7 a 9</td></tr>
+    <tr><td>2 · Reintentar con criterio</td><td>Solo lo pasajero (503, 429, timeout) y esperando cada vez más</td><td>Errores que se pudieron evitar, o saturar al otro</td><td>slides 10 a 12</td></tr>
+    <tr><td>3 · Sin duplicados</td><td>Si el reintento puede repetir algo, <code>Idempotency-Key</code></td><td>Dos correos, dos cobros</td><td>slides 13 y 14</td></tr>
+    <tr><td>4 · Desconfiar y cuidar</td><td>Validar lo que llega; la clave en una variable de entorno</td><td>500 con traceback; clave robada</td><td>slides 15 a 17</td></tr>
+  </table>
+  <div class="foot">En las demostraciones y en las pruebas, entre su API y el servicio externo hay un <b>simulador</b> que puede fallar a propósito</div>
+</section>
+
+<!-- 6 -->
+<section class="s dark" data-t="Gancho">
+  <div class="k">Antes de empezar · voten</div>
+  <h2 style="font-size:36px">Su API llama a la IA para cada petición.<br>Hoy la IA está saturada y tarda <span style="color:#F2C27B">30 segundos</span>.<br>¿Qué ve el usuario de <i>su</i> API?</h2>
+  <div class="vote">
+    <div><b>A</b>Espera 30 segundos y recibe su respuesta: es lento, pero funciona.</div>
+    <div><b>B</b>Recibe un error claro en pocos segundos y puede intentar más tarde.</div>
+    <div><b>C</b>Su API se queda esperando, y los demás usuarios también se quedan esperando.</div>
+  </div>
+  <p class="lead" style="margin-top:16px">Pista: ¿cuántas peticiones puede atender su API al mismo tiempo mientras espera?</p>
+  <div class="foot">Mano alzada: A, B o C · la respuesta al final</div>
+</section>
+
+<!-- 7 -->
+<section class="s" data-t="Su API como cliente">
+  <div class="k">Concepto 1 · el otro servidor no es suyo <button class="ref" data-ref="aws" aria-label="Ver referencia de timeouts">R</button></div>
+  <h2 style="margin-bottom:10px">Siempre con timeout: esperar, sí; esperar para siempre, no</h2>
+  <div class="an2">
+    <div class="card"><div class="who">La analogía</div><h3>Pedir un dato por teléfono</h3>
+      <p>Un cliente le pregunta algo; usted llama a otra oficina para averiguarlo. Si nadie contesta en 30 segundos, cuelga y le dice al cliente “ahorita no puedo, intente más tarde”.</p>
+      <p>Lo que no hace es quedarse con el teléfono pegado una hora mientras la fila de clientes crece.</p></div>
+    <div class="card"><div class="who">En su API</div><h3>Toda llamada remota lleva timeout</h3>
+      <p>Amazon: “una práctica recomendada… consiste en establecer un tiempo de espera para cualquier llamada remota”.</p>
+      <p>Si el externo no contesta a tiempo, su API responde <b>504 Gateway Timeout</b>. Si contesta mal, <b>502 Bad Gateway</b>. Nunca un 500 ni un usuario esperando sin saber.</p></div>
+  </div>
+  <div class="ana" style="margin-top:12px;font-size:19px"><b>Cómo lo vamos a probar:</b> su API lee la dirección del servicio externo de una variable de entorno, <code>EXTERNO_URL</code>. Para las pruebas la apuntamos al <b>simulador</b> (<code>http://127.0.0.1:9000</code>), que reenvía al servicio real… o falla a propósito cuando se lo pedimos. En la industria se usan herramientas así (por ejemplo, Toxiproxy).</div>
+  <div class="foot">Brooker, M. (s.f.), Timeouts, retries, and backoff with jitter. Amazon Builders’ Library</div>
+</section>
+
+<!-- 8 -->
+<section class="s" data-t="En vivo: su API llama a la IA">
+  <div class="k">En vivo · FEAT-402 · nuestra API le pregunta a Gemini</div>
+  <h2 style="margin-bottom:10px">Su API recibe un reporte y le pide a la IA que lo clasifique</h2>
+  <div class="live" data-live="ia"></div>
+  <div class="foot">Con <code>GEMINI_API_KEY</code> la clasificación la hace Gemini de verdad; sin ella, el simulador responde algo parecido</div>
+</section>
+
+<!-- 9 -->
+<section class="s" data-t="En vivo: timeout">
+  <div class="k">En vivo · regla 1 · el externo tarda 20 segundos</div>
+  <h2 style="margin-bottom:10px">¿Cuánto espera nuestra API? Lo decidimos nosotros</h2>
+  <div class="live" data-live="timeout"></div>
+  <div class="foot">En el ejemplo: 2 s por intento, 3 intentos; en total, menos de 10 s (la prueba 22 lo revisa)</div>
+</section>
+
+<!-- 10 -->
+<section class="s" data-t="Reintentar con criterio">
+  <div class="k">Concepto 2 · reintentar sí, pero con criterio <button class="ref" data-ref="aws" aria-label="Ver referencia de reintentos">R</button></div>
+  <h2 style="margin-bottom:8px">Solo lo pasajero, y esperando cada vez un poco más</h2>
+  <div class="diff">
+    <div><h3 style="color:var(--teal-ink)">✓ Se reintenta (puede arreglarse solo)</h3>
+      <table class="stk"><tr><td>Timeout / sin conexión</td><td>el otro está lento o se reinició</td></tr><tr><td>429 Too Many Requests</td><td>vas muy rápido: espera lo que diga <code>Retry-After</code></td></tr><tr><td>500 · 502 · 503 · 504</td><td>falla del otro lado, a veces momentánea</td></tr></table></div>
+    <div><h3 style="color:var(--red-ink)">✗ No se reintenta (seguirá igual)</h3>
+      <table class="stk"><tr><td>400 · 422</td><td>lo que mandaste está mal</td></tr><tr><td>401 · 403</td><td>tu clave no sirve o no tiene permiso</td></tr><tr><td>404</td><td>eso no existe</td></tr></table></div>
+  </div>
+  <div class="grid2" style="margin-top:12px">
+    <div class="ana" style="font-size:18.5px"><b>Backoff:</b> esperar 0.5 s, luego 1 s, luego 2 s… y rendirse (3 intentos en el ejemplo). Amazon: “los reintentos son egoístas”: si el otro está saturado, reintentar de inmediato lo empeora.</div>
+    <div class="ana" style="font-size:18.5px"><b>Jitter:</b> sumar un poco de azar a la espera. Si mil clientes fallan a la vez y todos reintentan exactamente al segundo, vuelven a chocar juntos. El azar “distribuye los reintentos en el tiempo”.</div>
+  </div>
+  <div class="foot">Brooker, M. (s.f.), Amazon Builders’ Library · los números (0.5 s, 3 intentos) son del ejemplo; cada sistema elige los suyos</div>
+</section>
+
+<!-- 11 -->
+<section class="s" data-t="En vivo: reintentos">
+  <div class="k">En vivo · regla 2 · fallas pasajeras</div>
+  <h2 style="margin-bottom:10px">El externo falla una vez… y el usuario ni se entera</h2>
+  <div class="live" data-live="reintentos"></div>
+  <div class="foot">El simulador anota cada llamada y los segundos entre una y otra</div>
+</section>
+
+<!-- 12 -->
+<section class="s" data-t="En vivo: no reintentar">
+  <div class="k">En vivo · reglas 2 y 4 · lo que no se arregla reintentando <button class="ref" data-ref="owasp10" aria-label="Ver referencia de OWASP API10">R</button></div>
+  <h2 style="margin-bottom:10px">Un 400 no se reintenta. Una respuesta basura se valida.</h2>
+  <div class="live" data-live="noreintentar"></div>
+  <div class="foot">OWASP API10:2023: “validen siempre y depuren los datos recibidos de las APIs integradas antes de usarlos”</div>
+</section>
+
+<!-- 13 -->
+<section class="s" data-t="Idempotencia, de vuelta">
+  <div class="k">Concepto 3 · la idempotencia de la sesión 1, ahora en serio <button class="ref" data-ref="stripe" aria-label="Ver referencia de Stripe">R</button></div>
+  <h2 style="margin-bottom:10px">Cuando el reintento hace daño: el correo sí salió</h2>
+  <div class="tl">
+    <div><b>1</b>Su API pide: “manda el correo del préstamo 41”.</div>
+    <div class="ok"><b>2</b>El servicio <b>sí lo manda</b>… pero su respuesta tarda.</div>
+    <div class="bad"><b>3</b>Su API llega a su timeout: no sabe si salió.</div>
+    <div class="bad"><b>4</b>Reintenta: <b>segundo correo</b>. Con un cobro, segundo cargo.</div>
+  </div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="ana" style="font-size:19px"><b>La solución:</b> mandar el encabezado <code>Idempotency-Key</code> con <b>la misma llave en todos los intentos</b> (por ejemplo <code>prestamo-41</code>). El servicio recuerda las llaves: si ve una repetida, regresa la respuesta de la primera vez y <b>no repite la acción</b>.</div>
+    <div class="ana" style="font-size:19px">Stripe lo hace así con los cobros, y AWS con muchas de sus APIs. Es la frase de la sesión 1: <b>“1 vez o 10 veces, los datos terminan igual”</b>. Con llave, reintentar se vuelve seguro.</div>
+  </div>
+  <div class="foot">Stripe (s.f.), Idempotent requests · Featonby, M. (s.f.), Making retries safe with idempotent APIs</div>
+</section>
+
+<!-- 14 -->
+<section class="s" data-t="En vivo: INT-401">
+  <div class="k">En vivo · regla 3 · reproducimos INT-401</div>
+  <h2 style="margin-bottom:10px">Sin llave: dos correos. Con llave: uno.</h2>
+  <div class="live" data-live="correo"></div>
+  <div class="foot">El servicio de correo es simulado: cuenta los correos que “manda”</div>
+</section>
+
+<!-- 15 -->
+<section class="s" data-t="La IA es una API">
+  <div class="k">Concepto 4 · la IA es una API HTTP más… con trampas propias <button class="ref" data-ref="gemini" aria-label="Ver referencia de Gemini">R</button></div>
+  <h2 style="margin-bottom:8px">Una petición POST con texto; una respuesta JSON que hay que revisar</h2>
+  <div class="grid2" style="grid-template-columns:1.1fr 1fr;gap:14px">
+    <div class="code" style="font-size:14px;padding:12px 16px;line-height:1.45">POST https://generativelanguage.googleapis.com
+     /v1beta/models/<span class="new">gemini-flash-lite-latest</span>:generateContent
+x-goog-api-key: <span class="new">(de la variable GEMINI_API_KEY)</span>
+
+{"contents": [{"parts": [{"text":
+   "Clasifica... responde SOLO un JSON
+    {gravedad, resumen}. Reporte: ..."}]}],
+ "generationConfig":
+   {"responseMimeType": "application/json"}}
+
+<span class="cm"># respuesta: el texto viene aquí adentro</span>
+candidates[0].content.parts[0].text
+  → '{"gravedad": "alta", "resumen": "..."}'</div>
+    <div class="chk" style="grid-template-columns:1fr">
+      <div><b>No es determinista.</b> La misma pregunta puede dar respuestas distintas, o un JSON incompleto. <b>Validen</b> cada campo, como si lo mandara un usuario.</div>
+      <div><b>Cobra y limita.</b> Se paga por tokens; el nivel gratuito tiene límite por minuto: <b>429</b>.</div>
+      <div><b>Tarda segundos.</b> Mucho más que su base de datos: timeout y mensaje claro.</div>
+      <div><b>Se lleva lo que le manden.</b> Nada de contraseñas ni datos personales en el prompt: solo lo necesario.</div>
+    </div>
+  </div>
+  <div class="foot">Google (s.f.), Gemini API · el modelo se configura con <code>GEMINI_MODELO</code>: los nombres cambian con frecuencia</div>
+</section>
+
+<!-- 16 -->
+<section class="s" data-t="Secretos">
+  <div class="k">Regla 4 · la API key es una contraseña con tarjeta de crédito <button class="ref" data-ref="twelve" aria-label="Ver referencia de doce factores">R</button></div>
+  <h2 style="margin-bottom:10px">La clave vive en una variable de entorno, nunca en el código</h2>
+  <div class="diff">
+    <div><h3>✗ Así se filtran</h3><div class="code">GEMINI_API_KEY = "AIzaSyD...<span style="color:#F29A87">la clave real</span>"
+<span class="cm"># git add . && git push  → pública para siempre</span>
+<span class="cm"># en el front (JavaScript): cualquiera la ve con F12</span></div></div>
+    <div><h3>✓ Así</h3><div class="code"><span class="cm"># el código solo la LEE</span>
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+<span class="cm"># Windows: variables de entorno (o un archivo .env</span>
+<span class="cm"># que está en .gitignore y nunca se sube)</span></div></div>
+  </div>
+  <div class="grid2" style="margin-top:12px">
+    <div class="ana" style="font-size:19px"><b>La prueba de los doce factores:</b> ¿podrían publicar su código hoy mismo “sin comprometer ninguna credencial”? Si la respuesta es no, hay una clave donde no debe.</div>
+    <div class="ana" style="font-size:19px"><b>El front nunca llama a la IA directo:</b> llama a <i>su</i> API, y su API (en el servidor) llama a la IA con la clave. Si una clave se filtra: revóquenla y generen otra, no basta con borrarla del repositorio.</div>
+  </div>
+  <div class="foot">Wiggins, A. (s.f.), The Twelve-Factor App, III. Config · OWASP API10:2023</div>
+</section>
+
+<!-- 17 -->
+<section class="s" data-t="En vivo: la clave">
+  <div class="k">En vivo · regla 4 · ¿dónde está la clave?</div>
+  <h2 style="margin-bottom:10px">La API la usa, pero no aparece en ningún archivo</h2>
+  <div class="live" data-live="secretos"></div>
+  <div class="foot">Bots automatizados rastrean GitHub buscando claves recién subidas</div>
+</section>
+
+<!-- 18 -->
+<section class="s" data-t="El código">
+  <div class="k">Así se ve en el código · <code>llamar_externo()</code> en <code>api_equipos.py</code></div>
+  <h2 style="margin-bottom:8px">Una función para todas las llamadas externas</h2>
+  <div class="code" style="font-size:14px;padding:12px 18px;line-height:1.42">def llamar_externo(metodo, url, cuerpo=None, encabezados=None, llave=None):
+    for intento in range(1, INTENTOS + 1):                    <span class="cm"># INTENTOS = 3</span>
+        req = urllib.request.Request(url, data=..., method=metodo)
+<span class="new">        if llave: req.add_header("Idempotency-Key", llave)      # misma llave en cada intento</span>        try:
+<span class="new">            with urllib.request.urlopen(req, timeout=TIMEOUT) as r:  # TIMEOUT = 2 s</span>                estado, texto = r.status, r.read()
+        except urllib.error.HTTPError as e:   estado, texto = e.code, e.read()
+        except (URLError, socket.timeout, ...): estado, texto = None, b""    <span class="cm"># no contestó a tiempo</span>
+<span class="new">        if estado is not None and estado not in {429, 500, 502, 503, 504}:</span><span class="new">            break                                             # éxito, o un error que NO se reintenta</span>        if intento &lt; INTENTOS:
+<span class="new">            time.sleep(0.5 * 2 ** (intento - 1) + random.uniform(0, 0.2))   # backoff + jitter</span>    if estado is None:        raise HTTPException(504, "El servicio externo no respondió a tiempo")
+    if estado &gt;= 400:         raise HTTPException(502, "El servicio externo falló o rechazó la petición")
+<span class="new">    try: return json.loads(texto)                             # validar: ¿de verdad es JSON?</span>    except ValueError: raise HTTPException(502, "El servicio externo respondió algo que no es JSON")</div>
+  <p style="font-size:18px;margin:10px 0 0">Después, <code>reportar_falla()</code> valida que la IA haya respondido <code>gravedad</code> en {alta, media, baja}. Si no: 502. <span class="pill warn">ámbar = las 4 reglas</span></p>
+  <div class="foot">Simplificado para la slide; el archivo completo tiene los comentarios y el manejo de <code>Retry-After</code></div>
+</section>
+
+<!-- 19 -->
+<section class="s" data-t="En sus lenguajes">
+  <div class="k">En sus lenguajes · y qué integración puede hacer cada equipo</div>
+  <h2 style="margin-bottom:8px">El timeout se escribe distinto; la idea es la misma</h2>
+  <table class="stk">
+    <tr><th style="width:15%">Stack</th><th style="width:42%">Llamada con timeout</th><th>Dirección y clave</th></tr>
+    <tr><td>FastAPI</td><td><code>urllib.request.urlopen(req, timeout=2)</code> o <code>httpx.post(url, timeout=2)</code></td><td><code>os.environ.get("EXTERNO_URL", "https://…")</code></td></tr>
+    <tr><td>Express</td><td><code>fetch(url, { signal: AbortSignal.timeout(2000) })</code></td><td><code>process.env.EXTERNO_URL ?? 'https://…'</code></td></tr>
+    <tr><td>PHP</td><td><code>curl_setopt($ch, CURLOPT_TIMEOUT, 2)</code></td><td><code>getenv('EXTERNO_URL') ?: 'https://…'</code></td></tr>
+  </table>
+  <table class="stk" style="margin-top:12px">
+    <tr><th style="width:24%">Equipo</th><th>Integración sugerida (pueden elegir otra)</th></tr>
+    <tr><td>Travel Planer</td><td>Clima del destino con una API pública sin clave (por ejemplo, Open-Meteo)</td></tr>
+    <tr><td>MiniPoS · Katea</td><td>Precio en dólares con una API de tipo de cambio, o la IA sugiere la descripción de un producto</td></tr>
+    <tr><td>Nexus</td><td>Datos de la película a partir del id de IMDb que ya usan (por ejemplo, OMDb, con clave gratuita)</td></tr>
+    <tr><td>Gestor de tareas</td><td>La IA sugiere la prioridad de una tarea a partir de su título</td></tr>
+    <tr><td>Citas · Registro · PLOTO</td><td>Correo de confirmación con <code>Idempotency-Key</code> al servicio de correo simulado (<code>POST /correos</code>)</td></tr>
+  </table>
+  <div class="foot">Ejemplos completos para Node y PHP en la guía · Citas médicas: nada de datos de salud a una IA externa</div>
+</section>
+
+<!-- 20 -->
+<section class="s" data-t="probar_api v4">
+  <div class="k">En vivo · las pruebas crecen · <code>probar_api.py</code> versión 4</div>
+  <h2 style="margin-bottom:6px">25 pruebas: las 20 de antes y 5 de integración</h2>
+  <p style="font-size:17.5px;margin:0 0 10px"><b>21</b> externo normal → 2xx · <b>22</b> externo lento → su API responde en menos de 10 s con 502/504 · <b>23</b> falla una vez → reintenta y da 2xx · <b>24</b> responde 400 → no reintenta · <b>25</b> responde basura → 502 en JSON. Arranquen su API con <code>set EXTERNO_URL=http://127.0.0.1:9000</code>; la prueba arranca el simulador sola.</p>
+  <div class="live row" data-live="probar"></div>
+  <div class="foot">Probado: una API sin timeout, sin reintentos ni validación falla la 22, la 23 y la 25</div>
+</section>
+
+<!-- 21 -->
+<section class="s dark" data-t="¿Lo entendiste tú?">
+  <div class="k">Antes de programar · ¿lo entendiste tú o lo entendió la IA?</div>
+  <h2 style="margin-bottom:10px;font-size:33px">Al terminar, contesten esto señalando su código</h2>
+  <div class="chk" style="margin-bottom:12px">
+    <div style="background:#1C2331;border-color:#3A4458;color:#E7ECF5"><b>1.</b> ¿Cuántos segundos espera su API al externo y en qué línea está ese número?</div>
+    <div style="background:#1C2331;border-color:#3A4458;color:#E7ECF5"><b>2.</b> ¿Qué códigos reintentan y cuáles no? ¿Por qué?</div>
+    <div style="background:#1C2331;border-color:#3A4458;color:#E7ECF5"><b>3.</b> ¿Qué responde su API si el externo tarda? ¿Y si responde basura?</div>
+    <div style="background:#1C2331;border-color:#3A4458;color:#E7ECF5"><b>4.</b> ¿Dónde está su clave y cómo llega al código?</div>
+    <div style="background:#1C2331;border-color:#3A4458;color:#E7ECF5"><b>5.</b> Si su integración reintenta, ¿puede duplicar algo? ¿Cómo lo evitan?</div>
+    <div style="background:#1C2331;border-color:#3A4458;color:#E7ECF5"><b>6.</b> ¿Qué datos le mandan al servicio externo, y por qué ninguno más?</div>
+  </div>
+  <div class="card" style="background:#1C2331;border-color:#3A4458;color:#E7ECF5"><h3 style="color:#7FD4C9">Úsenla como compañero que revisa</h3><p style="font-size:18.5px;margin:6px 0 0">Hoy además van a <b>programar con</b> una IA desde su código. Les va a quedar claro que responde distinto cada vez y que hay que revisarla: lo mismo aplica cuando la usan para escribir su código.</p></div>
+  <div class="foot">Estas preguntas están en el bloque 05 del artefacto y en la lista del revisor del PR</div>
+</section>
+
+<!-- 22 -->
+<section class="s" data-t="Práctica">
+  <div class="k">Práctica · con su equipo · en su lenguaje</div>
+  <h2 style="margin-bottom:8px">Una integración en su proyecto, a prueba de fallas</h2>
+  <div class="grid2" style="grid-template-columns:1.1fr 1fr;gap:16px">
+    <div class="steps" style="gap:8px">
+      <div style="font-size:18px"><b>Bloques 01 y 02:</b> ¿reintentar o no? y arma la petición a la IA (individual, 10 min).</div>
+      <div style="font-size:18px"><b>Bloque 03, en equipo:</b> elijan su integración y llenen su ficha: qué servicio, qué ruta de su API, timeout, qué reintentan, qué datos mandan.</div>
+      <div style="font-size:18px"><b>Rama</b> <code>integracion-externa</code>: la dirección en <code>EXTERNO_URL</code>, la clave en una variable de entorno, las 4 reglas.</div>
+      <div style="font-size:18px"><b>Pruebas:</b> <code>"externo"</code> en <code>prueba.json</code>; su API con <code>EXTERNO_URL=http://127.0.0.1:9000</code>; dos corridas, hasta 25 de 25.</div>
+      <div style="font-size:18px"><b>PR</b> revisado con la lista. Bloques 04 a 06 y cada quien su PDF.</div>
+    </div>
+    <div class="card" style="padding:12px 18px"><h3 style="font-size:20px;margin:0 0 6px">Lista del revisor del PR</h3>
+      <ul class="tight" style="font-size:16.5px;line-height:1.4">
+        <li>¿Toda llamada externa tiene timeout?</li>
+        <li>¿Solo se reintentan 429, 5xx y timeouts, con espera?</li>
+        <li>¿Lo que puede duplicarse lleva <code>Idempotency-Key</code>?</li>
+        <li>¿Se valida la respuesta antes de usarla?</li>
+        <li>¿La clave sale de una variable de entorno y <code>.env</code> está en <code>.gitignore</code>?</li>
+        <li>¿Solo se mandan los datos necesarios (nada personal)?</li>
+      </ul></div>
+  </div>
+  <div class="ana" style="margin-top:12px;font-size:19.5px">Entrega: <b>viernes 13 de noviembre, hasta las 23:59</b>. Apóyense en <code>guia_u3s5.html</code> (paso a paso en sus tres lenguajes).</div>
+  <div class="foot">Cada integrante corre probar_api.py con su propia matrícula</div>
+</section>
+
+<!-- 23 -->
+<section class="s" data-t="Dónde apoyarse">
+  <div class="k">Si se atoran · en este orden</div>
+  <h2 style="margin-bottom:10px">Dónde apoyarse para entender, no solo para que funcione</h2>
+  <div class="src">
+    <div><b>1 · La guía de la sesión</b><code>guia_u3s5.html</code>: el dibujo, glosario, los pasos en Python, Node y PHP, cómo usar el simulador y los errores frecuentes.</div>
+    <div><b>2 · Estas slides, en su máquina</b><code>clase-s5.zip</code> → <code>python puente.py</code>. Repitan cada paso; jueguen con los modos del simulador.</div>
+    <div><b>3 · El ejemplo completo</b><code>api_equipos.py</code> y los fragmentos de Node y PHP de la guía, probados contra el simulador.</div>
+    <div><b>4 · Documentación oficial</b>La de la API que integren (límites, códigos de error, formato). Gemini: “Using Gemini API keys” y la referencia de <code>generateContent</code>.</div>
+    <div><b>5 · Por qué</b>Amazon Builders’ Library (timeouts, reintentos y jitter), Stripe (idempotencia) y OWASP API10:2023.</div>
+    <div><b>6 · Su equipo y el profe</b>Pregunten con el error exacto, la línea y el modo del simulador en el que falla.</div>
+  </div>
+  <div class="ana" style="margin-top:12px;font-size:19px">El simulador también sirve suelto: <code>python simulador.py</code> y prueben su API a mano cambiando el modo con <code>POST /_control</code>.</div>
+  <div class="foot">Los enlaces están en la guía y en la última slide</div>
+</section>
+
+<!-- 24 -->
+<section class="s" data-t="Entrevista">
+  <div class="k">Para no llegar novatos · preguntas típicas de una entrevista de backend</div>
+  <h2 style="margin-bottom:10px">Después de hoy, ya las pueden contestar</h2>
+  <div class="iv">
+    <div><b>“¿Qué haces si el servicio del que depende tu API se cae o tarda?”</b><span>Timeout en cada llamada, reintentos solo en fallas pasajeras con backoff y jitter, y si no se recupera, 502/504 claros: mi API no se cae con él.</span></div>
+    <div><b>“¿Siempre reintentas?”</b><span>No: un 400 o un 404 no se arreglan solos. Y si la operación tiene efectos (cobrar, enviar), solo con Idempotency-Key.</span></div>
+    <div><b>“¿Dónde guardas las API keys?”</b><span>En variables de entorno o un gestor de secretos; nunca en el repositorio ni en el front. Si se filtra, se revoca.</span></div>
+    <div><b>“¿Qué cuidas al integrar un modelo de IA?”</b><span>Validar su salida porque no es determinista, timeouts, límites y costo por tokens, y no mandarle datos personales.</span></div>
+    <div><b>“¿502 o 504?”</b><span>502: el servidor del que dependo respondió algo inválido o un error. 504: no respondió a tiempo.</span></div>
+  </div>
+  <div class="foot">Contéstenlas con un ejemplo de su propio proyecto</div>
+</section>
+
+<!-- 25 -->
+<section class="s dark" data-t="Cierre">
+  <div class="k">Cierre · el gancho</div>
+  <h2>¿Qué ve el usuario? <span style="color:#4FD1C5">Debería ser la B.</span></h2>
+  <div class="grid2">
+    <div>
+      <p>Sin timeout, pasa la A en el mejor caso… y la C en el peor: cada petición que espera ocupa a su servidor, y con suficientes peticiones esperando, nadie más es atendido. Con timeout, reintentos con criterio y un 504 claro, el usuario recibe la B en pocos segundos.</p>
+      <p style="margin-top:10px">¿Cuántos votaron por la A pensando “es lento pero funciona”?</p>
+    </div>
+    <div class="card" style="background:#1C2331;border-color:#3A4458;color:#fff">
+      <h3>Llévense esto</h3>
+      <ul class="tight" style="color:#D6DDEA">
+        <li>Toda llamada remota lleva timeout.</li>
+        <li>Se reintenta solo lo pasajero, esperando más cada vez.</li>
+        <li>Si reintentar puede duplicar algo: Idempotency-Key.</li>
+        <li>Lo que llega de afuera se valida; las claves viven fuera del código.</li>
+      </ul>
+      <p style="margin-top:14px;color:#AEB8CA">Martes 17: <b>Front y CORS</b>. Una página web llamando a su API.</p>
+    </div>
+  </div>
+  <div class="foot">Unidad III · Sesión 5</div>
+</section>
+
+<!-- 26 -->
+<section class="s" data-t="Hazlo tú">
+  <div class="k">Apéndice · las demostraciones en tu computadora</div>
+  <h2 style="margin-bottom:12px">Hazlo tú: las mismas slides, ejecutando en tu máquina</h2>
+  <div class="grid2" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)">
+    <div class="card" style="padding:14px 20px">
+      <ol style="font-size:18.5px;line-height:1.45;margin:0;padding-left:24px">
+        <li>Descarga <code>clase-s5.zip</code> y descomprímelo.</li>
+        <li>En la carpeta, escribe <code>cmd</code> en la barra de dirección del Explorador.</li>
+        <li>Solo la primera vez: <code>pip install fastapi uvicorn pyjwt bcrypt</code></li>
+        <li>Opcional, para la IA real: crea tu clave en <b>aistudio.google.com/apikey</b>, guárdala en la variable <code>GEMINI_API_KEY</code> y abre un cmd nuevo. Pruébala con <code>python probar_gemini.py</code>.</li>
+        <li><code>python puente.py</code>: arranca el simulador, la API y abre las slides.</li>
+      </ol>
+    </div>
+    <div>
+      <p class="lbl2">A mano, en cmd</p>
+      <div class="term" style="font-size:14px;white-space:pre-wrap;word-break:break-all">python simulador.py
+
+<span class="cm">:: en otra ventana</span>
+set EXTERNO_URL=http://127.0.0.1:9000
+uvicorn api_equipos:app --port 8000
+
+<span class="cm">:: en otra: poner el simulador lento</span>
+curl.exe -X POST http://127.0.0.1:9000/_control -H "Content-Type: application/json" -d "{\"modo\":\"lento\"}"</div>
+    </div>
+  </div>
+  <div class="foot">Sin GEMINI_API_KEY todo funciona igual: el simulador responde como si fuera la IA</div>
+</section>
+
+<!-- 27 -->
+<section class="s" data-t="Apéndice: si algo falla">
+  <div class="k">Apéndice · Si algo falla</div>
+  <h2 style="margin-bottom:10px;font-size:34px">Lo que pueden ver hoy</h2>
+  <table class="small">
+    <tr><th style="width:42%">Mensaje o síntoma</th><th>Qué pasa y qué hacer</th></tr>
+    <tr><td class="mono" style="font-size:14.5px">[X ] 21 … ¡su API no pasó por el simulador!</td><td>Arrancaron la API sin <code>EXTERNO_URL=http://127.0.0.1:9000</code>, o su código no lee esa variable.</td></tr>
+    <tr><td class="mono" style="font-size:14.5px">[X ] 22 … su API no respondió en 15 s</td><td>Falta el timeout en la llamada externa. <i>(reproducido)</i></td></tr>
+    <tr><td class="mono" style="font-size:14.5px">[X ] 23 … (no reintentó)</td><td>No hay reintentos para 503. <i>(reproducido)</i></td></tr>
+    <tr><td class="mono" style="font-size:14.5px">[X ] 25 … -> 500</td><td>Hacen <code>json.loads</code>/<code>JSON.parse</code> sin validar. <i>(reproducido)</i></td></tr>
+    <tr><td class="mono" style="font-size:14.5px">Gemini: 429 RESOURCE_EXHAUSTED</td><td>Se acabó el límite gratuito por minuto: esperen. Su API debe reintentar o responder 502.</td></tr>
+    <tr><td class="mono" style="font-size:14.5px">Gemini: 404 … model not found</td><td>El nombre del modelo cambió: <code>python probar_gemini.py</code> dice cuál funciona; guárdenlo en <code>GEMINI_MODELO</code>.</td></tr>
+    <tr><td class="mono" style="font-size:14.5px">set no “se queda” en otra ventana</td><td><code>set</code> solo vale en esa ventana de cmd. Para siempre: variables de entorno de Windows o <code>setx</code>, y abrir un cmd nuevo.</td></tr>
+  </table>
+  <div class="foot">Unidad III · Sesión 5</div>
+</section>
+
+<!-- 28 -->
+<section class="s" data-t="Referencias">
+  <div class="k">Referencias</div>
+  <h2 style="margin-bottom:12px">Fuentes de esta sesión</h2>
+  <div id="reflist"></div>
+  <div class="foot">Formato APA 7.ª ed.</div>
+</section>
+
+</div>
+
+<div id="nav"><button id="prev" aria-label="Diapositiva anterior">←</button><span id="cnt"></span><button id="next" aria-label="Diapositiva siguiente">→</button><button id="fs" aria-label="Pantalla completa">⛶</button></div>
+<div id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="mt"><div class="box2"><h4 id="mt"></h4><p class="d" id="md"></p><div class="apa" id="ma"></div><button id="mc">Cerrar</button></div></div>
+
+<script>
+"use strict";
+const REFS={
+  aws:{t:'Timeouts, reintentos y jitter (Amazon)',d:'“Una práctica recomendada en Amazon consiste en establecer un tiempo de espera para cualquier llamada remota.” “Los reintentos son egoístas”: si la sobrecarga causa los errores, reintentar puede empeorarla. Retardo exponencial: la espera crece después de cada intento. Fluctuación (jitter): “incorpora cierta cantidad de aleatoriedad al retardo para distribuir los reintentos en el tiempo”.',a:['Brooker, M. (s.f.). <i>Timeouts, retries, and backoff with jitter</i>. Amazon Builders’ Library. https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/']},
+  owasp10:{t:'OWASP API10:2023 Unsafe Consumption of APIs',d:'Los desarrolladores tienden a confiar más en los datos que reciben de APIs de terceros que en la entrada del usuario. Una API es vulnerable si no implementa tiempos de espera en sus interacciones con servicios externos. Recomienda validar y depurar siempre los datos recibidos de las APIs integradas antes de usarlos.',a:['OWASP Foundation. (2023). <i>API10:2023 Unsafe consumption of APIs</i>. OWASP API Security Top 10. https://owasp.org/API-Security/editions/2023/en/0xaa-unsafe-consumption-of-apis/']},
+  stripe:{t:'Peticiones idempotentes (Stripe)',d:'Stripe permite mandar el encabezado Idempotency-Key en las peticiones POST: si la petición se repite con la misma llave, regresa el resultado de la primera vez en lugar de repetir la operación, para reintentar sin riesgo de cobrar dos veces.',a:['Stripe. (s.f.). <i>Idempotent requests</i>. Stripe API Reference. https://docs.stripe.com/api/idempotent_requests','Featonby, M. (s.f.). <i>Making retries safe with idempotent APIs</i>. Amazon Builders’ Library. https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/']},
+  twelve:{t:'The Twelve-Factor App · III. Config',d:'Exige “separación estricta entre la configuración y el código” y guarda la configuración en variables de entorno. Prueba: si el código se pudiera publicar en cualquier momento “sin comprometer ninguna credencial”.',a:['Wiggins, A. (s.f.). <i>The twelve-factor app: III. Config</i>. https://12factor.net/config']},
+  gemini:{t:'Gemini API',d:'Las claves se crean en Google AI Studio (aistudio.google.com/apikey) y se guardan en la variable de entorno GEMINI_API_KEY. Las peticiones REST van a generativelanguage.googleapis.com/v1beta/models/{modelo}:generateContent con el encabezado x-goog-api-key.',a:['Google. (s.f.). <i>Using Gemini API keys</i>. Google AI for Developers. https://ai.google.dev/gemini-api/docs/api-key']}
+};
+const $=s=>document.querySelector(s),$$=s=>Array.from(document.querySelectorAll(s));
+const S=$$('.s');let cur=0;
+function fit(){const k=Math.min(innerWidth/1280,innerHeight/720);$('#stage').style.transform=`translate(-50%,-50%) scale(${k})`}
+function show(i){cur=Math.max(0,Math.min(S.length-1,i));S.forEach((s,j)=>s.classList.toggle('on',j===cur));$('#cnt').textContent=`${cur+1} / ${S.length}`;$('#bar').style.width=((cur+1)/S.length*100)+'%';try{history.replaceState(null,'','#'+(cur+1))}catch(e){}}
+addEventListener('resize',fit);fit();
+$('#prev').onclick=()=>show(cur-1);$('#next').onclick=()=>show(cur+1);
+$('#fs').onclick=()=>{if(!document.fullscreenElement)document.documentElement.requestFullscreen().catch(()=>{});else document.exitFullscreen()};
+addEventListener('keydown',e=>{if(!$('#modal').hidden){if(e.key==='Escape')closeM();return}
+  if(e.target.closest&&e.target.closest('button')&&(e.key===' '||e.key==='Enter'))return;
+  if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();show(cur+1)}
+  else if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();show(cur-1)}
+  else if(e.key==='Home')show(0);else if(e.key==='End')show(S.length-1);else if(e.key==='f'||e.key==='F')$('#fs').click()});
+let lastFocus=null;
+function openM(k){const r=REFS[k];if(!r)return;lastFocus=document.activeElement;$('#mt').textContent=r.t;$('#md').textContent=r.d;$('#ma').innerHTML=r.a.map(x=>`<div>${x}</div>`).join('<div style="height:8px"></div>');$('#modal').hidden=false;$('#mc').focus()}
+function closeM(){$('#modal').hidden=true;if(lastFocus)lastFocus.focus()}
+$$('.ref').forEach(b=>b.addEventListener('click',()=>openM(b.dataset.ref)));
+$('#mc').onclick=closeM;$('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeM()});
+const all=[...new Set(Object.values(REFS).flatMap(r=>r.a))].sort((a,b)=>a.replace(/<[^>]+>/g,'').localeCompare(b.replace(/<[^>]+>/g,''),'es'));
+$('#reflist').innerHTML=all.map(x=>`<p style="font-size:19px;margin:0 0 10px;padding-left:2em;text-indent:-2em">${x}</p>`).join('');
+
+/* ---------- Terminal en vivo (puente.py) ---------- */
+const LIVE={
+ "ia": [
+  {"l": "Login del encargado", "h": {"m": "POST", "port": 8000, "u": "/login", "b": {"usuario": "encargado", "clave": "encargado123"}}, "save": {"TOKEN_ENC": "access_token"}, "hl": ["access_token"],
+   "q": "Entrar como encargado: los reportes también piden token.", "e": "<b>200</b> con el token en <code>%TOKEN_ENC%</code>.", "n": "Token listo."},
+  {"l": "¿Tenemos la clave de la IA?", "sh": "verclave", "hl": ["está definida", "no está definida"],
+   "c": [["GEMINI_API_KEY", "la variable de entorno donde vive la clave; el código solo la lee"]],
+   "q": "Revisar que la variable de entorno con la clave exista, <b>sin mostrarla completa</b>.",
+   "e": "“GEMINI_API_KEY está definida: AIza************”. Si no existe, la demo usa la IA simulada.",
+   "n": "La clave está en una <b>variable de entorno</b>, no en el código. Nunca se imprime completa."},
+  {"l": "Reportar una falla grave", "h": {"m": "POST", "port": 8000, "u": "/reportes", "b": {"equipo_id": 1, "descripcion": "El multímetro marca 0 V en todas las escalas y huele a quemado"}, "hdr": {"Authorization": "Bearer {{TOKEN_ENC}}"}}, "hl": ["201 Created", "\"gravedad\": \"alta\""],
+   "q": "Nuestra API recibe el reporte, <b>le pide a la IA</b> que lo clasifique y guarda el resultado.",
+   "e": "<b>201</b> con <code>\"gravedad\": \"alta\"</code> y un resumen. La API esperó a la IA, revisó que respondiera el JSON que le pedimos y lo guardó.",
+   "n": "Nuestra API fue <b>cliente</b> de otra API. El cliente no se enteró: solo vio un 201."},
+  {"l": "Reportar una falla menor", "h": {"m": "POST", "port": 8000, "u": "/reportes", "b": {"equipo_id": 2, "descripcion": "Al Arduino le falta la etiqueta de inventario, pero funciona bien"}, "hdr": {"Authorization": "Bearer {{TOKEN_ENC}}"}}, "hl": ["201 Created", "\"gravedad\""],
+   "q": "Un reporte sin riesgo, para ver si la IA distingue.",
+   "e": "<b>201</b> con gravedad <b>baja</b> (o media). La IA no es determinista: por eso la API valida que la gravedad sea una de las tres permitidas.",
+   "n": "La respuesta de la IA <b>puede variar</b>. Lo que no varía es nuestra validación."},
+  {"l": "¿Qué le llegó al servicio externo?", "h": {"m": "GET", "port": 9000, "u": "/_control"}, "hl": ["generateContent", "llamadas_recibidas"],
+   "c": [["GET :9000/_control", "el simulador de fallas: está entre nuestra API y Gemini, y anota cada llamada"]],
+   "q": "Ver las llamadas que hizo nuestra API hacia afuera.",
+   "e": "Dos llamadas a <code>/v1beta/models/…:generateContent</code>: una por reporte. Así se ve tu API desde el otro lado.",
+   "n": "Cada petición a nuestra API generó <b>otra</b> petición hacia afuera. Ahora: ¿y si esa tarda?"}
+ ],
+ "timeout": [
+  {"l": "Login del encargado", "h": {"m": "POST", "port": 8000, "u": "/login", "b": {"usuario": "encargado", "clave": "encargado123"}}, "save": {"TOKEN_ENC": "access_token"}, "hl": ["access_token"],
+   "q": "Entrar como encargado.", "e": "Token en <code>%TOKEN_ENC%</code>.", "n": "Token listo."},
+  {"l": "El servicio externo se pone lento", "h": {"m": "POST", "port": 9000, "u": "/_control", "b": {"modo": "lento", "segundos": 20, "reiniciar": true}}, "hl": ["\"modo\": \"lento\""],
+   "c": [["POST :9000/_control", "le ordenamos al simulador cómo portarse"], ["\"modo\": \"lento\"", "va a tardar 20 segundos en responder cada llamada"]],
+   "q": "Simular que la IA (o el correo, o el banco) está saturada y tarda 20 segundos.",
+   "e": "El simulador confirma <code>\"modo\": \"lento\"</code>. Pregunta al grupo: <i>¿cuánto va a tardar nuestra API en contestarle al usuario?</i>",
+   "n": "Pasa todos los días: el otro servidor está saturado, en mantenimiento o lejos."},
+  {"l": "Reportar una falla (con el externo lento)", "h": {"m": "POST", "port": 8000, "u": "/reportes", "b": {"equipo_id": 1, "descripcion": "La pantalla del osciloscopio parpadea"}, "hdr": {"Authorization": "Bearer {{TOKEN_ENC}}"}}, "hl": ["504 Gateway Timeout", "no respondió a tiempo"],
+   "q": "La misma petición de antes, ahora con el servicio externo lento.",
+   "e": "Unos 8 segundos y <b>504 Gateway Timeout</b>: “no respondió a tiempo (3 intentos de 2 s)”. Sin timeout, el usuario esperaría 20 s… o para siempre.",
+   "n": "<b>504</b> = “el servidor del que dependo no me contestó a tiempo”. Mejor un error claro en 8 s que un usuario esperando sin saber."},
+  {"l": "Ver qué hizo nuestra API", "sh": "verlog", "hl": ["sin respuesta a tiempo", "reintento en"],
+   "c": [["(ventana de la API)", "lo que nuestra API escribió en su consola: cada intento fallido y cuánto esperó"]],
+   "q": "Leer el registro (log) de nuestra API.",
+   "e": "“intento 1: sin respuesta a tiempo → reintento en 0.6 s”, luego el 2, y se rinde en el 3.",
+   "n": "Esperó 2 s por intento, reintentó 2 veces y <b>se rindió</b>. Rendirse a tiempo también es diseño."},
+  {"l": "Regresar el externo a la normalidad", "h": {"m": "POST", "port": 9000, "u": "/_control", "b": {"modo": "normal", "reiniciar": true}}, "hl": ["\"modo\": \"normal\""],
+   "q": "Quitar la lentitud.", "e": "<code>\"modo\": \"normal\"</code>.", "n": "Todo normal otra vez."}
+ ],
+ "reintentos": [
+  {"l": "Login del encargado", "h": {"m": "POST", "port": 8000, "u": "/login", "b": {"usuario": "encargado", "clave": "encargado123"}}, "save": {"TOKEN_ENC": "access_token"}, "hl": ["access_token"],
+   "q": "Entrar como encargado.", "e": "Token en <code>%TOKEN_ENC%</code>.", "n": "Token listo."},
+  {"l": "El externo fallará UNA vez (503)", "h": {"m": "POST", "port": 9000, "u": "/_control", "b": {"modo": "falla_una", "reiniciar": true}}, "hl": ["falla_una"],
+   "q": "Simular una falla pasajera: el primer intento recibe <b>503 Service Unavailable</b> y el siguiente ya funciona.",
+   "e": "Confirmado. Pregunta: <i>¿el usuario verá un error?</i>", "n": "Una falla pasajera, como un reinicio del otro servidor."},
+  {"l": "Reportar una falla", "h": {"m": "POST", "port": 8000, "u": "/reportes", "b": {"equipo_id": 1, "descripcion": "El cable de la punta del multímetro está pelado"}, "hdr": {"Authorization": "Bearer {{TOKEN_ENC}}"}}, "hl": ["201 Created"],
+   "q": "La misma petición de siempre.", "e": "<b>201</b>. El usuario ni se enteró del 503: nuestra API reintentó por él.",
+   "n": "<b>El reintento absorbió la falla.</b> Para eso sirve."},
+  {"l": "¿Cuántas veces llamó?", "h": {"m": "GET", "port": 9000, "u": "/_control"}, "hl": ["\"llamadas_recibidas\": 2", "\"respondio\": 503", "segundos_entre_llamadas"],
+   "q": "Ver el registro del simulador.",
+   "e": "<b>2 llamadas</b>: la primera respondió 503 y la segunda 200, con medio segundo (y un poco de azar) entre ellas.",
+   "n": "Esperó antes de reintentar. Con 3 o más fallas, la espera crece: 0.5 s, 1 s, 2 s… (<b>backoff</b>)."},
+  {"l": "Ahora: límite de peticiones (429)", "h": {"m": "POST", "port": 9000, "u": "/_control", "b": {"modo": "429_una", "reiniciar": true}}, "hl": ["429_una"],
+   "q": "Simular que la IA dice <b>429 Too Many Requests</b> (“vas muy rápido”) con <code>Retry-After: 1</code>.",
+   "e": "Confirmado. Es lo que responde Gemini cuando se acaba el límite gratuito por minuto.", "n": "429 también es pasajero: hay que esperar lo que pide."},
+  {"l": "Reportar otra vez", "h": {"m": "POST", "port": 8000, "u": "/reportes", "b": {"equipo_id": 2, "descripcion": "Al Arduino se le sale el cable USB"}, "hdr": {"Authorization": "Bearer {{TOKEN_ENC}}"}}, "hl": ["201 Created"],
+   "q": "Misma prueba con el 429.", "e": "<b>201</b>, después de esperar al menos 1 s (lo que pidió <code>Retry-After</code>).", "n": "Respetó el <code>Retry-After</code>: esperó lo que el otro servidor pidió."},
+  {"l": "Regresar a la normalidad", "h": {"m": "POST", "port": 9000, "u": "/_control", "b": {"modo": "normal", "reiniciar": true}}, "hl": ["\"modo\": \"normal\""],
+   "q": "Modo normal.", "e": "Listo.", "n": "Siguiente: ¿hay errores que NO se deben reintentar?"}
+ ],
+ "noreintentar": [
+  {"l": "Login del encargado", "h": {"m": "POST", "port": 8000, "u": "/login", "b": {"usuario": "encargado", "clave": "encargado123"}}, "save": {"TOKEN_ENC": "access_token"}, "hl": ["access_token"],
+   "q": "Entrar como encargado.", "e": "Token en <code>%TOKEN_ENC%</code>.", "n": "Token listo."},
+  {"l": "El externo responde 400", "h": {"m": "POST", "port": 9000, "u": "/_control", "b": {"modo": "error_400", "reiniciar": true}}, "hl": ["error_400"],
+   "q": "Simular que el servicio externo dice <b>400 Bad Request</b>: “lo que me mandaste está mal”.",
+   "e": "Confirmado. Pregunta: <i>¿sirve de algo reintentar?</i>", "n": "Un 400 no es pasajero: la petición está mal y seguirá mal."},
+  {"l": "Reportar una falla", "h": {"m": "POST", "port": 8000, "u": "/reportes", "b": {"equipo_id": 1, "descripcion": "El display del multímetro no prende"}, "hdr": {"Authorization": "Bearer {{TOKEN_ENC}}"}}, "hl": ["502 Bad Gateway", "no se reintenta"],
+   "q": "La misma petición.", "e": "<b>502 Bad Gateway</b> de inmediato: “el servicio externo rechazó la petición; no se reintenta”.",
+   "n": "<b>502</b> = “el servidor del que dependo me respondió mal”. No le echamos la culpa al usuario con un 400."},
+  {"l": "¿Cuántas veces llamó?", "h": {"m": "GET", "port": 9000, "u": "/_control"}, "hl": ["\"llamadas_recibidas\": 1"],
+   "q": "Revisar el simulador.", "e": "<b>1 sola llamada.</b> Reintentar un 400 solo gasta tiempo, cuota y dinero.", "n": "Reintentar <b>solo</b> lo pasajero: timeout, 429, 500, 502, 503 y 504."},
+  {"l": "El externo responde basura", "h": {"m": "POST", "port": 9000, "u": "/_control", "b": {"modo": "basura", "reiniciar": true}}, "hl": ["basura"],
+   "q": "Simular que el externo responde <b>200 OK</b>, pero con una página HTML en vez de JSON (pasa con proxies y páginas de error).",
+   "e": "Confirmado. Pregunta: <i>si el código hace <code>json.loads()</code> sin más, ¿qué pasa?</i>", "n": "200 no garantiza que lo que llegó sirva."},
+  {"l": "Reportar una falla", "h": {"m": "POST", "port": 8000, "u": "/reportes", "b": {"equipo_id": 1, "descripcion": "El display del multímetro no prende"}, "hdr": {"Authorization": "Bearer {{TOKEN_ENC}}"}}, "hl": ["502 Bad Gateway", "no es JSON"],
+   "q": "La misma petición.", "e": "<b>502</b> “respondió algo que no es JSON”, en el formato de error de siempre. Sin validar, sería un <b>500</b> con un traceback.",
+   "n": "OWASP API10: <b>validen siempre</b> lo que reciben de una API externa, igual que lo que manda el usuario."},
+  {"l": "Regresar a la normalidad", "h": {"m": "POST", "port": 9000, "u": "/_control", "b": {"modo": "normal", "reiniciar": true}}, "hl": ["\"modo\": \"normal\""],
+   "q": "Modo normal.", "e": "Listo.", "n": "Siguiente: ¿qué pasa cuando reintentar <b>sí</b> hace daño?"}
+ ],
+ "correo": [
+  {"l": "Login de Ana", "h": {"m": "POST", "port": 8000, "u": "/login", "b": {"usuario": "ana", "clave": "ana12345"}}, "save": {"TOKEN_ANA": "access_token"}, "hl": ["access_token"],
+   "q": "Entrar como Ana.", "e": "Token en <code>%TOKEN_ANA%</code>.", "n": "Ana lista."},
+  {"l": "El correo se manda, pero la respuesta se pierde", "h": {"m": "POST", "port": 9000, "u": "/_control", "b": {"modo": "pierde_respuesta", "segundos": 20, "reiniciar": true}}, "hl": ["pierde_respuesta"],
+   "q": "El caso de INT-401: el servicio de correo <b>sí manda</b> el correo, pero su respuesta tarda tanto que nuestra API se cansa de esperar.",
+   "e": "Confirmado. Desde nuestra API eso se ve igual que una falla: timeout.", "n": "Nuestra API no puede saber si el correo salió o no."},
+  {"l": "Mandar el aviso SIN Idempotency-Key", "h": {"m": "POST", "port": 8000, "u": "/demo/correo-sin-llave", "hdr": {"Authorization": "Bearer {{TOKEN_ANA}}"}}, "hl": ["UN correo"],
+   "q": "Nuestra API manda el aviso con timeout y reintentos… pero sin llave.",
+   "e": "<b>200</b>: “la API cree que mandó UN correo”. Pregunta: <i>¿cuántos le llegaron a Ana?</i>", "n": "La API está tranquila. Veamos el buzón de Ana."},
+  {"l": "¿Cuántos correos salieron?", "h": {"m": "GET", "port": 9000, "u": "/_control"}, "hl": ["\"correos_enviados\": 2"],
+   "q": "Revisar el servicio de correo.", "e": "<b>2 correos.</b> El primer intento sí lo mandó (solo se perdió la respuesta) y el reintento mandó otro.",
+   "n": "<b>Este es el INT-401</b>: correos (o cobros) duplicados por reintentar algo que no es idempotente."},
+  {"l": "Repetir el escenario", "h": {"m": "POST", "port": 9000, "u": "/_control", "b": {"modo": "pierde_respuesta", "segundos": 20, "reiniciar": true}}, "hl": ["pierde_respuesta"],
+   "q": "Mismo problema, contadores en cero.", "e": "Confirmado.", "n": "Ahora con la corrección."},
+  {"l": "Mandar el aviso CON Idempotency-Key", "h": {"m": "POST", "port": 8000, "u": "/demo/correo-con-llave", "hdr": {"Authorization": "Bearer {{TOKEN_ANA}}"}}, "hl": ["idempotency_key"],
+   "q": "La misma lógica, pero cada intento lleva el encabezado <code>Idempotency-Key</code> con <b>la misma llave</b>.",
+   "e": "<b>200</b> con la llave que se usó.", "n": "Mismo resultado para la API. ¿Y para Ana?"},
+  {"l": "¿Cuántos correos salieron ahora?", "h": {"m": "GET", "port": 9000, "u": "/_control"}, "hl": ["\"correos_enviados\": 1", "idempotency_key"],
+   "q": "Revisar el servicio de correo.", "e": "<b>1 correo</b> y 2 llamadas con la misma <code>idempotency_key</code>: el servicio reconoció el reintento y no mandó otro.",
+   "n": "La idempotencia de la sesión 1, en serio: <b>1 vez o 10 veces, el resultado es el mismo</b>. Stripe lo hace así con los cobros."},
+  {"l": "Regresar a la normalidad", "h": {"m": "POST", "port": 9000, "u": "/_control", "b": {"modo": "normal", "reiniciar": true}}, "hl": ["\"modo\": \"normal\""],
+   "q": "Modo normal.", "e": "Listo.", "n": "Listo."}
+ ],
+ "secretos": [
+  {"l": "¿Dónde está la clave?", "sh": "verclave", "hl": ["está definida", "Nunca la imprimas completa"],
+   "c": [["GEMINI_API_KEY", "variable de entorno del sistema operativo, fuera del proyecto"]],
+   "q": "Comprobar que la clave existe como variable de entorno.",
+   "e": "Definida, mostrada solo con sus primeros 4 caracteres.", "n": "Vive en el sistema operativo, no en el proyecto."},
+  {"l": "¿Está en algún archivo del proyecto?", "sh": "buscarclave", "hl": ["NO aparece", "aparece en"],
+   "c": [["findstr /s /m", "en Windows, busca un texto en todos los archivos de la carpeta (aquí lo hace Python)"]],
+   "q": "Buscar la clave en todos los archivos de la carpeta: es lo que haría alguien que clona su repositorio.",
+   "e": "“La clave NO aparece en ningún archivo”. Si apareciera, ya estaría en GitHub… y bots que rastrean repositorios la encuentran en minutos.",
+   "n": "Prueba de los doce factores: <b>¿podrían publicar su código hoy sin regalar ninguna clave?</b>"}
+ ],
+ "probar": [
+  {"l": "Primera corrida", "sh": "probar", "hl": ["PENDIENTE", "RESULTADO: 24 de 25"],
+   "c": [["python probar_api.py", "versión 4: las 20 de antes + 5 de integración con el simulador"], ["(prueba.json)", "ahora con \"externo\": la ruta de SU API que llama a otro servicio"]],
+   "q": "Correr la prueba v4. Nuestra API ya está arrancada con <code>EXTERNO_URL=http://127.0.0.1:9000</code>.",
+   "e": "21 a 25 en <code>[OK]</code> y la 15 pendiente (24 de 25). La 22 tarda unos 8 s: es el timeout.",
+   "n": "21 normal · 22 lento · 23 falla una vez · 24 error 400 · 25 basura."},
+  {"l": "Reiniciar la API", "sh": "reiniciar8000",
+   "c": [["Ctrl+C", "detiene la API"], ["uvicorn api_equipos:app --port 8000", "la vuelve a arrancar (con las mismas variables de entorno)"]],
+   "q": "Reiniciar para la prueba 15.", "e": "<code>Uvicorn running</code>.", "n": "Reiniciada."},
+  {"l": "Segunda corrida", "sh": "probar", "hl": ["RESULTADO: 25 de 25", "U3S5;"],
+   "c": [["python probar_api.py", "la misma prueba"]],
+   "q": "Correr otra vez.", "e": "<b>25 de 25.</b> La línea <code>U3S5;…</code> va al artefacto.",
+   "n": "<b>25 de 25.</b> Sin timeout falla la 22; sin reintentos, la 23; sin validar, la 25."}
+ ]
+}
+;
+const REC={"ia:0": {"status": 200, "reason": "OK", "headers": {"content-type": "application/json"}, "body": "{\"access_token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlbmNhcmdhZG8iLCJyb2wiOiJlbmNhcmdhZG8iLCJpYXQiOjE3OTQ0NTY2NzYsImV4cCI6MTc5NDQ1ODQ3Nn0.nybAIM2lEHPywX-TIF4gp9TOj-A2nP7MdsBhcHhtRTo\",\"token_type\":\"bearer\",\"expira_en_segundos\":1800}"}, "ia:1": {"cmd": "echo GEMINI_API_KEY (sin mostrarla completa)", "out": "GEMINI_API_KEY está definida: AIza************ (39 caracteres)\nNunca la imprimas completa: ni en la terminal, ni en un log, ni en una captura."}, "ia:2": {"status": 201, "reason": "Created", "headers": {"content-type": "application/json"}, "body": "{\"id\":1,\"equipo_id\":1,\"usuario\":\"encargado\",\"descripcion\":\"El multímetro marca 0 V en todas las escalas y huele a quemado\",\"gravedad\":\"alta\",\"resumen\":\"Posible daño eléctrico; retirar el equipo de uso.\",\"fecha\":\"2026-11-11T22:11:16\"}"}, "ia:3": {"status": 201, "reason": "Created", "headers": {"content-type": "application/json"}, "body": "{\"id\":2,\"equipo_id\":2,\"usuario\":\"encargado\",\"descripcion\":\"Al Arduino le falta la etiqueta de inventario, pero funciona bien\",\"gravedad\":\"media\",\"resumen\":\"Falla menor; revisar en el laboratorio.\",\"fecha\":\"2026-11-11T22:11:16\"}"}, "ia:4": {"status": 200, "reason": "OK", "headers": {"content-type": "application/json; charset=utf-8"}, "body": "{\"modo\": \"normal\", \"reenvia_a\": \"(respuestas simuladas)\", \"llamadas_recibidas\": 2, \"llamadas\": [{\"n\": 1, \"hora\": \"22:11:16\", \"metodo\": \"POST\", \"ruta\": \"/v1beta/models/gemini-3.8-flash:generateContent\", \"respondio\": 200, \"idempotency_key\": null}, {\"n\": 2, \"hora\": \"22:11:16\", \"metodo\": \"POST\", \"ruta\": \"/v1beta/models/gemini-3.8-flash:generateContent\", \"respondio\": 200, \"idempotency_key\": null}], \"segundos_entre_llamadas\": [0.0], \"correos_enviados\": 0, \"correos\": []}"}, "timeout:0": {"status": 200, "reason": "OK", "headers": {"content-type": "application/json"}, "body": "{\"access_token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlbmNhcmdhZG8iLCJyb2wiOiJlbmNhcmdhZG8iLCJpYXQiOjE3OTQ0NTY2NzcsImV4cCI6MTc5NDQ1ODQ3N30.4gYw0V9Gcdvy0uPeFahsskx5ztlzdKp_X6oUc7C6lOY\",\"token_type\":\"bearer\",\"expira_en_segundos\":1800}"}, "timeout:1": {"status": 200, "reason": "OK", "headers": {"content-type": "application/json; charset=utf-8"}, "body": "{\"modo\": \"lento\", \"reenvia_a\": \"(respuestas simuladas)\", \"llamadas_recibidas\": 0, \"llamadas\": [], \"segundos_entre_llamadas\": [], \"correos_enviados\": 0, \"correos\": []}"}, "timeout:2": {"status": 504, "reason": "Gateway Timeout", "headers": {"content-type": "application/json"}, "body": "{\"error\":\"El servicio externo no respondió a tiempo (3 intentos de 2 s)\",\"detalles\":[]}"}, "timeout:3": {"cmd": "(ventana de la API: líneas [externo])", "out": "INFO:     127.0.0.1:49522 - \"POST /reportes HTTP/1.1\" 201 Created\nINFO:     127.0.0.1:49544 - \"POST /reportes HTTP/1.1\" 201 Created\n[externo] intento 1: sin respuesta a tiempo -> reintento en 0.6 s\n[externo] intento 2: sin respuesta a tiempo -> reintento en 1.2 s\nINFO:     127.0.0.1:49600 - \"POST /reportes HTTP/1.1\" 504 Gateway Timeout"}, "timeout:4": {"status": 200, "reason": "OK", "headers": {"content-type": "application/json; charset=utf-8"}, "body": "{\"modo\": \"normal\", \"reenvia_a\": \"(respuestas simuladas)\", \"llamadas_recibidas\": 0, \"llamadas\": [], \"segundos_entre_llamadas\": [], \"correos_enviados\": 0, \"correos\": []}"}, "reintentos:0": {"status": 200, "reason": "OK", "headers": {"content-type": "application/json"}, "body": "{\"access_token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlbmNhcmdhZG8iLCJyb2wiOiJlbmNhcmdhZG8iLCJpYXQiOjE3OTQ0NTY2ODUsImV4cCI6MTc5NDQ1ODQ4NX0.HI2csUckC-F0j0OyFGKzyxIaHVtGbUlWGpnqQHrrLKc\",\"token_type\":\"bearer\",\"expira_en_segundos\":1800}"}, "reintentos:1": {"status": 200, "reason": "OK", "headers": {"content-type": "application/json; charset=utf-8"}, "body": "{\"modo\": \"falla_una\", \"reenvia_a\": \"(respuestas simuladas)\", \"llamadas_recibidas\": 0, \"llamadas\": [], \"segundos_entre_llamadas\": [], \"correos_enviados\": 0, \"correos\": []}"}, "reintentos:2": {"status": 201, "reason": "Created", "headers": {"content-type": "application/json"}, "body": "{\"id\":3,\"equipo_id\":1,\"usuario\":\"encargado\",\"descripcion\":\"El cable de la punta del multímetro está pelado\",\"gravedad\":\"media\",\"resumen\":\"Falla menor; revisar en el laboratorio.\",\"fecha\":\"2026-11-11T22:11:25\"}"}, "reintentos:3": {"status": 200, "reason": "OK", "headers": {"content-type": "application/json; charset=utf-8"}, "body": "{\"modo\": \"falla_una\", \"reenvia_a\": \"(respuestas simuladas)\", \"llamadas_recibidas\": 2, \"llamadas\": [{\"n\": 1, \"hora\": \"22:11:25\", \"metodo\": \"POST\", \"ruta\": \"/v1beta/models/gemini-3.8-flash:generateContent\", \"respondio\": 503, \"idempotency_key\": null}, {\"n\": 2, \"hora\": \"22:11:25\", \"metodo\": \"POST\", \"ruta\": \"/v1beta/models/gemini-3.8-flash:generateContent\", \"respondio\": 200, \"idempotency_key\": null}], \"segundos_entre_llamadas\": [0.68], \"correos_enviados\": 0, \"correos\": []}"}, "reintentos:4": {"status": 200, "reason": "OK", "headers": {"content-type": "application/json; charset=utf-8"}, "body": "{\"modo\": \"429_una\", \"reenvia_a\": \"(respuestas simuladas)\", \"llamadas_recibidas\": 0, \"llamadas\": [], \"segundos_entre_llamadas\": [], \"correos_enviados\": 0, \"correos\": []}"}, "reintentos:5": {"status": 201, "reason": "Created", "headers": {"content-type": "application/json"}, "body": "{\"id\":4,\"equipo_id\":2,\"usuario\":\"encargado\",\"descripcion\":\"Al Arduino se le sale el cable USB\",\"gravedad\":\"media\",\"resumen\":\"Falla menor; revisar en el laboratorio.\",\"fecha\":\"2026-11-11T22:11:26\"}"}, "reintentos:6": {"status": 200, "reason": "OK", "headers": {"content-type": "application/json; charset=utf-8"}, "body": "{\"modo\": \"normal\", \"reenvia_a\": \"(respuestas simuladas)\", \"llamadas_recibidas\": 0, \"llamadas\": [], \"segundos_entre_llamadas\": [], \"correos_enviados\": 0, \"correos\": []}"}, "noreintentar:0": {"status": 200, "reason": "OK", "headers": {"content-type": "application/json"}, "body": "{\"access_token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlbmNhcmdhZG8iLCJyb2wiOiJlbmNhcmdhZG8iLCJpYXQiOjE3OTQ0NTY2ODcsImV4cCI6MTc5NDQ1ODQ4N30.gtX4KSxOteG7REvaywf2KNIQ-lDqGl_Xf67V4dPkPUA\",\"token_type\":\"bearer\",\"expira_en_segundos\":1800}"}, "noreintentar:1": {"status": 200, "reason": "OK", "headers": {"content-type": "application/json; charset=utf-8"}, "body": "{\"modo\": \"error_400\", \"reenvia_a\": \"(respuestas simuladas)\", \"llamadas_recibidas\": 0, \"llamadas\": [], \"segundos_entre_llamadas\": [], \"correos_enviados\": 0, \"correos\": []}"}, "noreintentar:2": {"status": 502, "reason": "Bad Gateway", "headers": {"content-type": "application/json"}, "body": "{\"error\":\"El servicio externo rechazó la petición (400); no se reintenta\",\"detalles\":[]}"}, "noreintentar:3": {"status": 200, "reason": "OK", "headers": {"content-type": "application/json; charset=utf-8"}, "body": "{\"modo\": \"error_400\", \"reenvia_a\": \"(respuestas simuladas)\", \"llamadas_recibidas\": 1, \"llamadas\": [{\"n\": 1, \"hora\": \"22:11:27\", \"metodo\": \"POST\", \"ruta\": \"/v1beta/models/gemini-3.8-flash:generateContent\", \"respondio\": 400, \"idempotency_key\": null}], \"segundos_entre_llamadas\": [], \"correos_enviados\": 0, \"correos\": []}"}, "noreintentar:4": {"status": 200, "reason": "OK", "headers": {"content-type": "application/json; charset=utf-8"}, "body": "{\"modo\": \"basura\", \"reenvia_a\": \"(respuestas simuladas)\", \"llamadas_recibidas\": 0, \"llamadas\": [], \"segundos_entre_llamadas\": [], \"correos_enviados\": 0, \"correos\": []}"}, "noreintentar:5": {"status": 502, "reason": "Bad Gateway", "headers": {"content-type": "application/json"}, "body": "{\"error\":\"El servicio externo respondió algo que no es JSON\",\"detalles\":[]}"}, "noreintentar:6": {"status": 200, "reason": "OK", "headers": {"content-type": "application/json; charset=utf-8"}, "body": "{\"modo\": \"normal\", \"reenvia_a\": \"(respuestas simuladas)\", \"llamadas_recibidas\": 0, \"llamadas\": [], \"segundos_entre_llamadas\": [], \"correos_enviados\": 0, \"correos\": []}"}, "correo:0": {"status": 200, "reason": "OK", "headers": {"content-type": "application/json"}, "body": "{\"access_token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhbmEiLCJyb2wiOiJhbHVtbm8iLCJpYXQiOjE3OTQ0NTY2ODcsImV4cCI6MTc5NDQ1ODQ4N30.vi6baQIiPZsYF87GNVAQuXBsV0icNKXZEFbeOzVrxuM\",\"token_type\":\"bearer\",\"expira_en_segundos\":1800}"}, "correo:1": {"status": 200, "reason": "OK", "headers": {"content-type": "application/json; charset=utf-8"}, "body": "{\"modo\": \"pierde_respuesta\", \"reenvia_a\": \"(respuestas simuladas)\", \"llamadas_recibidas\": 0, \"llamadas\": [], \"segundos_entre_llamadas\": [], \"correos_enviados\": 0, \"correos\": []}"}, "correo:2": {"status": 200, "reason": "OK", "headers": {"content-type": "application/json"}, "body": "{\"resultado\":\"la API cree que mandó UN correo\"}"}, "correo:3": {"status": 200, "reason": "OK", "headers": {"content-type": "application/json; charset=utf-8"}, "body": "{\"modo\": \"pierde_respuesta\", \"reenvia_a\": \"(respuestas simuladas)\", \"llamadas_recibidas\": 2, \"llamadas\": [{\"n\": 1, \"hora\": \"22:11:27\", \"metodo\": \"POST\", \"ruta\": \"/correos\", \"respondio\": \"200 pero 20 s tarde\", \"idempotency_key\": null}, {\"n\": 2, \"hora\": \"22:11:30\", \"metodo\": \"POST\", \"ruta\": \"/correos\", \"respondio\": 201, \"idempotency_key\": null}], \"segundos_entre_llamadas\": [2.62], \"correos_enviados\": 2, \"correos\": [{\"id\": 1, \"para\": \"ana@ucol.mx\", \"asunto\": \"Prueba sin llave\", \"hora\": \"22:11:27\"}, {\"id\": 2, \"para\": \"ana@ucol.mx\", \"asunto\": \"Prueba sin llave\", \"hora\": \"22:11:30\"}]}"}, "correo:4": {"status": 200, "reason": "OK", "headers": {"content-type": "application/json; charset=utf-8"}, "body": "{\"modo\": \"pierde_respuesta\", \"reenvia_a\": \"(respuestas simuladas)\", \"llamadas_recibidas\": 0, \"llamadas\": [], \"segundos_entre_llamadas\": [], \"correos_enviados\": 0, \"correos\": []}"}, "correo:5": {"status": 200, "reason": "OK", "headers": {"content-type": "application/json"}, "body": "{\"resultado\":\"la API cree que mandó UN correo\",\"idempotency_key\":\"demo-ana-1794456690250489650\"}"}, "correo:6": {"status": 200, "reason": "OK", "headers": {"content-type": "application/json; charset=utf-8"}, "body": "{\"modo\": \"pierde_respuesta\", \"reenvia_a\": \"(respuestas simuladas)\", \"llamadas_recibidas\": 2, \"llamadas\": [{\"n\": 1, \"hora\": \"22:11:30\", \"metodo\": \"POST\", \"ruta\": \"/correos\", \"respondio\": \"200 pero 20 s tarde\", \"idempotency_key\": \"demo-ana-1794456690250489650\"}, {\"n\": 2, \"hora\": \"22:11:32\", \"metodo\": \"POST\", \"ruta\": \"/correos\", \"respondio\": 200, \"idempotency_key\": \"demo-ana-1794456690250489650\"}], \"segundos_entre_llamadas\": [2.66], \"correos_enviados\": 1, \"correos\": [{\"id\": 1, \"para\": \"ana@ucol.mx\", \"asunto\": \"Prueba con llave\", \"hora\": \"22:11:30\"}]}"}, "correo:7": {"status": 200, "reason": "OK", "headers": {"content-type": "application/json; charset=utf-8"}, "body": "{\"modo\": \"normal\", \"reenvia_a\": \"(respuestas simuladas)\", \"llamadas_recibidas\": 0, \"llamadas\": [], \"segundos_entre_llamadas\": [], \"correos_enviados\": 0, \"correos\": []}"}, "secretos:0": {"cmd": "echo GEMINI_API_KEY (sin mostrarla completa)", "out": "GEMINI_API_KEY está definida: AIza************ (39 caracteres)\nNunca la imprimas completa: ni en la terminal, ni en un log, ni en una captura."}, "secretos:1": {"cmd": "findstr /s /m \"<la clave>\" *.*", "out": "Revisé 13 archivos de la carpeta.\nLa clave NO aparece en ningún archivo: el código la lee de la variable de entorno."}, "probar:0": {"cmd": "python probar_api.py", "out": "Probando http://127.0.0.1:8000/equipos con la matrícula 20201234\n\n[OK]  1. POST con datos válidos crea (201)            -> 201\n[OK]  2. GET del recurso creado (200)                 -> 200\n[OK]  3. GET de la colección lo incluye (200)         -> 200\n[OK]  4. POST inválido se rechaza (422 o 400)         -> 422\n[OK]  5. …y no se guardó nada (la foto no cambió)     antes 3, después 3\n[OK]  6. …y el error viene en JSON                    \n[OK]  7. JSON roto: 400/422 con error en JSON         -> 400\n[OK]  8. GET de uno que no existe (404)               -> 404\n[OK]  9. PUT dos veces: misma foto                    -> 200 y 200\n[OK] 10. DELETE dos veces (204/200 y luego 404)       -> 204 y 404\n[OK] 11. GET después de borrar (404)                  -> 404\n[OK] 12. El contrato OpenAPI existe (/openapi.json)   -> 200\n[OK] 13. …documenta la colección y /{id}              \n[OK] 14. …y documenta 201, 404 y 422                  \n[X ] 15. Los datos sobreviven a un reinicio           PENDIENTE: reinicia tu API y vuelve a correr la prueba\n[OK] 16. Login: clave mala 401; buena da token        -> 401 y 200\n[OK] 17. Sin token: POST se rechaza (401)             -> 401\n[OK] 18. Token alterado se rechaza (401)              -> 401\n[OK] 19. Rol sin permiso: DELETE se rechaza (403)     -> 403\n[OK] 20. Dueño: otro usuario no ve lo ajeno           otro -> 404, dueño -> 200\n[OK] 21. Externo normal: responde 2xx                 -> 201, 1 llamada(s) al simulador\n[OK] 22. Externo tarda: responde en < 10 s (502/504)  -> 504 en 7.7 s\n[OK] 23. Externo falla 1 vez: reintenta y responde 2xx -> 201, 2 llamada(s)\n[OK] 24. Externo responde 400: NO reintenta           -> 502, 1 llamada(s)\n[OK] 25. Externo responde basura: 502 en JSON         -> 502\n\nRESULTADO: 24 de 25\nU3S5;20201234;http://127.0.0.1:8000/equipos;1111111111111101111111111;5646C693\n\n>>> Falta la prueba 15: reinicia tu API (Ctrl+C y vuelve a correrla) y corre otra vez: python probar_api.py\n\nGuardado en reporte_U3S5_20201234.txt. Pégalo completo en el artefacto."}, "probar:1": {"cmd": "Ctrl+C   (en la ventana de la API)", "out": "^C\nINFO:     Shutting down\nINFO:     Finished server process\n\nC:\\clase-s5> uvicorn api_equipos:app --port 8000\nINFO:     Started server process [712]\nINFO:     Waiting for application startup.\nINFO:     Application startup complete.\nINFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)"}, "probar:2": {"cmd": "python probar_api.py", "out": "Probando http://127.0.0.1:8000/equipos con la matrícula 20201234\n\n[OK]  1. POST con datos válidos crea (201)            -> 201\n[OK]  2. GET del recurso creado (200)                 -> 200\n[OK]  3. GET de la colección lo incluye (200)         -> 200\n[OK]  4. POST inválido se rechaza (422 o 400)         -> 422\n[OK]  5. …y no se guardó nada (la foto no cambió)     antes 3, después 3\n[OK]  6. …y el error viene en JSON                    \n[OK]  7. JSON roto: 400/422 con error en JSON         -> 400\n[OK]  8. GET de uno que no existe (404)               -> 404\n[OK]  9. PUT dos veces: misma foto                    -> 200 y 200\n[OK] 10. DELETE dos veces (204/200 y luego 404)       -> 204 y 404\n[OK] 11. GET después de borrar (404)                  -> 404\n[OK] 12. El contrato OpenAPI existe (/openapi.json)   -> 200\n[OK] 13. …documenta la colección y /{id}              \n[OK] 14. …y documenta 201, 404 y 422                  \n[OK] 15. Los datos sobreviven a un reinicio           \n[OK] 16. Login: clave mala 401; buena da token        -> 401 y 200\n[OK] 17. Sin token: POST se rechaza (401)             -> 401\n[OK] 18. Token alterado se rechaza (401)              -> 401\n[OK] 19. Rol sin permiso: DELETE se rechaza (403)     -> 403\n[OK] 20. Dueño: otro usuario no ve lo ajeno           otro -> 404, dueño -> 200\n[OK] 21. Externo normal: responde 2xx                 -> 201, 1 llamada(s) al simulador\n[OK] 22. Externo tarda: responde en < 10 s (502/504)  -> 504 en 7.6 s\n[OK] 23. Externo falla 1 vez: reintenta y responde 2xx -> 201, 2 llamada(s)\n[OK] 24. Externo responde 400: NO reintenta           -> 502, 1 llamada(s)\n[OK] 25. Externo responde basura: 502 en JSON         -> 502\n\nRESULTADO: 25 de 25\nU3S5;20201234;http://127.0.0.1:8000/equipos;1111111111111111111111111;D2E3C700\n\nGuardado en reporte_U3S5_20201234.txt. Pégalo completo en el artefacto."}};
+const LV={vivo:false,prompt:'C:\\clase-s5>',busy:false,vars:{}};
+const SHCMD={arrancar8000:'uvicorn api_equipos:app --port 8000',reiniciar8000:'Ctrl+C   (en la ventana de la API)',probar:'python probar_api.py',verclave:'echo GEMINI_API_KEY (sin mostrarla completa)',buscarclave:'findstr /s /m "<la clave>" *.*',verlog:'(ventana de la API: líneas [externo])',gemini:'python probar_gemini.py',cero:'(empezar la demostración desde cero)'};
+/* variables: {{X}} -> el valor real al ejecutar; en pantalla, los tokens se ven como %X% (variable de cmd) */
+const lvShow=s=>String(s).replace(/\{\{(\w+)\}\}/g,(m,k)=>/^TOKEN/.test(k)||LV.vars[k]===undefined?`%${k}%`:LV.vars[k]);
+const lvReal=s=>String(s).replace(/\{\{(\w+)\}\}/g,(m,k)=>LV.vars[k]??'');
+const lvMissing=st=>[...JSON.stringify([st.h||{},st.arg||'']).matchAll(/\{\{(\w+)\}\}/g)].map(m=>m[1]).filter(k=>LV.vars[k]===undefined);
+const lvEsc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function lvCurl(h){const u=`http://127.0.0.1:${h.port}${lvShow(h.u)}`,a=h.hdr&&h.hdr.Authorization?` -H "Authorization: ${lvShow(h.hdr.Authorization)}"`:'';
+  if(!h.b)return `curl.exe -i ${h.m==='GET'?'':'-X '+h.m+' '}${u}${a}`;
+  const j=JSON.stringify(h.b).replace(/"/g,'\\"');return `curl.exe -i -X ${h.m} ${u}${a} -H "Content-Type: application/json" -d "${j}"`}
+function lvParts(st){if(st.c)return {main:st.c,extra:[]};if(!st.h)return {main:[],extra:[]};const h=st.h,M=[];
+  if(h.m!=='GET')M.push(['-X '+h.m,`el método: ${({POST:'POST crea',PUT:'PUT reemplaza',DELETE:'DELETE borra'})[h.m]||h.m}`]);else M.push(['(sin -X)','sin -X, curl usa GET: consultar']);
+  M.push([`http://127.0.0.1:${h.port}${lvShow(h.u)}`,`127.0.0.1 = tu computadora · ${h.port===9000?'9000 = el simulador del servicio externo':h.port+' = el puerto de nuestra API'} · ${lvShow(h.u)} = ${h.port===9000?'su panel de control':'el recurso'}`]);
+  if(h.hdr&&h.hdr.Authorization)M.push([`-H "Authorization: ${lvShow(h.hdr.Authorization)}"`,`el gafete: “Bearer” + el token que nos dio el login (guardado en ${lvShow(h.hdr.Authorization).replace('Bearer ','')})`]);
+  else if(h.u!=='/login'&&h.port!==9000)M.push(['(sin Authorization)','no mandamos token: la API no sabe quiénes somos']);
+  const X=[['curl.exe','manda una petición HTTP desde la terminal (como Postman, pero en texto)'],['-i','muestra también el código de estado y los encabezados de la respuesta']];
+  if(h.b){X.push(['-H "Content-Type: application/json"','encabezado: avisa que el cuerpo va en JSON']);X.push(['-d "…"','el cuerpo: los datos que mandamos (en cmd las comillas de adentro van como \\")'])}
+  return {main:M,extra:X}}
+function lvCmd(st){if(st.sh)return (SHCMD[st.sh]||st.sh).replace('{arg}',lvShow(st.arg||''));if(st.h)return lvCurl(st.h);if(st.open)return `start ${st.open}`;return ''}
+function lvFmtHttp(r){if(r.conn)return r.conn;if(r.error)return 'ERROR: '+r.error;
+  let body=r.body||'';try{const o=JSON.parse(body);body=JSON.stringify(o,null,2)}catch(e){}
+  let L=body.split('\n');const extra=L.length-38;if(extra>8)L=L.slice(0,38).concat([`… (${extra} líneas más: el contrato completo se ve mejor en /docs)`]);
+  const hs=Object.entries(r.headers||{}).map(([k,v])=>`${k}: ${v}`).join('\n');
+  return `HTTP/1.1 ${r.status} ${r.reason}\n${hs}${hs?'\n':''}\n${L.join('\n')}`}
+function lvSave(st,r,txt){const out=[];if(!st.save||!r)return out;
+  for(const [k,src] of Object.entries(st.save)){let v;
+    if(src==='@last'){v=String(txt).trim().split('\n').pop().trim()}
+    else{try{const o=JSON.parse(r.body||'');v=o&&(o[src]??(o.datos||o.data||{})[src])}catch(e){}}
+    if(v===undefined||v===null||v===''||(src==='@last'&&!/^[\w-]+\.[\w-]+\.[\w-]+$/.test(v)))continue;
+    LV.vars[k]=String(v);
+    out.push(/^TOKEN/.test(k)?`:: guardado en %${k}%   (a mano en cmd: set ${k}=${String(v).slice(0,12)}…)`:`:: guardado: ${k} = ${v}`)}
+  return out}
+function lvPaint(txt,hl,status){let h=lvEsc(txt);
+  h=h.replace(/^(HTTP\/1\.1 )(\d{3})(.*)$/m,(m,a,c,b)=>`${a}<span class="lv-c${c[0]}">${c}${b}</span>`);
+  h=h.replace(/^(\[OK\].*)$/gm,'<span class="lv-ok">$1</span>').replace(/^(\[X \].*)$/gm,'<span class="lv-bad">$1</span>').replace(/^(INFO:.*)$/gm,'<span class="lv-dim">$1</span>').replace(/^(ERROR.*|curl: \(7\).*)$/gm,'<span class="lv-bad">$1</span>');
+  (hl||[]).forEach(x=>{const e=lvEsc(x);if(!e)return;h=h.split(e).join(`<mark>${e}</mark>`)});return h}
+function lvBuild(el){const id=el.dataset.live,steps=LIVE[id];if(!steps)return;let n=0;
+  el.innerHTML=`<div class="lv-steps"><ol>${steps.map((st,i)=>st.g?`<li class="lv-g">${lvEsc(st.g)}</li>`:`<li><button class="lv-b" data-i="${i}"><span class="lv-n">${++n}</span><span class="lv-l">${lvEsc(st.l)}</span></button>${st.h||(st.sh&&!/^(detener|reiniciar|cero)/.test(st.sh))?`<button class="lv-cp" data-i="${i}" title="Copiar el comando para hacerlo tú" aria-label="Copiar comando del paso ${n}">⧉</button>`:''}</li>`).join('')}</ol></div>
+  <div class="lv-right"><div class="lv-term"><div class="lv-bar"><i></i><i></i><i></i><span class="lv-t">Símbolo del sistema</span><span class="lv-mode"></span><button class="lv-clr" title="Limpiar la terminal">limpiar</button><button class="lv-zero" title="Empezar la demostración desde cero (borra equipos.db)">↺ desde cero</button></div><pre class="lv-out" tabindex="0" aria-live="polite"></pre></div><div class="lv-nota">Da clic en el paso 1: primero verás qué hace y qué esperamos; luego ▶ Ejecutar.</div></div>`;
+  const out=el.querySelector('.lv-out'),nota=el.querySelector('.lv-nota');
+  const put=html=>{out.insertAdjacentHTML('beforeend',html);out.scrollTop=out.scrollHeight};
+  async function type(cmd){const sp=document.createElement('span');sp.className='lv-cmd';out.insertAdjacentHTML('beforeend',`<span class="lv-p">${lvEsc(LV.prompt)}</span> `);out.appendChild(sp);
+    const k=Math.max(1,Math.ceil(cmd.length/45));for(let i=0;i<cmd.length;i+=k){sp.textContent=cmd.slice(0,i+k);out.scrollTop=out.scrollHeight;await new Promise(r=>setTimeout(r,14))}put('\n')}
+  async function run(i){if(LV.busy)return;const st=steps[i],key=id+':'+i,b=el.querySelector(`.lv-b[data-i="${i}"]`);LV.busy=true;el.classList.add('lv-busy');b.classList.add('lv-run');
+    const falta=lvMissing(st);
+    if(falta.length){put(`<span class="lv-bad">Falta ${falta.map(k=>'%'+k+'%').join(' y ')}: primero ejecuta el paso del login (o el que lo guarda) en esta misma slide.</span>\n\n`);b.classList.remove('lv-run');el.classList.remove('lv-busy');LV.busy=false;return}
+    try{await type(lvCmd(st));const wait=document.createElement('span');wait.className='lv-wait';wait.textContent='ejecutando…';out.appendChild(wait);
+      let txt;
+      if(st.open){if(LV.vivo){window.open(st.open,'_blank');txt='(se abrió /docs en otra pestaña)'}else txt='(con el puente, este paso abre /docs en otra pestaña)'}
+      let resp=null;
+      if(st.open){}
+      else if(LV.vivo){try{const pl=st.sh?{sh:st.sh,arg:lvReal(st.arg||'')}:JSON.parse(lvReal(JSON.stringify(st.h)));
+        const r=await fetch('/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(pl)});const j=await r.json();resp=j;txt=st.sh?(j.out??('ERROR: '+(j.error||''))):lvFmtHttp(j)}catch(e){txt='ERROR: no responde el puente. ¿Sigue abierta la ventana de python puente.py?'}}
+      else{await new Promise(r=>setTimeout(r,450));const r=REC[key];resp=r;txt=!r?'(sin grabación para este paso)':(st.sh?r.out:lvFmtHttp(r))}
+      const sv=lvSave(st,resp,txt);
+      wait.remove();put(lvPaint(txt,st.hl)+'\n'+(sv.length?`<span class="lv-sv">${lvEsc(sv.join('\n'))}</span>\n`:'')+'\n');nota.classList.remove('lv-planm');
+      nota.innerHTML=`<span class="lv-tag ok">Lo que pasó</span> ${st.n||''} <button class="lv-again">ver la explicación</button>`;nota.querySelector('.lv-again').onclick=()=>prep(i);
+      b.classList.add('lv-done');b.classList.remove('lv-sel');const nx=el.querySelector(`.lv-b[data-i="${i}"]`).closest('li').nextElementSibling;const nb=nx&&(nx.querySelector('.lv-b')||(nx.nextElementSibling&&nx.nextElementSibling.querySelector('.lv-b')));if(nb)nb.focus({preventScroll:true})}
+    finally{b.classList.remove('lv-run');el.classList.remove('lv-busy');LV.busy=false}}
+  function prep(i){if(LV.busy)return;const st=steps[i],num=el.querySelector(`.lv-b[data-i="${i}"] .lv-n`).textContent;
+    el.querySelectorAll('.lv-b').forEach(x=>x.classList.toggle('lv-sel',+x.dataset.i===i));
+    const P=lvParts(st),grid=a=>`<div class="lv-parts">${a.map(([x,y])=>`<code>${lvEsc(x)}</code><span>${lvEsc(y)}</span>`).join('')}</div>`;
+    nota.classList.add('lv-planm');
+    nota.innerHTML=`<div class="lv-ph"><span class="lv-tag">Paso ${num}</span><b>${lvEsc(st.l)}</b></div><p class="lv-q">${st.q||''}</p>`+
+      (P.main.length?grid(P.main):'')+
+      (st.h&&st.h.b?`<p class="lv-body"><b>Lo que mandamos:</b> <code>${lvEsc(JSON.stringify(st.h.b))}</code></p>`:'')+
+      (lvMissing(st).length?`<p class="lv-body" style="color:var(--red-ink)"><b>Ojo:</b> este paso usa ${lvMissing(st).map(k=>'%'+k+'%').join(' y ')}, que todavía no existe. Ejecuta antes el paso que lo guarda.</p>`:'')+
+      `<p class="lv-exp" hidden><b>Qué esperamos y por qué:</b> ${st.e||''}</p>`+
+      (P.extra.length?`<details class="lv-more"><summary>Las demás partes del comando</summary>${grid(P.extra)}</details>`:'')+
+      `<div class="lv-act"><button class="lv-show">¿Qué esperamos? · mostrar</button><button class="lv-go">▶ Ejecutar</button></div>`;
+    nota.querySelector('.lv-show').onclick=e=>{const x=nota.querySelector('.lv-exp');x.hidden=false;e.target.remove();nota.scrollTop=Math.max(0,x.offsetTop-nota.offsetTop-60);nota.querySelector('.lv-go').focus({preventScroll:true})};
+    const go=nota.querySelector('.lv-go');go.onclick=()=>run(i);go.focus({preventScroll:true});nota.scrollTop=0}
+  el.querySelectorAll('.lv-b').forEach(b=>b.addEventListener('click',e=>{if(e.shiftKey)run(+b.dataset.i);else prep(+b.dataset.i)}));
+  el.querySelectorAll('.lv-cp').forEach(b=>b.addEventListener('click',()=>{const c=lvCmd(steps[+b.dataset.i]);/* tokens quedan como %VAR% */try{navigator.clipboard.writeText(c).then(()=>{b.textContent='✓';setTimeout(()=>b.textContent='⧉',1200)})}catch(e){}}));
+  el.querySelector('.lv-clr').onclick=()=>{out.innerHTML='';el.querySelectorAll('.lv-b').forEach(b=>b.classList.remove('lv-done'));nota.textContent='Da clic en el paso 1.'};
+  el.querySelector('.lv-zero').onclick=async()=>{if(LV.busy)return;el.querySelector('.lv-clr').click();
+    if(!LV.vivo){nota.textContent='Listo: empieza otra vez desde el paso 1.';return}
+    LV.busy=true;el.classList.add('lv-busy');try{await type(SHCMD.cero);const r=await fetch('/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sh:'cero'})});const j=await r.json();put(lvPaint(j.out)+'\n\n');nota.textContent='Base de datos borrada y API reiniciada. Empieza desde el paso 1.'}catch(e){put('ERROR: no responde el puente.\n')}finally{el.classList.remove('lv-busy');LV.busy=false}};
+}
+function lvModes(){$$('.lv-mode').forEach(m=>{m.className='lv-mode '+(LV.vivo?'on':'rec');m.textContent=LV.vivo?'● EN VIVO':'● GRABADO';m.title=LV.vivo?'Los comandos se ejecutan en esta computadora':'Salida real grabada al preparar la clase. Para ejecutarlo de verdad: python puente.py'})}
+$$('.live').forEach(lvBuild);lvModes();
+(async()=>{if(!/^https?:$/.test(location.protocol))return;try{const r=await fetch('/estado',{cache:'no-store'});const j=await r.json();if(j.ok){LV.vivo=true;LV.prompt=j.prompt;lvModes()}}catch(e){}})();
+
+show(Math.max(0,(parseInt(location.hash.slice(1),10)||1)-1));
+</script>
+</body>
+</html>

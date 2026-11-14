@@ -54,6 +54,18 @@ const envSchema = z.object({
   // (separados por coma). Si uno agota su cuota gratis, el motor pasa al
   // siguiente; si se agotan todos, «Para ti» usa la heurística local (RF-10).
   GEMINI_MODELS: geminiModelsSchema,
+  // Opcional: un solo modelo de Gemini (el que sugiere probar_gemini.py).
+  // Si existe, la ficha con IA lo usa antes que la lista de GEMINI_MODELS.
+  GEMINI_MODELO: z
+    .union([z.string().min(1), z.literal("")])
+    .default("")
+    .transform((value) => value || undefined),
+  // Opcional: URL base del servicio externo de la U3S5 (simulador de fallas).
+  // Si existe, tiene prioridad sobre GEMINI_BASE_URL para la ficha con IA.
+  EXTERNO_URL: z
+    .union([z.url(), z.literal("")])
+    .default("")
+    .transform((value) => value || undefined),
 });
 
 export const env = envSchema.parse(process.env);

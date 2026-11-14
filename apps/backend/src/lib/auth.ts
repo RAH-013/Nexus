@@ -1,5 +1,6 @@
 import { prismaAdapter } from "@better-auth/prisma-adapter";
 import { betterAuth } from "better-auth";
+import { bearer } from "better-auth/plugins";
 import { env } from "../config/env";
 import { prisma } from "./prisma";
 
@@ -12,6 +13,9 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
+  // Permite `Authorization: Bearer <token de sesión>` además de la cookie.
+  // Lo usa el arnés de pruebas de la U3S5 (probar_ia.py) para autenticarse.
+  plugins: [bearer()],
   trustedOrigins: [
     "http://127.0.0.1",
     "http://127.0.0.1:80",

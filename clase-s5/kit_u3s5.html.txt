@@ -1,0 +1,163 @@
+Kit · IA en su API
+UNIDAD III · SESIÓN 5 · KIT
+Su API le pregunta a una IA
+Hoy su proyecto gana
+un endpoint con IA
+, y no se cae cuando la IA falla. Elijan su equipo y su lenguaje: el código de abajo se arma para su proyecto.
+1 · Su API llama a otra API
+La IA es otra API REST: POST, JSON y una clave.
+2 · Tiempo máximo y mensaje claro
+Si la IA tarda o falla, su API responde en 5 s con un 502 o 504 que se entiende.
+3 · La clave fuera del código
+En una variable de entorno. Nunca en GitHub.
+Paso 0 · Su equipo y su lenguaje
+Python (FastAPI)
+Node (Express)
+PHP
+Es una
+idea sugerida
+. Pueden cambiar la ruta, el campo y la instrucción: el código se actualiza solo.
+Ruta del endpoint
+Campo que manda el usuario
+Ejemplo de ese campo
+Instrucción para la IA (la forma del JSON va entre llaves; el dato del usuario va al final)
+Paso 1 · Su clave de Gemini (5 min, una sola vez)
+Entren a
+aistudio.google.com/apikey
+con su cuenta de Google y den clic en
+Create API key
+. Copien la clave.
+En
+cmd
+(no PowerShell), guárdenla en una variable de entorno de su usuario:
+setx GEMINI_API_KEY "pega-aquí-tu-clave"
+Cierren ese cmd y abran uno nuevo
+:
+setx
+solo se nota en las ventanas que se abren después.
+Pruébenla:
+python probar_gemini.py
+. Si les sugiere otro modelo, copien la línea
+setx GEMINI_MODELO …
+que imprime.
+En Mac o Linux:
+export GEMINI_API_KEY="tu-clave"
+en la terminal donde arrancan su API.
+La clave es como una contraseña.
+Nunca en el código, nunca en GitHub, nunca en Classroom ni en un chat. Si se publica, bórrenla en AI Studio y creen otra.
+Paso 2 · Peguen la función (una sola vez)
+Copiar
+Paso 3 · Peguen su endpoint
+Este es el endpoint de su proyecto. Fíjense en la línea que
+revisa lo que respondió la IA
+: la IA no siempre responde lo que le pidieron.
+Copiar
+Paso 4 · Pruébenlo con la IA de verdad
+Arranquen su API en un cmd
+nuevo
+(para que tenga la clave), como siempre.
+En otro cmd, manden una petición
+:
+Copiar
+Deben ver un
+200
+con un JSON como
+, escrito por la IA.
+Paso 5 · ¿Y si la IA falla? Pruébenlo con el simulador
+El simulador se pone entre su API y la IA, y puede hacer que la IA tarde, se caiga o responda basura.
+Ventana 1:
+detengan su API (Ctrl+C), escriban esto y vuelvan a arrancarla en esa misma ventana:
+set EXTERNO_URL=http://127.0.0.1:9000
+En su
+prueba.json
+agreguen (o reemplacen) el bloque
+"externo"
+:
+Copiar
+Ventana 2
+, en la carpeta de
+probar_ia.py
+,
+simulador.py
+y su
+prueba.json
+:
+python probar_ia.py
+Deben llegar a
+4 de 4
+:
+Para la tarea:
+python probar_api.py
+(las pruebas 21, 22 y 25 son las de hoy).
+Si algo falla
+Lo que ven
+Qué hacer
+503
+Falta configurar la variable de entorno GEMINI_API_KEY
+Abrieron el cmd antes del
+setx
+. Abran uno nuevo y arranquen ahí su API.
+502
+La IA no está disponible (respondió 400 o 403)
+La clave está mal copiada. Repitan el paso 1 y corran
+python probar_gemini.py
+.
+502
+… (respondió 404)
+Ese modelo no está disponible para su clave. Corran
+python probar_gemini.py
+y usen el
+setx GEMINI_MODELO …
+que sugiere.
+502
+… (respondió 429)
+Muchas peticiones seguidas: el plan gratuito tiene límite por minuto. Esperen un minuto.
+502
+… (respondió 503) con la IA real
+Google está saturado en ese momento. Justo para esto es la protección: su API no se cayó. Intenten en un minuto.
+502
+La IA respondió algo inesperado
+Su instrucción no pide la forma del JSON entre llaves, o revisan un campo con otro nombre.
+probar_ia: “¡Su API no le habló al simulador!”
+Faltó
+set EXTERNO_URL=http://127.0.0.1:9000
+en la ventana de su API, antes de arrancarla.
+PHP:
+Call to undefined function curl_init()
+En
+php.ini
+quiten el
+;
+de
+extension=curl
+y reinicien.
+PHP:
+SSL certificate problem
+Descarguen
+cacert.pem
+de curl.se/docs/caextract.html y en
+php.ini
+pongan
+curl.cainfo = "C:\ruta\cacert.pem"
+.
+Node:
+fetch is not defined
+Necesitan Node 18 o más nuevo (
+node -v
+).
+El martes: defensa de 1 minuto
+El profesor elige a una persona del equipo. Sin notas, con su código en pantalla, contesta:
+¿Dónde está el tiempo máximo de espera, y por qué ese número?
+Si la IA se cae, ¿qué responde su API y por qué no un 500?
+¿Dónde está la clave y cómo la lee su código?
+Si pueden contestar esto, entendieron la sesión. Si la IA les escribió el código, pídanle que se lo explique hasta poder contestarlo ustedes.
+Nivel 2 (opcional)
+En una empresa, además, se
+reintenta
+con espera creciente cuando la falla es pasajera (503, 429) y se usa
+Idempotency-Key
+para no cobrar ni mandar un correo dos veces. Está en la guía
+guia_u3s5.html
+y en las slides de consulta. En
+probar_api.py
+son las pruebas 23 y 24: cuentan como bonus.

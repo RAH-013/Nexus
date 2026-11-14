@@ -1,0 +1,444 @@
+Guía U3S5 · APIs de terceros y de IA
+Unidad III · Sesión 5 · Guía de estudio
+APIs de terceros y de IA: paso a paso
+Para consultar mientras programan INT-401 y FEAT-402. Los fragmentos de Python, Node y PHP están probados contra el simulador de fallas en sus seis modos.
+Contenido
+La idea en un dibujo
+Glosario
+Los 7 pasos en su proyecto
+Si su integración usa Gemini
+El simulador, a mano
+Errores frecuentes
+¿Lo entendiste tú?
+Fuentes
+1 · La idea en un dibujo
+Usuario
+Le pide algo a su API.
+Su API
+Para contestar, necesita a otro servicio.
+Simulador
+Solo en pruebas: reenvía… o falla a propósito.
+Servicio externo
+IA, clima, tipo de cambio, correo.
+Regla
+En código
+Si el externo…
+Su API responde
+1. Timeout siempre
+timeout=2
+tarda
+504
+en segundos
+2. Reintentar con criterio
+solo 429, 5xx, timeout; espera 0.5 s, 1 s…
+falla una vez
+2xx (el usuario ni se entera)
+no reintentar 400, 401, 404
+rechaza la petición
+502
+de inmediato
+3. Sin duplicados
+Idempotency-Key
+, misma llave en cada intento
+hizo la acción pero la respuesta se perdió
+sin repetir la acción
+4. Desconfiar y cuidar
+validar la respuesta; la clave en una variable de entorno
+responde basura
+502
+en JSON, nunca 500
+2 · Glosario
+Término
+Qué es, en una línea
+Timeout
+Lo máximo que su API espera a otro servidor antes de rendirse.
+502 Bad Gateway
+“El servidor del que dependo me respondió mal” (error o basura).
+504 Gateway Timeout
+“El servidor del que dependo no me respondió a tiempo”.
+429 Too Many Requests
+“Vas muy rápido”. Puede traer
+Retry-After
+: cuántos segundos esperar.
+Falla pasajera
+La que puede arreglarse sola: timeout, 429, 500, 502, 503, 504. Solo esas se reintentan.
+Backoff
+Esperar cada vez más entre reintentos: 0.5 s, 1 s, 2 s…
+Jitter
+Un poco de azar en la espera, para que mil clientes no reintenten en el mismo instante.
+Idempotency-Key
+Un encabezado con una llave única por operación. Si el servicio la ve repetida, no repite la acción.
+Variable de entorno
+Configuración que vive en el sistema operativo, fuera del código:
+GEMINI_API_KEY
+,
+EXTERNO_URL
+.
+Simulador de fallas
+simulador.py
+: se pone entre su API y el externo y puede tardar, fallar o responder basura a propósito.
+3 · Los 7 pasos en su proyecto
+1
+Elijan la integración y llenen la ficha
+Una sola, la que tenga sentido para su proyecto (bloque 03 del artefacto). Si su equipo no tiene una natural, usen el
+correo simulado
+:
+POST {CORREO}/correos
+con
+{"para", "asunto", "texto"}
+, que existe dentro de
+simulador.py
+.
+Citas médicas: nada de datos de salud ni nombres a una IA externa. Usen el correo de confirmación.
+2
+La dirección y la clave, de variables de entorno
+EXTERNO_URL = os.environ.get("EXTERNO_URL", "https://api.open-meteo.com").rstrip("/")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+# nunca escrita aquí
+const EXTERNO_URL = (process.env.EXTERNO_URL ?? 'https://api.open-meteo.com').replace(/\/$/, '');
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY ?? '';
+// nunca escrita aquí
+$EXTERNO_URL = rtrim(getenv('EXTERNO_URL') ?: 'https://api.open-meteo.com', '/');
+$GEMINI_API_KEY = getenv('GEMINI_API_KEY') ?: '';
+// nunca escrita aquí
+Si usan un archivo
+.env
+, agréguenlo a
+.gitignore
+antes
+del primer commit.
+3
+Una función para llamar al externo (timeout, reintentos, validación)
+Cópienla a su proyecto y
+léanla línea por línea
+: es lo que les van a preguntar.
+TIMEOUT = 2.0          # segundos máximos esperando a que el otro servidor responda (por intento)
+INTENTOS = 3           # 1 intento + 2 reintentos
+TRANSITORIOS = {429, 500, 502, 503, 504}   # fallas pasajeras: vale la pena reintentar
+def llamar_externo(metodo: str, url: str, cuerpo=None, encabezados=None, llave=None):
+"""Llama a un servicio externo. Regresa el JSON de la respuesta o lanza HTTPException 502/504."""
+datos = json.dumps(cuerpo).encode() if cuerpo is not None else None
+for intento in range(1, INTENTOS + 1):
+req = urllib.request.Request(url, data=datos, method=metodo)
+req.add_header("Content-Type", "application/json")
+for k, v in (encabezados or {}).items():
+req.add_header(k, v)
+if llave:
+req.add_header("Idempotency-Key", llave)   # la MISMA llave en todos los intentos
+espera_minima = 0
+try:
+with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+estado, texto = r.status, r.read()
+except urllib.error.HTTPError as e:
+estado, texto = e.code, e.read()
+espera_minima = float(e.headers.get("Retry-After") or 0) if e.code == 429 else 0
+except (urllib.error.URLError, socket.timeout, TimeoutError, ConnectionError):
+estado, texto = None, b""                   # no respondió a tiempo o no hubo conexión
+if estado is not None and estado not in TRANSITORIOS:
+break                                      # éxito, o un error que no se arregla reintentando (400, 401, 404...)
+if intento < INTENTOS:
+espera = max(espera_minima, 0.5 * 2 ** (intento - 1)) + random.uniform(0, 0.2)   # 0.5 s, 1 s... + azar
+print(f"[externo] intento {intento}: {estado or 'sin respuesta a tiempo'} -> reintento en {espera:.1f} s", flush=True)
+time.sleep(espera)
+if estado is None:
+raise HTTPException(504, f"El servicio externo no respondió a tiempo ({INTENTOS} intentos de {TIMEOUT:g} s)")
+if estado in TRANSITORIOS:
+raise HTTPException(502, f"El servicio externo sigue fallando ({estado}) después de {INTENTOS} intentos")
+if estado >= 400:
+raise HTTPException(502, f"El servicio externo rechazó la petición ({estado}); no se reintenta")
+try:
+return json.loads(texto)
+except ValueError:
+raise HTTPException(502, "El servicio externo respondió algo que no es JSON")
+// externo.js — Llamar a un servicio externo con timeout, reintentos y validación (Unidad III, Sesión 5)
+// Node 18+ (trae fetch). Uso en Express:
+//   const { llamarExterno, FallaExterna } = require('./externo');
+//   try { const datos = await llamarExterno('POST', `${EXTERNO_URL}/ruta`, cuerpo, { 'x-goog-api-key': process.env.GEMINI_API_KEY }); }
+//   catch (e) { if (e instanceof FallaExterna) return res.status(e.codigo).json({ error: e.message, detalles: [] }); throw e; }
+const TIMEOUT_MS = 2000;                 // máximo por intento
+const INTENTOS = 3;                      // 1 intento + 2 reintentos
+const TRANSITORIOS = new Set([429, 500, 502, 503, 504]);
+class FallaExterna extends Error {
+constructor(codigo, mensaje) { super(mensaje); this.codigo = codigo; }   // 502 o 504
+}
+const dormir = ms => new Promise(r => setTimeout(r, ms));
+async function llamarExterno(metodo, url, cuerpo = null, encabezados = {}, llave = null) {
+let estado = null, texto = '';
+for (let intento = 1; intento <= INTENTOS; intento++) {
+let esperaMinima = 0;
+try {
+const r = await fetch(url, {
+method: metodo,
+headers: { 'Content-Type': 'application/json', ...encabezados, ...(llave ? { 'Idempotency-Key': llave } : {}) },
+body: cuerpo === null ? undefined : JSON.stringify(cuerpo),
+signal: AbortSignal.timeout(TIMEOUT_MS),             // <- el timeout
+});
+estado = r.status;
+texto = await r.text();
+if (estado === 429) esperaMinima = Number(r.headers.get('Retry-After') || 0) * 1000;
+} catch (e) {
+estado = null;                                         // no respondió a tiempo o no hubo conexión
+}
+if (estado !== null && !TRANSITORIOS.has(estado)) break; // éxito, o un error que no se reintenta
+if (intento < INTENTOS) {
+const espera = Math.max(esperaMinima, 500 * 2 ** (intento - 1)) + Math.random() * 200;   // backoff + jitter
+console.log(`[externo] intento ${intento}: ${estado ?? 'sin respuesta a tiempo'} -> reintento en ${(espera / 1000).toFixed(1)} s`);
+await dormir(espera);
+}
+}
+if (estado === null) throw new FallaExterna(504, `El servicio externo no respondió a tiempo (${INTENTOS} intentos)`);
+if (TRANSITORIOS.has(estado)) throw new FallaExterna(502, `El servicio externo sigue fallando (${estado})`);
+if (estado >= 400) throw new FallaExterna(502, `El servicio externo rechazó la petición (${estado}); no se reintenta`);
+try { return JSON.parse(texto); }                         // validar: ¿de verdad es JSON?
+catch { throw new FallaExterna(502, 'El servicio externo respondió algo que no es JSON'); }
+}
+module.exports = { llamarExterno, FallaExterna };
+<?php
+// externo.php — Llamar a un servicio externo con timeout, reintentos y validación (Unidad III, Sesión 5)
+// Uso:  require __DIR__ . '/externo.php';
+//       $datos = llamar_externo('POST', getenv('EXTERNO_URL') . '/ruta', $cuerpo, ['x-goog-api-key: ' . getenv('GEMINI_API_KEY')]);
+//       (si falla, llama a error(502|504, ...) con el formato {"error","detalles"} de su API)
+// Necesita la extensión curl (en php.ini: extension=curl).
+const TIMEOUT_S = 2;          // máximo por intento
+const INTENTOS = 3;           // 1 intento + 2 reintentos
+const TRANSITORIOS = [429, 500, 502, 503, 504];
+function llamar_externo(string $metodo, string $url, $cuerpo = null, array $encabezados = [], ?string $llave = null) {
+$estado = null; $texto = '';
+for ($intento = 1; $intento <= INTENTOS; $intento++) {
+$ch = curl_init($url);
+$h = array_merge(['Content-Type: application/json'], $encabezados, $llave ? ["Idempotency-Key: $llave"] : []);
+curl_setopt_array($ch, [
+CURLOPT_CUSTOMREQUEST => $metodo,
+CURLOPT_HTTPHEADER => $h,
+CURLOPT_RETURNTRANSFER => true,
+CURLOPT_HEADER => true,
+CURLOPT_CONNECTTIMEOUT => TIMEOUT_S,
+CURLOPT_TIMEOUT => TIMEOUT_S,                                  // <- el timeout
+]);
+if ($cuerpo !== null) curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($cuerpo));
+$resp = curl_exec($ch);
+$espera_minima = 0;
+if ($resp === false) {
+$estado = null;                                                // no respondió a tiempo o no hubo conexión
+} else {
+$estado = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+$tam = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+$cab = substr($resp, 0, $tam);
+$texto = substr($resp, $tam);
+if ($estado === 429 && preg_match('/^Retry-After:\s*(\d+)/mi', $cab, $m)) $espera_minima = (float)$m[1];
+}
+curl_close($ch);
+if ($estado !== null && !in_array($estado, TRANSITORIOS, true)) break;   // éxito, o un error que no se reintenta
+if ($intento < INTENTOS) {
+$espera = max($espera_minima, 0.5 * 2 ** ($intento - 1)) + mt_rand(0, 200) / 1000;   // backoff + jitter
+error_log(sprintf('[externo] intento %d: %s -> reintento en %.1f s', $intento, $estado ?? 'sin respuesta a tiempo', $espera));
+usleep((int)($espera * 1e6));
+}
+}
+if ($estado === null) error(504, 'El servicio externo no respondió a tiempo (' . INTENTOS . ' intentos)');
+if (in_array($estado, TRANSITORIOS, true)) error(502, "El servicio externo sigue fallando ($estado)");
+if ($estado >= 400) error(502, "El servicio externo rechazó la petición ($estado); no se reintenta");
+$datos = json_decode($texto, true);                                   // validar: ¿de verdad es JSON?
+if (!is_array($datos)) error(502, 'El servicio externo respondió algo que no es JSON');
+return $datos;
+}
+4
+Úsenla en una ruta de su API y validen lo que llega
+@app.get("/viajes/{viaje_id}/clima", responses={**E502, **E504})
+def clima(viaje_id: int, yo: dict = Depends(usuario_actual)):
+v = buscar_viaje(viaje_id, yo)
+d = llamar_externo("GET", f"{EXTERNO_URL}/v1/forecast?latitude={v['lat']}&longitude={v['lon']}&current_weather=true")
+try:
+actual = d["current_weather"]
+# validar: ¿trae lo que esperamos?
+return {"temperatura": float(actual["temperature"]), "viento": float(actual["windspeed"])}
+except (KeyError, TypeError, ValueError):
+raise HTTPException(502, "El servicio del clima respondió en un formato inesperado")
+app.get('/viajes/:id/clima', usuarioActual, async (req, res) => {
+const v = buscarViaje(req.params.id, req.yo);
+try {
+const d = await llamarExterno('GET', `${EXTERNO_URL}/v1/forecast?latitude=${v.lat}&longitude=${v.lon}&current_weather=true`);
+const t = Number(d?.current_weather?.temperature);
+// validar
+if (!Number.isFinite(t)) return error(res, 502, 'El servicio del clima respondió en un formato inesperado');
+res.json({ temperatura: t });
+} catch (e) {
+if (e instanceof FallaExterna) return error(res, e.codigo, e.message);
+throw e;
+}
+});
+if ($partes[0] === 'viajes' && ($partes[2] ?? '') === 'clima') {
+$v = buscar_viaje($db, $partes[1], usuario_actual());
+$d = llamar_externo('GET', "$EXTERNO_URL/v1/forecast?latitude={$v['lat']}&longitude={$v['lon']}&current_weather=true");
+$t = $d['current_weather']['temperature'] ?? null;
+// validar
+if (!is_numeric($t)) error(502, 'El servicio del clima respondió en un formato inesperado');
+responder(['temperatura' => (float)$t]);
+}
+El ejemplo es de clima (Open-Meteo); revisen en la documentación de
+su
+servicio qué ruta y qué campos regresa. Para la IA, vean la sección 4.
+5
+Si la acción tiene efectos,
+Idempotency-Key
+Mandar un correo, cobrar, crear algo en otro sistema: usen una llave que identifique
+la operación
+, no el intento. Por ejemplo
+cita-{id}-confirmacion
+. La misma en todos los reintentos.
+llamar_externo("POST", f"{CORREO_URL}/correos", {"para": ..., "asunto": ..., "texto": ...}, llave=f"cita-{cita_id}-confirmacion")
+Si el correo falla del todo, decidan: ¿se cancela la operación o se guarda con
+notificado: false
+? El ejemplo guarda el préstamo y marca
+notificado
+: un tercero caído no tumba su API.
+6
+prueba.json
+: el bloque
+"externo"
+"externo": {
+"metodo": "GET",
+"ruta": "/viajes/1/clima",
+"token": "admin",
+"real": "https://api.open-meteo.com"
+}
+ruta
+es la de
+su
+API.
+real
+es a dónde reenvía el simulador cuando está en modo normal; si lo dejan vacío, el simulador responde algo genérico (sirve para correo e IA simulada). Pongan
+simulador.py
+junto a
+probar_api.py
+.
+7
+Correr las pruebas
+:: ventana 1: su API apuntando al simulador
+set EXTERNO_URL=http://127.0.0.1:9000
+set CORREO_URL=http://127.0.0.1:9000
+uvicorn main:app --port 8000
+(o: node app.js / php -S ...)
+:: ventana 2
+python probar_api.py
+La prueba arranca el simulador sola. Reinicien la API (en la ventana 1, con las mismas variables) y córranla otra vez: 25 de 25.
+4 · Si su integración usa Gemini
+Creen su clave en
+aistudio.google.com/apikey
+(botón
+Create API key
+).
+Guárdenla: Inicio → “variables de entorno” → Variables de usuario → Nueva →
+GEMINI_API_KEY
+. Abran un
+cmd nuevo
+.
+python probar_gemini.py
+: dice si la clave funciona y qué modelo usar (guárdenlo en
+GEMINI_MODELO
+).
+POST {EXTERNO_URL}/v1beta/models/{GEMINI_MODELO}:generateContent
+x-goog-api-key: {GEMINI_API_KEY}
+{"contents": [{"parts": [{"text": "Instrucción... responde SOLO un JSON {...}. Dato: ..."}]}],
+"generationConfig": {"responseMimeType": "application/json"}}
+# la respuesta trae el texto en: candidates[0].content.parts[0].text  → json.loads → validar cada campo
+Con
+EXTERNO_URL=http://127.0.0.1:9000
+, el simulador responde en formato Gemini aunque no tengan clave. Con
+"real": "https://generativelanguage.googleapis.com"
+en prueba.json, reenvía a Gemini de verdad (y su clave viaja en el encabezado).
+5 · El simulador, a mano
+python simulador.py
+:: respuestas simuladas
+python simulador.py https://api.open-meteo.com
+:: reenvía a la API real
+curl.exe -X POST http://127.0.0.1:9000/_control -H "Content-Type: application/json" -d "{\"modo\":\"lento\"}"
+curl.exe http://127.0.0.1:9000/_control
+:: llamadas recibidas y correos enviados
+Modos:
+normal
+,
+lento
+,
+falla_una
+,
+falla_siempre
+,
+429_una
+,
+error_400
+,
+basura
+,
+pierde_respuesta
+.
+6 · Errores frecuentes
+Síntoma
+Causa y solución
+21: “¡su API no pasó por el simulador!”
+Arrancaron la API sin
+EXTERNO_URL
+, en otra ventana (
+set
+solo vale en la suya), o el código no lee la variable.
+22: “su API no respondió en 15 s”
+Falta el timeout. En Node:
+AbortSignal.timeout
+; en PHP:
+CURLOPT_TIMEOUT
+.
+22 tarda más de 10 s
+Timeout × intentos + esperas pasa de 10 s: bajen el timeout o los intentos.
+23: “no reintentó”
+No reintentan 503, o el reintento solo está en el
+catch
+(fetch no lanza error con un 503).
+24: 3 llamadas
+Reintentan todo. Un 400 no se arregla solo.
+25: 500
+json.loads
+/
+JSON.parse
+/
+json_decode
+sin validar.
+Gemini 404 “model not found”
+El nombre del modelo cambió:
+python probar_gemini.py
+.
+Gemini 429
+Límite gratuito por minuto. Esperen; su API debe reintentar o responder 502.
+PHP: “Call to undefined function curl_init”
+Activen
+extension=curl
+en
+php.ini
+.
+7 · ¿Lo entendiste tú o lo entendió la IA?
+¿Cuántos segundos espera su API al externo y en qué línea está ese número?
+¿Qué códigos reintentan y cuáles no? ¿Por qué?
+¿Qué responde su API si el externo tarda? ¿Y si responde basura?
+¿Dónde está su clave y cómo llega al código?
+Si su integración reintenta, ¿puede duplicar algo? ¿Cómo lo evitan?
+¿Qué datos le mandan al servicio externo, y por qué ninguno más?
+Hoy integraron una IA en su API y vieron que responde distinto cada vez y que hay que validarla. Lo mismo vale cuando la usan para escribir código: revisen lo que les da.
+8 · Fuentes
+Brooker, M. (s.f.).
+Timeouts, retries, and backoff with jitter
+. Amazon Builders’ Library. https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/
+Featonby, M. (s.f.).
+Making retries safe with idempotent APIs
+. Amazon Builders’ Library. https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/
+Google. (s.f.).
+Using Gemini API keys
+. https://ai.google.dev/gemini-api/docs/api-key
+OWASP Foundation. (2023).
+API10:2023 Unsafe consumption of APIs
+. https://owasp.org/API-Security/editions/2023/en/0xaa-unsafe-consumption-of-apis/
+Stripe. (s.f.).
+Idempotent requests
+. https://docs.stripe.com/api/idempotent_requests
+Wiggins, A. (s.f.).
+The twelve-factor app: III. Config
+. https://12factor.net/config
+Universidad de Colima · Facultad de Telemática · Programación Distribuida · Unidad III, Sesión 5
