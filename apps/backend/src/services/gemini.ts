@@ -95,7 +95,6 @@ export interface GeminiResult {
   sentiments: CommentSentiment[] | null;
 }
 
-/** Ficha corta que la IA escribe para un título (U3S5). */
 export interface Ficha {
   genero: string;
   sinopsis: string;

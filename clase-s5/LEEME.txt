@@ -16,7 +16,7 @@ LA DEMOSTRACIÓN DE LA CLASE (para repetirla en tu computadora)
 
 TU CLAVE DE GEMINI (una sola vez)
    Créala en aistudio.google.com/apikey, y en cmd:
-      setx GEMINI_API_KEY "pega-aquí-tu-clave"
+      setx GEMINI_API_KEY "AIzaSyAvpDoeMOp4gLWc-JLxkrAdHYASu9FEutg"
    Cierra ese cmd, abre uno nuevo y pruébala:   python probar_gemini.py
    NUNCA la pongas en el código, en GitHub, en Classroom ni en un chat.
 
