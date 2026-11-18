@@ -2,6 +2,18 @@ import { z } from "zod";
 
 const DEFAULT_CINEMETA_BASE_URL = "https://v3-cinemeta.strem.io";
 const DEFAULT_GEMINI_MODELS = ["gemini-2.5-flash"];
+const DEFAULT_CORS_ORIGINS: string[] = [];
+
+const corsOriginsSchema = z
+  .union([z.string(), z.literal("")])
+  .default(DEFAULT_CORS_ORIGINS.join(","))
+  .transform((value) =>
+    value
+      .split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean),
+  )
+  .pipe(z.array(z.url()));
 
 /** Lista por comas de modelos de Gemini, en orden de preferencia. */
 const geminiModelsSchema = z
@@ -17,6 +29,7 @@ const geminiModelsSchema = z
   });
 
 const envSchema = z.object({
+  CORS_ORIGINS: corsOriginsSchema,
   NODE_ENV: z
     .enum(["development", "test", "production"])
     .default("development"),

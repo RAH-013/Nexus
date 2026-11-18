@@ -1,129 +1,206 @@
 openapi: 3.0.3
+
 info:
-  title: "API de comentarios"
-  version: "1.0"
-  description: 'Todos los errores responden {"error", "detalles"}.'
+  title: API de comentarios de Nexus
+  version: 1.2.0
+  description: API para consultar, crear, actualizar y eliminar comentarios de películas.
+
+servers:
+  - url: /
+
+tags:
+  - name: Comments
+    description: Operaciones de comentarios
+
 paths:
-  "/api/comments/movie/tt22084616":
+  /api/comments/movie/tt35538033:
     get:
-      summary: "Listar api/comments/movie/tt22084616"
+      tags:
+        - Comments
+      summary: Listar comentarios de una película
+      operationId: getMovieComments
       responses:
         "200":
-          description: "Lista"
+          description: Lista de comentarios
           content:
             application/json:
               schema:
                 type: array
-                items: { $ref: "#/components/schemas/Api" }
+                items:
+                  $ref: "#/components/schemas/Comment"
+
     post:
-      summary: "Crear"
+      tags:
+        - Comments
+      summary: Crear un comentario
+      operationId: createMovieComment
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/ApiNuevo" }
+            schema:
+              $ref: "#/components/schemas/CommentCreate"
       responses:
         "201":
-          description: "Creado"
+          description: Comentario creado
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/Api" }
-        "400": { $ref: "#/components/responses/JsonInvalido" }
-        "409": { $ref: "#/components/responses/Conflicto" }
-        "422": { $ref: "#/components/responses/DatosInvalidos" }
-  "/api/comments/movie/tt22084616/{id}":
+              schema:
+                $ref: "#/components/schemas/Comment"
+        "400":
+          $ref: "#/components/responses/JsonInvalido"
+        "401":
+          $ref: "#/components/responses/NoAutorizado"
+        "409":
+          $ref: "#/components/responses/Conflicto"
+        "422":
+          $ref: "#/components/responses/DatosInvalidos"
+
+  /api/comments/movie/tt35538033/{id}:
     parameters:
       - name: id
         in: path
         required: true
-        schema: { type: integer }
+        description: Identificador interno del comentario
+        schema:
+          type: integer
+
     get:
-      summary: "Consultar uno"
+      tags:
+        - Comments
+      summary: Consultar un comentario
+      operationId: getMovieComment
       responses:
         "200":
-          description: "Encontrado"
+          description: Comentario encontrado
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/Api" }
-        "404": { $ref: "#/components/responses/NoExiste" }
+              schema:
+                $ref: "#/components/schemas/Comment"
+        "404":
+          $ref: "#/components/responses/NoExiste"
+
     put:
-      summary: "Reemplazar completo"
+      tags:
+        - Comments
+      summary: Actualizar un comentario
+      operationId: updateMovieComment
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/ApiNuevo" }
+            schema:
+              $ref: "#/components/schemas/CommentCreate"
       responses:
         "200":
-          description: "Reemplazado"
+          description: Comentario actualizado
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/Api" }
-        "400": { $ref: "#/components/responses/JsonInvalido" }
-        "404": { $ref: "#/components/responses/NoExiste" }
-        "409": { $ref: "#/components/responses/Conflicto" }
-        "422": { $ref: "#/components/responses/DatosInvalidos" }
+              schema:
+                $ref: "#/components/schemas/Comment"
+        "400":
+          $ref: "#/components/responses/JsonInvalido"
+        "401":
+          $ref: "#/components/responses/NoAutorizado"
+        "404":
+          $ref: "#/components/responses/NoExiste"
+        "409":
+          $ref: "#/components/responses/Conflicto"
+        "422":
+          $ref: "#/components/responses/DatosInvalidos"
+
     delete:
-      summary: "Borrar"
+      tags:
+        - Comments
+      summary: Eliminar un comentario
+      operationId: deleteMovieComment
       responses:
-        "204":
-          description: "Borrado"
-        "404": { $ref: "#/components/responses/NoExiste" }
+        "200":
+          description: Comentario eliminado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Comentario eliminado
+        "401":
+          $ref: "#/components/responses/NoAutorizado"
+        "404":
+          $ref: "#/components/responses/NoExiste"
+
 components:
   schemas:
-    ApiNuevo:
+    CommentCreate:
       type: object
-      required: ["tipo", "idTitulo", "idComentario", "body"]
+      required:
+        - text
       properties:
-        "tipo":
-          type: string
-          description: "Solo `movie` o `series`"
-        "idTitulo":
-          type: string
-          minLength: 1
-          maxLength: 80
-          description: "Entre 1 y 80 caracteres"
-        "idComentario":
-          type: integer
-          description: "Entero positivo (≥ 1)"
-        "body":
+        text:
           type: string
           minLength: 1
           maxLength: 500
-          description: "Entre 1 y 500 caracteres tras quitar espacios"
-    Api:
-      allOf:
-        - $ref: "#/components/schemas/ApiNuevo"
-        - type: object
-          required: ["id"]
-          properties:
-            id: { type: integer }
+          example: Comentario de prueba para Nexus.
+
+    Comment:
+      type: object
+      required:
+        - id
+        - text
+      properties:
+        id:
+          type: integer
+          example: 1
+        text:
+          type: string
+          example: Comentario de prueba para Nexus.
+
     Error:
       type: object
-      required: ["error", "detalles"]
+      required:
+        - error
+        - detalles
       properties:
-        error: { type: string }
+        error:
+          type: string
         detalles:
           type: array
-          items: { type: string }
+          items:
+            type: string
+
   responses:
     JsonInvalido:
-      description: "El cuerpo no es un JSON válido"
+      description: El cuerpo no contiene JSON válido
       content:
         application/json:
-          schema: { $ref: "#/components/schemas/Error" }
+          schema:
+            $ref: "#/components/schemas/Error"
+
     DatosInvalidos:
-      description: "Los datos no cumplen las reglas"
+      description: Los datos no cumplen las reglas de validación
       content:
         application/json:
-          schema: { $ref: "#/components/schemas/Error" }
+          schema:
+            $ref: "#/components/schemas/Error"
+
     NoExiste:
-      description: "No existe ese Api"
+      description: El comentario no existe
       content:
         application/json:
-          schema: { $ref: "#/components/schemas/Error" }
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    NoAutorizado:
+      description: Se requiere una sesión válida
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
     Conflicto:
-      description: "Cuando un usuario intenta publicar dos veces el mismo comentario en la misma película o serie, la API debe responder 409 para evitar comentarios duplicados."
+      description: El comentario ya existe
       content:
         application/json:
-          schema: { $ref: "#/components/schemas/Error" }
+          schema:
+            $ref: "#/components/schemas/Error"

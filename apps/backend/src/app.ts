@@ -36,6 +36,40 @@ app.use(express.urlencoded({ extended: false, limit: "50kb" }));
 
 app.use(compression());
 
+// TEMPORAL: integración con el simulador externo para las pruebas 21–25.
+// Elimina este bloque cuando termines las pruebas.
+//
+// Comprueba que EXTERNO_URL esté configurada y que el simulador responda.
+app.get("/api/test-externo", async (_req, res) => {
+  const externoUrl = process.env.EXTERNO_URL;
+
+  if (!externoUrl) {
+    return res.status(500).json({
+      error: "EXTERNO_URL no está configurada",
+    });
+  }
+
+  try {
+    const response = await fetch(externoUrl, {
+      method: "GET",
+      signal: AbortSignal.timeout(5000),
+    });
+
+    const body = await response.text();
+
+    return res.status(response.status).json({
+      message: "Respuesta del servicio externo",
+      status: response.status,
+      body,
+    });
+  } catch (error) {
+    return res.status(502).json({
+      error: "No se pudo conectar con el servicio externo",
+      detalles: error instanceof Error ? error.message : String(error),
+    });
+  }
+});
+
 // Documentación
 const openApiPath = path.resolve(process.cwd(), "src/docs/openapi.yaml");
 const openApiDocument = YAML.parse(fs.readFileSync(openApiPath, "utf8"));
