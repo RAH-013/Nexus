@@ -45,6 +45,8 @@ services:
     container_name: nexus-backend
     expose:
       - "3000"
+    ports:
+      - "3000:3000"
     environment:
       TZ: America/Mexico_City
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
@@ -55,6 +57,8 @@ services:
       TMDB_API_KEY: ${TMDB_API_KEY:-}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODELS: ${GEMINI_MODELS:-}
+      GEMINI_MODELO: ${GEMINI_MODELO:-}
+      EXTERNO_URL: ${EXTERNO_URL:-}
       REDIS_URL: redis://redis:6379
     depends_on:
       postgres:

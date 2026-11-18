@@ -1,0 +1,45 @@
+CLASE-S5 · Programación Distribuida · Unidad III, Sesión 5
+Su API le pregunta a una IA… y no se cae cuando la IA falla.
+
+PARA EMPEZAR (Windows, en cmd, no en PowerShell)
+ 1. Descomprime esta carpeta (no la abras desde dentro del .zip).
+ 2. Abre la carpeta en el Explorador, escribe  cmd  en la barra de dirección y presiona Enter.
+ 3. Solo la primera vez:   pip install fastapi uvicorn pyjwt bcrypt
+ 4. Abre kit_u3s5.html (doble clic): elige tu equipo y tu lenguaje y sigue los pasos 1 a 5.
+
+LA DEMOSTRACIÓN DE LA CLASE (para repetirla en tu computadora)
+   python puente.py
+   Abre las slides y la página  http://127.0.0.1:8000/demo
+   Ahí ves dos apps con el mismo reporte: la A sin protección y la B con tiempo máximo.
+   Con los botones de arriba la IA funciona, tarda, se cae o responde basura.
+   Para terminar: Ctrl+C.
+
+TU CLAVE DE GEMINI (una sola vez)
+   Créala en aistudio.google.com/apikey, y en cmd:
+      setx GEMINI_API_KEY "pega-aquí-tu-clave"
+   Cierra ese cmd, abre uno nuevo y pruébala:   python probar_gemini.py
+   NUNCA la pongas en el código, en GitHub, en Classroom ni en un chat.
+
+PROBAR TU ENDPOINT CUANDO LA IA FALLA
+   Ventana 1 (la de tu API):  set EXTERNO_URL=http://127.0.0.1:9000   y arranca tu API.
+   Ventana 2 (esta carpeta, con tu prueba.json y su bloque "externo"):
+      python probar_ia.py        -> debe decir 4 de 4
+      python probar_api.py       -> el reporte de la tarea (21, 22 y 25 obligatorias)
+
+ARCHIVOS
+ kit_u3s5.html             El kit: la función y el endpoint para tu equipo, en Python, Node o PHP
+ u3_sesion05_practica.html El artefacto de la tarea (genera tu PDF)
+ u3_sesion05_slides.html   Las slides de la clase
+ pagina_demo.html          La página de la demostración (la sirve api_equipos.py en /demo)
+ api_equipos.py            La API de ejemplo (sección 9: lo mínimo; sección 8: el nivel 2)
+ simulador.py              Se pone entre tu API y la IA y puede fallar a propósito
+ probar_ia.py              Prueba tu endpoint en 4 situaciones (rápido, para la clase)
+ probar_api.py             La prueba de la tarea (25 pruebas)
+ prueba.json               Configuración de ejemplo
+ probar_gemini.py          Comprueba tu clave y qué modelo funciona
+ puente.py                 Arranca la demostración y las terminales de las slides de consulta
+
+NIVEL 2 (OPCIONAL): reintentos con espera e Idempotency-Key
+ u3_sesion05_consulta.html (con python puente.py: http://127.0.0.1:8765/u3_sesion05_consulta.html)
+ guia_u3s5.html
+ En probar_api.py son las pruebas 23 y 24 (bonus).

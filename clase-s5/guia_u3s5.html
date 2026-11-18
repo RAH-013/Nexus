@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guía U3S5 · APIs de terceros y de IA</title>
+<style>
+:root{--bg:#F4F6FA;--card:#fff;--ink:#141C2B;--soft:#5A6577;--line:#E1E6EE;--teal:#17A398;--teal-t:#E2F5F2;--teal-ink:#0C6259;--amber:#E8A33D;--amber-t:#FCF0DC;--amber-ink:#7A4E0E;--red:#D2553F;--red-t:#FBE9E6;--red-ink:#9C3422;--blue:#2E5BE6;--blue-t:#E8EEFD;--blue-ink:#1F43B0;--code:#121722;--codeink:#E7ECF5}
+@media (prefers-color-scheme:dark){:root{--bg:#0F141D;--card:#171E2A;--ink:#E7ECF5;--soft:#9AA6B8;--line:#2A3344;--teal-t:#123A36;--teal-ink:#7FD4C9;--amber-t:#3A2D16;--amber-ink:#F2C27B;--red-t:#3C1F1A;--red-ink:#F29A87;--blue-t:#1A2647;--blue-ink:#9FB4FF;--code:#0A0E15}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16.5px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.w{max-width:960px;margin:0 auto;padding:24px 16px 60px}
+header{background:var(--code);color:#fff;border-radius:18px;padding:22px 24px;margin-bottom:18px}
+header .k{font:600 13px ui-monospace,Consolas,monospace;letter-spacing:.1em;color:#7FD4C9;text-transform:uppercase}
+header h1{margin:4px 0 6px;font-size:30px;line-height:1.2}
+header p{margin:0;color:#C9D2E0}
+nav.toc{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 18px;margin-bottom:18px}
+nav.toc ol{margin:4px 0;padding-left:20px;columns:2;column-gap:28px}
+nav.toc a{color:var(--blue-ink);text-decoration:none}
+section{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 22px;margin-bottom:16px}
+h2{margin:0 0 8px;font-size:23px}
+h3{margin:16px 0 6px;font-size:18px}
+code{font-family:ui-monospace,Consolas,monospace;font-size:.9em;background:var(--blue-t);color:var(--blue-ink);padding:1px 5px;border-radius:5px}
+pre{background:var(--code);color:var(--codeink);border-radius:12px;padding:12px 14px;overflow-x:auto;font:13.5px/1.5 ui-monospace,Consolas,monospace;margin:8px 0}
+pre code{background:none;color:inherit;padding:0;font-size:inherit}
+pre .c{color:#7FD4C9}
+.flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:10px 0}
+.flow div{background:var(--blue-t);border-radius:12px;padding:10px;font-size:14.5px;line-height:1.4}
+.flow b{display:block;color:var(--blue-ink)}
+@media (max-width:640px){.flow{grid-template-columns:1fr 1fr}nav.toc ol{columns:1}}
+.note{border-left:5px solid var(--amber);background:var(--amber-t);border-radius:0 12px 12px 0;padding:10px 14px;margin:10px 0}
+.good{border-left:5px solid var(--teal);background:var(--teal-t);border-radius:0 12px 12px 0;padding:10px 14px;margin:10px 0}
+.bad{border-left:5px solid var(--red);background:var(--red-t);border-radius:0 12px 12px 0;padding:10px 14px;margin:10px 0}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:13px;color:var(--soft);text-transform:uppercase;letter-spacing:.04em}
+.tabs{margin:8px 0}
+.tabs .tb{display:flex;gap:6px;flex-wrap:wrap}
+.tabs button{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:9px;padding:5px 12px;font:600 14px system-ui,sans-serif;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--teal);border-color:var(--teal);color:#fff}
+.tabs .pn{display:none}.tabs .pn.on{display:block}
+.step{display:flex;gap:12px;align-items:flex-start;margin-top:14px}
+.step .n{flex:none;width:32px;height:32px;border-radius:50%;background:var(--teal);color:#fff;display:grid;place-items:center;font-weight:700}
+.step .b{flex:1;min-width:0}
+.step h3{margin:3px 0 4px}
+.q li{margin:4px 0}
+li,td,.note,.good,.bad,p{overflow-wrap:anywhere}
+footer{color:var(--soft);font-size:13.5px;text-align:center;margin-top:20px}
+@media print{body{background:#fff}.tabs .pn{display:block!important}.tabs .tb{display:none}section{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="w">
+<header>
+  <div class="k">Unidad III · Sesión 5 · Guía de estudio</div>
+  <h1>APIs de terceros y de IA: paso a paso</h1>
+  <p>Para consultar mientras programan INT-401 y FEAT-402. Los fragmentos de Python, Node y PHP están probados contra el simulador de fallas en sus seis modos.</p>
+</header>
+
+<nav class="toc" aria-label="Contenido"><b>Contenido</b>
+<ol><li><a href="#flujo">La idea en un dibujo</a></li><li><a href="#glosario">Glosario</a></li><li><a href="#pasos">Los 7 pasos en su proyecto</a></li><li><a href="#gemini">Si su integración usa Gemini</a></li><li><a href="#simulador">El simulador, a mano</a></li><li><a href="#errores">Errores frecuentes</a></li><li><a href="#entendiste">¿Lo entendiste tú?</a></li><li><a href="#fuentes">Fuentes</a></li></ol></nav>
+
+<section id="flujo">
+<h2>1 · La idea en un dibujo</h2>
+<div class="flow">
+  <div><b>Usuario</b>Le pide algo a su API.</div>
+  <div><b>Su API</b>Para contestar, necesita a otro servicio.</div>
+  <div><b>Simulador</b>Solo en pruebas: reenvía… o falla a propósito.</div>
+  <div><b>Servicio externo</b>IA, clima, tipo de cambio, correo.</div>
+</div>
+<table>
+<tr><th>Regla</th><th>En código</th><th>Si el externo…</th><th>Su API responde</th></tr>
+<tr><td>1. Timeout siempre</td><td><code>timeout=2</code></td><td>tarda</td><td><b>504</b> en segundos</td></tr>
+<tr><td>2. Reintentar con criterio</td><td>solo 429, 5xx, timeout; espera 0.5 s, 1 s…</td><td>falla una vez</td><td>2xx (el usuario ni se entera)</td></tr>
+<tr><td></td><td>no reintentar 400, 401, 404</td><td>rechaza la petición</td><td><b>502</b> de inmediato</td></tr>
+<tr><td>3. Sin duplicados</td><td><code>Idempotency-Key</code>, misma llave en cada intento</td><td>hizo la acción pero la respuesta se perdió</td><td>sin repetir la acción</td></tr>
+<tr><td>4. Desconfiar y cuidar</td><td>validar la respuesta; la clave en una variable de entorno</td><td>responde basura</td><td><b>502</b> en JSON, nunca 500</td></tr>
+</table>
+</section>
+
+<section id="glosario">
+<h2>2 · Glosario</h2>
+<table>
+<tr><th style="width:24%">Término</th><th>Qué es, en una línea</th></tr>
+<tr><td>Timeout</td><td>Lo máximo que su API espera a otro servidor antes de rendirse.</td></tr>
+<tr><td>502 Bad Gateway</td><td>“El servidor del que dependo me respondió mal” (error o basura).</td></tr>
+<tr><td>504 Gateway Timeout</td><td>“El servidor del que dependo no me respondió a tiempo”.</td></tr>
+<tr><td>429 Too Many Requests</td><td>“Vas muy rápido”. Puede traer <code>Retry-After</code>: cuántos segundos esperar.</td></tr>
+<tr><td>Falla pasajera</td><td>La que puede arreglarse sola: timeout, 429, 500, 502, 503, 504. Solo esas se reintentan.</td></tr>
+<tr><td>Backoff</td><td>Esperar cada vez más entre reintentos: 0.5 s, 1 s, 2 s…</td></tr>
+<tr><td>Jitter</td><td>Un poco de azar en la espera, para que mil clientes no reintenten en el mismo instante.</td></tr>
+<tr><td>Idempotency-Key</td><td>Un encabezado con una llave única por operación. Si el servicio la ve repetida, no repite la acción.</td></tr>
+<tr><td>Variable de entorno</td><td>Configuración que vive en el sistema operativo, fuera del código: <code>GEMINI_API_KEY</code>, <code>EXTERNO_URL</code>.</td></tr>
+<tr><td>Simulador de fallas</td><td><code>simulador.py</code>: se pone entre su API y el externo y puede tardar, fallar o responder basura a propósito.</td></tr>
+</table>
+</section>
+
+<section id="pasos">
+<h2>3 · Los 7 pasos en su proyecto</h2>
+
+<div class="step"><div class="n">1</div><div class="b"><h3>Elijan la integración y llenen la ficha</h3>
+<p>Una sola, la que tenga sentido para su proyecto (bloque 03 del artefacto). Si su equipo no tiene una natural, usen el <b>correo simulado</b>: <code>POST {CORREO}/correos</code> con <code>{"para", "asunto", "texto"}</code>, que existe dentro de <code>simulador.py</code>.</p>
+<div class="note">Citas médicas: nada de datos de salud ni nombres a una IA externa. Usen el correo de confirmación.</div>
+</div></div>
+
+<div class="step"><div class="n">2</div><div class="b"><h3>La dirección y la clave, de variables de entorno</h3>
+<div class="tabs"><div class="tb" role="tablist"></div>
+<div class="pn" data-l="py"><pre>EXTERNO_URL = os.environ.get("EXTERNO_URL", "https://api.open-meteo.com").rstrip("/")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")     <span class="c"># nunca escrita aquí</span></pre></div>
+<div class="pn" data-l="js"><pre>const EXTERNO_URL = (process.env.EXTERNO_URL ?? 'https://api.open-meteo.com').replace(/\/$/, '');
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY ?? '';  <span class="c">// nunca escrita aquí</span></pre></div>
+<div class="pn" data-l="php"><pre>$EXTERNO_URL = rtrim(getenv('EXTERNO_URL') ?: 'https://api.open-meteo.com', '/');
+$GEMINI_API_KEY = getenv('GEMINI_API_KEY') ?: '';        <span class="c">// nunca escrita aquí</span></pre></div></div>
+<p>Si usan un archivo <code>.env</code>, agréguenlo a <code>.gitignore</code> <b>antes</b> del primer commit.</p>
+</div></div>
+
+<div class="step"><div class="n">3</div><div class="b"><h3>Una función para llamar al externo (timeout, reintentos, validación)</h3>
+<p>Cópienla a su proyecto y <b>léanla línea por línea</b>: es lo que les van a preguntar.</p>
+<div class="tabs"><div class="tb" role="tablist"></div>
+<div class="pn" data-l="py"><pre>TIMEOUT = 2.0          # segundos máximos esperando a que el otro servidor responda (por intento)
+INTENTOS = 3           # 1 intento + 2 reintentos
+TRANSITORIOS = {429, 500, 502, 503, 504}   # fallas pasajeras: vale la pena reintentar
+
+
+def llamar_externo(metodo: str, url: str, cuerpo=None, encabezados=None, llave=None):
+    """Llama a un servicio externo. Regresa el JSON de la respuesta o lanza HTTPException 502/504."""
+    datos = json.dumps(cuerpo).encode() if cuerpo is not None else None
+    for intento in range(1, INTENTOS + 1):
+        req = urllib.request.Request(url, data=datos, method=metodo)
+        req.add_header("Content-Type", "application/json")
+        for k, v in (encabezados or {}).items():
+            req.add_header(k, v)
+        if llave:
+            req.add_header("Idempotency-Key", llave)   # la MISMA llave en todos los intentos
+        espera_minima = 0
+        try:
+            with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+                estado, texto = r.status, r.read()
+        except urllib.error.HTTPError as e:
+            estado, texto = e.code, e.read()
+            espera_minima = float(e.headers.get("Retry-After") or 0) if e.code == 429 else 0
+        except (urllib.error.URLError, socket.timeout, TimeoutError, ConnectionError):
+            estado, texto = None, b""                   # no respondió a tiempo o no hubo conexión
+        if estado is not None and estado not in TRANSITORIOS:
+            break                                      # éxito, o un error que no se arregla reintentando (400, 401, 404...)
+        if intento &lt; INTENTOS:
+            espera = max(espera_minima, 0.5 * 2 ** (intento - 1)) + random.uniform(0, 0.2)   # 0.5 s, 1 s... + azar
+            print(f"[externo] intento {intento}: {estado or 'sin respuesta a tiempo'} -&gt; reintento en {espera:.1f} s", flush=True)
+            time.sleep(espera)
+    if estado is None:
+        raise HTTPException(504, f"El servicio externo no respondió a tiempo ({INTENTOS} intentos de {TIMEOUT:g} s)")
+    if estado in TRANSITORIOS:
+        raise HTTPException(502, f"El servicio externo sigue fallando ({estado}) después de {INTENTOS} intentos")
+    if estado &gt;= 400:
+        raise HTTPException(502, f"El servicio externo rechazó la petición ({estado}); no se reintenta")
+    try:
+        return json.loads(texto)
+    except ValueError:
+        raise HTTPException(502, "El servicio externo respondió algo que no es JSON")</pre></div>
+<div class="pn" data-l="js"><pre>// externo.js — Llamar a un servicio externo con timeout, reintentos y validación (Unidad III, Sesión 5)
+// Node 18+ (trae fetch). Uso en Express:
+//   const { llamarExterno, FallaExterna } = require('./externo');
+//   try { const datos = await llamarExterno('POST', `${EXTERNO_URL}/ruta`, cuerpo, { 'x-goog-api-key': process.env.GEMINI_API_KEY }); }
+//   catch (e) { if (e instanceof FallaExterna) return res.status(e.codigo).json({ error: e.message, detalles: [] }); throw e; }
+
+const TIMEOUT_MS = 2000;                 // máximo por intento
+const INTENTOS = 3;                      // 1 intento + 2 reintentos
+const TRANSITORIOS = new Set([429, 500, 502, 503, 504]);
+
+class FallaExterna extends Error {
+  constructor(codigo, mensaje) { super(mensaje); this.codigo = codigo; }   // 502 o 504
+}
+
+const dormir = ms =&gt; new Promise(r =&gt; setTimeout(r, ms));
+
+async function llamarExterno(metodo, url, cuerpo = null, encabezados = {}, llave = null) {
+  let estado = null, texto = '';
+  for (let intento = 1; intento &lt;= INTENTOS; intento++) {
+    let esperaMinima = 0;
+    try {
+      const r = await fetch(url, {
+        method: metodo,
+        headers: { 'Content-Type': 'application/json', ...encabezados, ...(llave ? { 'Idempotency-Key': llave } : {}) },
+        body: cuerpo === null ? undefined : JSON.stringify(cuerpo),
+        signal: AbortSignal.timeout(TIMEOUT_MS),             // &lt;- el timeout
+      });
+      estado = r.status;
+      texto = await r.text();
+      if (estado === 429) esperaMinima = Number(r.headers.get('Retry-After') || 0) * 1000;
+    } catch (e) {
+      estado = null;                                         // no respondió a tiempo o no hubo conexión
+    }
+    if (estado !== null &amp;&amp; !TRANSITORIOS.has(estado)) break; // éxito, o un error que no se reintenta
+    if (intento &lt; INTENTOS) {
+      const espera = Math.max(esperaMinima, 500 * 2 ** (intento - 1)) + Math.random() * 200;   // backoff + jitter
+      console.log(`[externo] intento ${intento}: ${estado ?? 'sin respuesta a tiempo'} -&gt; reintento en ${(espera / 1000).toFixed(1)} s`);
+      await dormir(espera);
+    }
+  }
+  if (estado === null) throw new FallaExterna(504, `El servicio externo no respondió a tiempo (${INTENTOS} intentos)`);
+  if (TRANSITORIOS.has(estado)) throw new FallaExterna(502, `El servicio externo sigue fallando (${estado})`);
+  if (estado &gt;= 400) throw new FallaExterna(502, `El servicio externo rechazó la petición (${estado}); no se reintenta`);
+  try { return JSON.parse(texto); }                         // validar: ¿de verdad es JSON?
+  catch { throw new FallaExterna(502, 'El servicio externo respondió algo que no es JSON'); }
+}
+
+module.exports = { llamarExterno, FallaExterna };
+</pre></div>
+<div class="pn" data-l="php"><pre>&lt;?php
+// externo.php — Llamar a un servicio externo con timeout, reintentos y validación (Unidad III, Sesión 5)
+// Uso:  require __DIR__ . '/externo.php';
+//       $datos = llamar_externo('POST', getenv('EXTERNO_URL') . '/ruta', $cuerpo, ['x-goog-api-key: ' . getenv('GEMINI_API_KEY')]);
+//       (si falla, llama a error(502|504, ...) con el formato {"error","detalles"} de su API)
+// Necesita la extensión curl (en php.ini: extension=curl).
+
+const TIMEOUT_S = 2;          // máximo por intento
+const INTENTOS = 3;           // 1 intento + 2 reintentos
+const TRANSITORIOS = [429, 500, 502, 503, 504];
+
+function llamar_externo(string $metodo, string $url, $cuerpo = null, array $encabezados = [], ?string $llave = null) {
+  $estado = null; $texto = '';
+  for ($intento = 1; $intento &lt;= INTENTOS; $intento++) {
+    $ch = curl_init($url);
+    $h = array_merge(['Content-Type: application/json'], $encabezados, $llave ? ["Idempotency-Key: $llave"] : []);
+    curl_setopt_array($ch, [
+      CURLOPT_CUSTOMREQUEST =&gt; $metodo,
+      CURLOPT_HTTPHEADER =&gt; $h,
+      CURLOPT_RETURNTRANSFER =&gt; true,
+      CURLOPT_HEADER =&gt; true,
+      CURLOPT_CONNECTTIMEOUT =&gt; TIMEOUT_S,
+      CURLOPT_TIMEOUT =&gt; TIMEOUT_S,                                  // &lt;- el timeout
+    ]);
+    if ($cuerpo !== null) curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($cuerpo));
+    $resp = curl_exec($ch);
+    $espera_minima = 0;
+    if ($resp === false) {
+      $estado = null;                                                // no respondió a tiempo o no hubo conexión
+    } else {
+      $estado = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+      $tam = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+      $cab = substr($resp, 0, $tam);
+      $texto = substr($resp, $tam);
+      if ($estado === 429 &amp;&amp; preg_match('/^Retry-After:\s*(\d+)/mi', $cab, $m)) $espera_minima = (float)$m[1];
+    }
+    curl_close($ch);
+    if ($estado !== null &amp;&amp; !in_array($estado, TRANSITORIOS, true)) break;   // éxito, o un error que no se reintenta
+    if ($intento &lt; INTENTOS) {
+      $espera = max($espera_minima, 0.5 * 2 ** ($intento - 1)) + mt_rand(0, 200) / 1000;   // backoff + jitter
+      error_log(sprintf('[externo] intento %d: %s -&gt; reintento en %.1f s', $intento, $estado ?? 'sin respuesta a tiempo', $espera));
+      usleep((int)($espera * 1e6));
+    }
+  }
+  if ($estado === null) error(504, 'El servicio externo no respondió a tiempo (' . INTENTOS . ' intentos)');
+  if (in_array($estado, TRANSITORIOS, true)) error(502, "El servicio externo sigue fallando ($estado)");
+  if ($estado &gt;= 400) error(502, "El servicio externo rechazó la petición ($estado); no se reintenta");
+  $datos = json_decode($texto, true);                                   // validar: ¿de verdad es JSON?
+  if (!is_array($datos)) error(502, 'El servicio externo respondió algo que no es JSON');
+  return $datos;
+}
+</pre></div></div>
+</div></div>
+
+<div class="step"><div class="n">4</div><div class="b"><h3>Úsenla en una ruta de su API y validen lo que llega</h3>
+<div class="tabs"><div class="tb" role="tablist"></div>
+<div class="pn" data-l="py"><pre>@app.get("/viajes/{viaje_id}/clima", responses={**E502, **E504})
+def clima(viaje_id: int, yo: dict = Depends(usuario_actual)):
+    v = buscar_viaje(viaje_id, yo)
+    d = llamar_externo("GET", f"{EXTERNO_URL}/v1/forecast?latitude={v['lat']}&amp;longitude={v['lon']}&amp;current_weather=true")
+    try:
+        actual = d["current_weather"]                     <span class="c"># validar: ¿trae lo que esperamos?</span>
+        return {"temperatura": float(actual["temperature"]), "viento": float(actual["windspeed"])}
+    except (KeyError, TypeError, ValueError):
+        raise HTTPException(502, "El servicio del clima respondió en un formato inesperado")</pre></div>
+<div class="pn" data-l="js"><pre>app.get('/viajes/:id/clima', usuarioActual, async (req, res) => {
+  const v = buscarViaje(req.params.id, req.yo);
+  try {
+    const d = await llamarExterno('GET', `${EXTERNO_URL}/v1/forecast?latitude=${v.lat}&amp;longitude=${v.lon}&amp;current_weather=true`);
+    const t = Number(d?.current_weather?.temperature);   <span class="c">// validar</span>
+    if (!Number.isFinite(t)) return error(res, 502, 'El servicio del clima respondió en un formato inesperado');
+    res.json({ temperatura: t });
+  } catch (e) {
+    if (e instanceof FallaExterna) return error(res, e.codigo, e.message);
+    throw e;
+  }
+});</pre></div>
+<div class="pn" data-l="php"><pre>if ($partes[0] === 'viajes' &amp;&amp; ($partes[2] ?? '') === 'clima') {
+  $v = buscar_viaje($db, $partes[1], usuario_actual());
+  $d = llamar_externo('GET', "$EXTERNO_URL/v1/forecast?latitude={$v['lat']}&amp;longitude={$v['lon']}&amp;current_weather=true");
+  $t = $d['current_weather']['temperature'] ?? null;      <span class="c">// validar</span>
+  if (!is_numeric($t)) error(502, 'El servicio del clima respondió en un formato inesperado');
+  responder(['temperatura' => (float)$t]);
+}</pre></div></div>
+<p class="note">El ejemplo es de clima (Open-Meteo); revisen en la documentación de <b>su</b> servicio qué ruta y qué campos regresa. Para la IA, vean la sección 4.</p>
+</div></div>
+
+<div class="step"><div class="n">5</div><div class="b"><h3>Si la acción tiene efectos, <code>Idempotency-Key</code></h3>
+<p>Mandar un correo, cobrar, crear algo en otro sistema: usen una llave que identifique <b>la operación</b>, no el intento. Por ejemplo <code>cita-{id}-confirmacion</code>. La misma en todos los reintentos.</p>
+<pre>llamar_externo("POST", f"{CORREO_URL}/correos", {"para": ..., "asunto": ..., "texto": ...}, llave=f"cita-{cita_id}-confirmacion")</pre>
+<div class="good">Si el correo falla del todo, decidan: ¿se cancela la operación o se guarda con <code>notificado: false</code>? El ejemplo guarda el préstamo y marca <code>notificado</code>: un tercero caído no tumba su API.</div>
+</div></div>
+
+<div class="step"><div class="n">6</div><div class="b"><h3><code>prueba.json</code>: el bloque <code>"externo"</code></h3>
+<pre>"externo": {
+  "metodo": "GET",
+  "ruta": "/viajes/1/clima",
+  "token": "admin",
+  "real": "https://api.open-meteo.com"
+}</pre>
+<p><code>ruta</code> es la de <b>su</b> API. <code>real</code> es a dónde reenvía el simulador cuando está en modo normal; si lo dejan vacío, el simulador responde algo genérico (sirve para correo e IA simulada). Pongan <code>simulador.py</code> junto a <code>probar_api.py</code>.</p>
+</div></div>
+
+<div class="step"><div class="n">7</div><div class="b"><h3>Correr las pruebas</h3>
+<pre><span class="c">:: ventana 1: su API apuntando al simulador</span>
+set EXTERNO_URL=http://127.0.0.1:9000
+set CORREO_URL=http://127.0.0.1:9000
+uvicorn main:app --port 8000          <span class="c">(o: node app.js / php -S ...)</span>
+
+<span class="c">:: ventana 2</span>
+python probar_api.py</pre>
+<p>La prueba arranca el simulador sola. Reinicien la API (en la ventana 1, con las mismas variables) y córranla otra vez: 25 de 25.</p>
+</div></div>
+</section>
+
+<section id="gemini">
+<h2>4 · Si su integración usa Gemini</h2>
+<ol><li>Creen su clave en <b>aistudio.google.com/apikey</b> (botón <i>Create API key</i>).</li>
+<li>Guárdenla: Inicio → “variables de entorno” → Variables de usuario → Nueva → <code>GEMINI_API_KEY</code>. Abran un <b>cmd nuevo</b>.</li>
+<li><code>python probar_gemini.py</code>: dice si la clave funciona y qué modelo usar (guárdenlo en <code>GEMINI_MODELO</code>).</li></ol>
+<pre>POST {EXTERNO_URL}/v1beta/models/{GEMINI_MODELO}:generateContent
+x-goog-api-key: {GEMINI_API_KEY}
+{"contents": [{"parts": [{"text": "Instrucción... responde SOLO un JSON {...}. Dato: ..."}]}],
+ "generationConfig": {"responseMimeType": "application/json"}}
+
+<span class="c"># la respuesta trae el texto en: candidates[0].content.parts[0].text  → json.loads → validar cada campo</span></pre>
+<div class="note">Con <code>EXTERNO_URL=http://127.0.0.1:9000</code>, el simulador responde en formato Gemini aunque no tengan clave. Con <code>"real": "https://generativelanguage.googleapis.com"</code> en prueba.json, reenvía a Gemini de verdad (y su clave viaja en el encabezado).</div>
+</section>
+
+<section id="simulador">
+<h2>5 · El simulador, a mano</h2>
+<pre>python simulador.py                                  <span class="c">:: respuestas simuladas</span>
+python simulador.py https://api.open-meteo.com       <span class="c">:: reenvía a la API real</span>
+
+curl.exe -X POST http://127.0.0.1:9000/_control -H "Content-Type: application/json" -d "{\"modo\":\"lento\"}"
+curl.exe http://127.0.0.1:9000/_control              <span class="c">:: llamadas recibidas y correos enviados</span></pre>
+<p>Modos: <code>normal</code>, <code>lento</code>, <code>falla_una</code>, <code>falla_siempre</code>, <code>429_una</code>, <code>error_400</code>, <code>basura</code>, <code>pierde_respuesta</code>.</p>
+</section>
+
+<section id="errores">
+<h2>6 · Errores frecuentes</h2>
+<table>
+<tr><th style="width:38%">Síntoma</th><th>Causa y solución</th></tr>
+<tr><td>21: “¡su API no pasó por el simulador!”</td><td>Arrancaron la API sin <code>EXTERNO_URL</code>, en otra ventana (<code>set</code> solo vale en la suya), o el código no lee la variable.</td></tr>
+<tr><td>22: “su API no respondió en 15 s”</td><td>Falta el timeout. En Node: <code>AbortSignal.timeout</code>; en PHP: <code>CURLOPT_TIMEOUT</code>.</td></tr>
+<tr><td>22 tarda más de 10 s</td><td>Timeout × intentos + esperas pasa de 10 s: bajen el timeout o los intentos.</td></tr>
+<tr><td>23: “no reintentó”</td><td>No reintentan 503, o el reintento solo está en el <code>catch</code> (fetch no lanza error con un 503).</td></tr>
+<tr><td>24: 3 llamadas</td><td>Reintentan todo. Un 400 no se arregla solo.</td></tr>
+<tr><td>25: 500</td><td><code>json.loads</code> / <code>JSON.parse</code> / <code>json_decode</code> sin validar.</td></tr>
+<tr><td>Gemini 404 “model not found”</td><td>El nombre del modelo cambió: <code>python probar_gemini.py</code>.</td></tr>
+<tr><td>Gemini 429</td><td>Límite gratuito por minuto. Esperen; su API debe reintentar o responder 502.</td></tr>
+<tr><td>PHP: “Call to undefined function curl_init”</td><td>Activen <code>extension=curl</code> en <code>php.ini</code>.</td></tr>
+</table>
+</section>
+
+<section id="entendiste">
+<h2>7 · ¿Lo entendiste tú o lo entendió la IA?</h2>
+<ol class="q">
+<li>¿Cuántos segundos espera su API al externo y en qué línea está ese número?</li>
+<li>¿Qué códigos reintentan y cuáles no? ¿Por qué?</li>
+<li>¿Qué responde su API si el externo tarda? ¿Y si responde basura?</li>
+<li>¿Dónde está su clave y cómo llega al código?</li>
+<li>Si su integración reintenta, ¿puede duplicar algo? ¿Cómo lo evitan?</li>
+<li>¿Qué datos le mandan al servicio externo, y por qué ninguno más?</li>
+</ol>
+<div class="good">Hoy integraron una IA en su API y vieron que responde distinto cada vez y que hay que validarla. Lo mismo vale cuando la usan para escribir código: revisen lo que les da.</div>
+</section>
+
+<section id="fuentes">
+<h2>8 · Fuentes</h2>
+<ul>
+<li>Brooker, M. (s.f.). <i>Timeouts, retries, and backoff with jitter</i>. Amazon Builders’ Library. https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/</li>
+<li>Featonby, M. (s.f.). <i>Making retries safe with idempotent APIs</i>. Amazon Builders’ Library. https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/</li>
+<li>Google. (s.f.). <i>Using Gemini API keys</i>. https://ai.google.dev/gemini-api/docs/api-key</li>
+<li>OWASP Foundation. (2023). <i>API10:2023 Unsafe consumption of APIs</i>. https://owasp.org/API-Security/editions/2023/en/0xaa-unsafe-consumption-of-apis/</li>
+<li>Stripe. (s.f.). <i>Idempotent requests</i>. https://docs.stripe.com/api/idempotent_requests</li>
+<li>Wiggins, A. (s.f.). <i>The twelve-factor app: III. Config</i>. https://12factor.net/config</li>
+</ul>
+</section>
+
+<footer>Universidad de Colima · Facultad de Telemática · Programación Distribuida · Unidad III, Sesión 5</footer>
+</div>
+<script>
+(function(){
+  var NOM={py:'Python · FastAPI',js:'Node · Express',php:'PHP'},pref='py';
+  try{pref=localStorage.getItem('u3s5_leng')||'py'}catch(e){}
+  var grupos=document.querySelectorAll('.tabs');
+  function poner(l){pref=l;try{localStorage.setItem('u3s5_leng',l)}catch(e){}
+    grupos.forEach(function(g){g.querySelectorAll('button').forEach(function(b){b.setAttribute('aria-selected',b.dataset.l===l)});
+      g.querySelectorAll('.pn').forEach(function(p){p.classList.toggle('on',p.dataset.l===l)})})}
+  grupos.forEach(function(g){var tb=g.querySelector('.tb');
+    g.querySelectorAll('.pn').forEach(function(p){var b=document.createElement('button');b.type='button';b.setAttribute('role','tab');b.dataset.l=p.dataset.l;b.textContent=NOM[p.dataset.l];b.onclick=function(){poner(p.dataset.l)};tb.appendChild(b)})});
+  poner(pref);
+})();
+</script>
+</body>
+</html>

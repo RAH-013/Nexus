@@ -1,0 +1,99 @@
+U3 · Sesión 5 · Su API le pregunta a una IA
+Facultad de Telemática · Ingeniería en Software
+Programación Distribuida · Ago 2026 – Ene 2027
+UNIDAD III · SESIÓN 5 · PRÁCTICA
+Su API le pregunta a una IA
+Un endpoint de su proyecto que usa Gemini, con tiempo máximo de espera, mensaje claro cuando la IA falla y la clave fuera del código. Tres bloques.
+🧰 Con el kit: kit_u3s5.html
+🧪 probar_api.py: 21, 22 y 25 obligatorias
+🎤 Defensa de 1 min: martes 17
+📄 Entrega: viernes 13, 23:59
+200 · 502 · 504
+0 de 3 bloques completos
+··
+Tus datos
+Pendiente
+Nombre completo
+[INPUT nombre]
+Matrícula
+[INPUT mat]
+Tu equipo
+Elige…
+01
+Su endpoint con IA
+Pendiente
+Lo que construyeron con el kit. Con tu equipo, pero cada quien lo escribe.
+Lenguaje y framework
+Elige…
+Python · FastAPI
+Python · Flask
+Node · Express
+PHP sin framework
+PHP · Laravel
+Otro
+Método y ruta del endpoint
+[INPUT ruta]
+Enlace al pull request
+[INPUT pr]
+La instrucción que su API le manda a la IA (con la forma del JSON entre llaves)
+[TEXTAREA instr]
+¿Qué dato del usuario le mandan a la IA, y qué datos NO le mandan?
+[INPUT datos]
+02
+Funciona… y no se cae
+Pendiente
+Con su API arrancada después de
+set EXTERNO_URL=http://127.0.0.1:9000
+, corran
+python probar_ia.py
+hasta 4 de 4.
+Luego
+python probar_api.py
+con
+tu
+matrícula en
+prueba.json
+(con el bloque
+"externo"
+del kit). Pega aquí
+todo
+lo que imprime.
+El reporte completo de
+probar_api.py
+[TEXTAREA rep]
+Captura de su endpoint respondiendo con la
+IA real
+(curl o /docs, con el 200 y el JSON)
+[INPUT cap]
+03
+Explica
+tu
+código
+Pendiente
+Esto es lo que te voy a preguntar el martes
+, en 1 minuto, con tu código en pantalla y sin notas. Si la IA te ayudó a escribirlo, pídele que te lo explique hasta que puedas contestarlo tú.
+1 · Copia la línea de
+su
+código donde está el tiempo máximo de espera
+[INPUT cTo]
+¿Qué le pasaría al usuario si quitaran ese tiempo máximo y la IA tardara 20 segundos? ¿Por qué eligieron ese número?
+[TEXTAREA eTo]
+2 · Si la IA se cae, ¿qué código de estado responde su API y qué mensaje ve el usuario? ¿Por qué no un 500?
+[TEXTAREA e502]
+3 · La línea donde su código lee la clave (nunca la clave misma)
+[INPUT cEnv]
+Uso de IA en esta actividad (Acuerdo No. 23/2024 UdeC): qué herramienta,
+para qué parte
+y qué entendiste o cambiaste. Si no usaste, escribe “No usé IA”. (Gemini dentro de su API no cuenta aquí.)
+[INPUT ia]
+[INPUT decl]
+Declaro que corrí probar_api.py con mi matrícula contra la API de mi equipo y que puedo explicar sin notas las tres respuestas de este bloque.
+PDF
+Genera tu evidencia
+El PDF no se genera sin el reporte con tu matrícula, la captura y los tres bloques. Si no llegas a las tres pruebas obligatorias puedes entregar: el PDF dice cuáles pasan. Se llama
+U3S5_IA_[tu matrícula].pdf
+.
+Generar mi PDF
+Universidad de Colima · Facultad de Telemática · Programación Distribuida · Unidad III, Sesión 5 · Tus respuestas se guardan en este navegador.
+[SCRIPT]
+[SCRIPT]

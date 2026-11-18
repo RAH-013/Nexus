@@ -1,4 +1,5 @@
 import { env } from "../config/env";
+import { FallaExterna, llamarExterno } from "./externo";
 
 /** Límite de la ficha «Para ti» (spec 004, RF-12). */
 export const RECOMMENDATION_LIMIT = 10;
@@ -12,6 +13,20 @@ const REQUEST_TIMEOUT_MS = 10_000;
 const MAX_OUTPUT_TOKENS = 2048;
 
 const TEMPERATURE = 0.3;
+
+/**
+ * URL del servicio externo para la ficha con IA. `EXTERNO_URL` (la variable
+ * de la U3S5) tiene prioridad sobre `GEMINI_BASE_URL` para poder apuntar al
+ * simulador de fallas sin cambiar el resto de la integración.
+ */
+const IA_URL = (env.EXTERNO_URL ?? env.GEMINI_BASE_URL).replace(/\/+$/, "");
+
+/** Modelo de la ficha: el de `GEMINI_MODELO` o el primero de la lista. */
+const IA_MODELO = env.GEMINI_MODELO ?? env.GEMINI_MODELS[0];
+
+/** Topes de la ficha para no devolver textos enormes al frontend. */
+const FICHA_GENERO_MAX_LENGTH = 80;
+const FICHA_SINOPSIS_MAX_LENGTH = 800;
 
 export type Sentiment = "positivo" | "negativo" | "neutro";
 
@@ -80,6 +95,12 @@ export interface GeminiResult {
   sentiments: CommentSentiment[] | null;
 }
 
+/** Ficha corta que la IA escribe para un título (U3S5). */
+export interface Ficha {
+  genero: string;
+  sinopsis: string;
+}
+
 interface GeminiApiResponse {
   candidates?: {
     content?: {
@@ -136,11 +157,12 @@ async function generateContent(
   apiKey: string,
   prompt: string,
 ): Promise<string> {
-  const url = `${env.GEMINI_BASE_URL}/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const url = `${env.GEMINI_BASE_URL}/v1beta/models/${model}:generateContent`;
 
   const response = await fetch(url, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    // La clave viaja en el encabezado, fuera de la URL y de los logs (U3S5).
+    headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
     body: JSON.stringify({
       contents: [{ role: "user", parts: [{ text: prompt }] }],
       generationConfig: {
@@ -326,4 +348,99 @@ export function buildPrompt(
     "Candidatos:",
     JSON.stringify(candidates, null, 1),
   ].join("\n");
+}
+
+/**
+ * Instrucción plana de la U3S5: la forma del JSON va entre llaves y el dato
+ * del usuario en la última línea (así el simulador sabe qué responder).
+ */
+export function buildFichaPrompt(titulo: string): string {
+  return [
+    "Eres el asistente de fichas de Nexus, una plataforma de películas y series.",
+    "Escribe la ficha del título que aparece en la última línea.",
+    "Responde SOLO con un objeto JSON con esta forma exacta:",
+    '{"genero": "drama", "sinopsis": "Una historia..."}',
+    "- genero: el género principal en español, en una o dos palabras.",
+    "- sinopsis: dos o tres frases en español, sin inventar datos sobre personas reales.",
+    "",
+    `Título: ${titulo}`,
+  ].join("\n");
+}
+
+/**
+ * Ficha de un título con IA (U3S5). Usa `EXTERNO_URL` si está configurada
+ * (simulador de fallas) y `GEMINI_MODELO` si existe. Cualquier falla del
+ * externo llega como `FallaExterna` con 502/503/504, nunca como 500.
+ */
+export async function preguntarFicha(titulo: string): Promise<Ficha> {
+  const apiKey = env.GEMINI_API_KEY;
+
+  // Con el simulador no hace falta clave; con Gemini real, sí.
+  if (!apiKey && IA_URL.includes("googleapis.com")) {
+    throw new FallaExterna(
+      503,
+      "Falta configurar la variable de entorno GEMINI_API_KEY",
+    );
+  }
+
+  const respuesta = await llamarExterno(
+    `${IA_URL}/v1beta/models/${encodeURIComponent(IA_MODELO)}:generateContent`,
+    {
+      metodo: "POST",
+      encabezados: apiKey ? { "x-goog-api-key": apiKey } : {},
+      cuerpo: {
+        contents: [{ role: "user", parts: [{ text: buildFichaPrompt(titulo) }] }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          temperature: TEMPERATURE,
+          maxOutputTokens: MAX_OUTPUT_TOKENS,
+          // Sin «thinking»: una ficha corta no necesita razonar.
+          thinkingConfig: { thinkingBudget: 0 },
+        },
+      },
+    },
+  );
+
+  return parseFichaResponse(respuesta);
+}
+
+/**
+ * Valida la respuesta de Gemini en dos pasos (U3S5): primero el JSON exterior
+ * (`candidates[0].content.parts[0].text`) y después el JSON interior. Si algo
+ * no tiene la forma pedida, se responde 502 en vez de devolver basura.
+ */
+export function parseFichaResponse(payload: unknown): Ficha {
+  const texto = (payload as GeminiApiResponse | null)?.candidates?.[0]?.content
+    ?.parts?.[0]?.text;
+
+  if (typeof texto !== "string" || !texto.trim()) {
+    throw new FallaExterna(502, "La IA no devolvió la ficha esperada");
+  }
+
+  let datos: unknown;
+
+  try {
+    datos = JSON.parse(texto);
+  } catch {
+    throw new FallaExterna(502, "La IA respondió algo que no es JSON");
+  }
+
+  const { genero, sinopsis } = (datos ?? {}) as {
+    genero?: unknown;
+    sinopsis?: unknown;
+  };
+
+  if (
+    typeof genero !== "string" ||
+    !genero.trim() ||
+    typeof sinopsis !== "string" ||
+    !sinopsis.trim()
+  ) {
+    throw new FallaExterna(502, "La IA respondió en un formato inesperado");
+  }
+
+  return {
+    genero: genero.trim().slice(0, FICHA_GENERO_MAX_LENGTH),
+    sinopsis: sinopsis.trim().slice(0, FICHA_SINOPSIS_MAX_LENGTH),
+  };
 }
