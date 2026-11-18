@@ -26,8 +26,7 @@
     "ruta": "/api/test-externo",
     "cuerpo": {},
     "token": "admin",
-    "simulador": "http://localhost:9000",
-    "real": "https://v3-cinemeta.strem.io"
+    "simulador": "http://localhost:9000"
   },
   "openapi": "/api/openapi.yaml",
   "auth": {

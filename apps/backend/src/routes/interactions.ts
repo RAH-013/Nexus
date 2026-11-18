@@ -2,6 +2,7 @@ import { Router } from "express";
 import { ItemType } from "../generated/prisma/enums";
 import { auth } from "../lib/auth";
 import {
+  getRatingById,
   getUserRating,
   listNotInterested,
   listUserRatings,
@@ -149,6 +150,109 @@ interactionsRouter.get("/ratings", async (req, res) => {
   } catch (error) {
     console.error("Error al listar calificaciones:", error);
     return res.status(500).json({ message: "No se pudieron obtener las calificaciones" });
+  }
+});
+
+/** Cuerpo de POST /ratings: el mismo que usa PUT /rating/:type/:id. */
+function parseRatingBody(body: { type?: unknown; id?: unknown; rating?: unknown } | undefined):
+  | { type: ItemType; id: string; rating: number }
+  | { message: string } {
+  const type = parseMediaType(
+    typeof body?.type === "string" ? body.type : undefined,
+  );
+  const id = typeof body?.id === "string" ? body.id.trim() : "";
+  const rating = Number(body?.rating);
+
+  if (!type || !id || id.length > MAX_ID_LENGTH) {
+    return { message: "Parámetros de título inválidos" };
+  }
+
+  if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
+    return { message: "La calificación debe ser un valor entre 1 y 5" };
+  }
+
+  return { type, id, rating };
+}
+
+/**
+ * Crea (o sustituye) la calificación de la sesión y regresa el recurso con su id.
+ * Es la versión «alta» de la colección: la lectura por id es GET /ratings/:ratingId.
+ */
+interactionsRouter.post("/ratings", async (req, res) => {
+  const session = await auth.api.getSession({ headers: toWebHeaders(req) });
+
+  if (!session) {
+    return res.status(401).json({ message: "Inicia sesión para calificar títulos" });
+  }
+
+  const datos = parseRatingBody(req.body);
+
+  if ("message" in datos) {
+    return res.status(400).json({ message: datos.message });
+  }
+
+  try {
+    const ratingId = await setUserRating(
+      session.user.id,
+      datos.type,
+      datos.id,
+      datos.rating,
+    );
+
+    if (ratingId === null) {
+      return res.status(400).json({ message: "La calificación debe ser un valor entre 1 y 5" });
+    }
+
+    return res.status(201).json({
+      id: ratingId,
+      type: datos.type === ItemType.MOVIE ? "movie" : "series",
+      externalId: datos.id,
+      rating: datos.rating,
+    });
+  } catch (error) {
+    console.error("Error al crear la calificación:", error);
+    return res.status(500).json({ message: "No se pudo guardar la calificación" });
+  }
+});
+
+/**
+ * Calificación por su id: solo la puede leer quien la hizo.
+ * Para los demás usuarios no existe (403), igual que el resto de recursos privados.
+ */
+interactionsRouter.get("/ratings/:ratingId", async (req, res) => {
+  const session = await auth.api.getSession({ headers: toWebHeaders(req) });
+
+  if (!session) {
+    return res.status(401).json({ message: "Inicia sesión para consultar tus calificaciones" });
+  }
+
+  const raw = req.params.ratingId;
+  const ratingId = Number(raw);
+
+  if (!/^\d+$/.test(raw) || !Number.isSafeInteger(ratingId) || ratingId < 1) {
+    return res.status(404).json({ message: "Calificación no encontrada" });
+  }
+
+  try {
+    const rating = await getRatingById(ratingId);
+
+    if (!rating) {
+      return res.status(404).json({ message: "Calificación no encontrada" });
+    }
+
+    if (rating.userId !== session.user.id) {
+      return res.status(403).json({ message: "Solo puedes ver tus calificaciones" });
+    }
+
+    return res.json({
+      id: rating.id,
+      type: rating.type === ItemType.MOVIE ? "movie" : "series",
+      externalId: rating.externalId,
+      rating: rating.rating,
+    });
+  } catch (error) {
+    console.error("Error al cargar la calificación:", error);
+    return res.status(500).json({ message: "No se pudo cargar la calificación" });
   }
 });
 

@@ -90,14 +90,15 @@ export async function recordImpressionBatch(
 
 /**
  * Califica un título (1 a 5 estrellas).
- * Si rating <= 0 o null, elimina la calificación.
+ * Si rating <= 0 o null, elimina la calificación y regresa null.
+ * En caso contrario regresa el id del registro de calificación creado.
  */
 export async function setUserRating(
   userId: string,
   type: ItemType,
   externalId: string,
   rating: number,
-): Promise<void> {
+): Promise<number | null> {
   const item = await ensureItem(externalId, type);
 
   // Borrar calificación previa
@@ -109,20 +110,63 @@ export async function setUserRating(
     },
   });
 
+  let ratingId: number | null = null;
+
   if (rating > 0) {
     const clampedRating = Math.min(5, Math.max(1, Math.round(rating)));
 
-    await prisma.userAction.create({
+    const created = await prisma.userAction.create({
       data: {
         userId,
         itemId: item.id,
         type: ActionType.RATING,
         value: clampedRating,
       },
+      select: { id: true },
     });
+
+    ratingId = created.id;
   }
 
   await invalidateRecommendationsCache(userId);
+
+  return ratingId;
+}
+
+/** Calificación por su id, con el usuario que la hizo y su título. */
+export async function getRatingById(ratingId: number): Promise<{
+  id: number;
+  userId: string;
+  type: ItemType;
+  externalId: string;
+  rating: number;
+} | null> {
+  const action = await prisma.userAction.findFirst({
+    where: {
+      id: ratingId,
+      type: ActionType.RATING,
+      item: { isNot: null },
+      value: { not: null },
+    },
+    select: {
+      id: true,
+      userId: true,
+      value: true,
+      item: { select: { externalId: true, type: true } },
+    },
+  });
+
+  if (!action || !action.item || action.value === null) {
+    return null;
+  }
+
+  return {
+    id: action.id,
+    userId: action.userId,
+    type: action.item.type,
+    externalId: action.item.externalId,
+    rating: action.value,
+  };
 }
 
 /**

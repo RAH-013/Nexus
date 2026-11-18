@@ -39,7 +39,24 @@ app.use(compression());
 // TEMPORAL: integración con el simulador externo para las pruebas 21–25.
 // Elimina este bloque cuando termines las pruebas.
 //
-// Comprueba que EXTERNO_URL esté configurada y que el simulador responda.
+// Comprueba que EXTERNO_URL esté configurada y que el simulador responda:
+// - 5xx (o caída): reintenta una sola vez, para que «falla_una» termine en 2xx.
+// - Más de 7 s de espera: 502, para que «lento» (20 s) responda antes de 10 s.
+// - 2xx que no es JSON («basura»): 502, porque no se puede leer la respuesta.
+const EXTERNO_TIMEOUT_MS = 7000;
+const EXTERNO_REINTENTO_MS = 250;
+
+async function llamarExterno(
+  externoUrl: string,
+): Promise<{ status: number; body: string }> {
+  const response = await fetch(externoUrl, {
+    method: "GET",
+    signal: AbortSignal.timeout(EXTERNO_TIMEOUT_MS),
+  });
+
+  return { status: response.status, body: await response.text() };
+}
+
 app.get("/api/test-externo", async (_req, res) => {
   const externoUrl = process.env.EXTERNO_URL;
 
@@ -49,25 +66,44 @@ app.get("/api/test-externo", async (_req, res) => {
     });
   }
 
+  let respuesta: { status: number; body: string };
+
   try {
-    const response = await fetch(externoUrl, {
-      method: "GET",
-      signal: AbortSignal.timeout(5000),
-    });
+    respuesta = await llamarExterno(externoUrl);
 
-    const body = await response.text();
-
-    return res.status(response.status).json({
-      message: "Respuesta del servicio externo",
-      status: response.status,
-      body,
-    });
+    if (respuesta.status >= 500) {
+      await new Promise((resolve) => setTimeout(resolve, EXTERNO_REINTENTO_MS));
+      respuesta = await llamarExterno(externoUrl);
+    }
   } catch (error) {
     return res.status(502).json({
       error: "No se pudo conectar con el servicio externo",
       detalles: error instanceof Error ? error.message : String(error),
     });
   }
+
+  if (respuesta.status >= 400) {
+    return res.status(respuesta.status).json({
+      message: "Respuesta del servicio externo",
+      status: respuesta.status,
+      body: respuesta.body,
+    });
+  }
+
+  try {
+    JSON.parse(respuesta.body);
+  } catch {
+    return res.status(502).json({
+      error: "El servicio externo respondió algo que no es JSON",
+      body: respuesta.body.slice(0, 200),
+    });
+  }
+
+  return res.status(200).json({
+    message: "Respuesta del servicio externo",
+    status: respuesta.status,
+    body: respuesta.body,
+  });
 });
 
 // Documentación

@@ -36,6 +36,9 @@ except Exception:
     pass
 
 PUERTO = int(os.environ.get("SIMULADOR_PUERTO", "9000"))
+# En todas las interfaces: si tu API corre dentro de un contenedor (Docker),
+# necesita llegar al simulador por la puerta de enlace del host, no por 127.0.0.1.
+HOST = os.environ.get("SIMULADOR_HOST", "")
 REAL = (sys.argv[1] if len(sys.argv) > 1 and sys.argv[1].startswith("http") else os.environ.get("SIMULADOR_REAL", "")).rstrip("/")
 ESTADO = {"modo": "normal", "segundos": 20, "llamadas": [], "correos": [], "llaves": {}, "fallo_hecho": False}
 CANDADO = threading.Lock()
@@ -227,7 +230,7 @@ class Manejador(BaseHTTPRequestHandler):
 
 
 def arrancar(puerto=PUERTO):
-    srv = ThreadingHTTPServer(("127.0.0.1", puerto), Manejador)
+    srv = ThreadingHTTPServer((HOST, puerto), Manejador)
     srv.daemon_threads = True
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     return srv
@@ -235,11 +238,11 @@ def arrancar(puerto=PUERTO):
 
 if __name__ == "__main__":
     try:
-        srv = ThreadingHTTPServer(("127.0.0.1", PUERTO), Manejador)
+        srv = ThreadingHTTPServer((HOST, PUERTO), Manejador)
     except OSError:
         sys.exit(f"El puerto {PUERTO} está ocupado: ¿ya hay un simulador abierto?")
     srv.daemon_threads = True
-    print(f"Simulador escuchando en http://127.0.0.1:{PUERTO}  ·  " + (f"reenvía a {REAL}" if REAL else "respuestas simuladas"))
+    print(f"Simulador escuchando en http://{HOST or '0.0.0.0'}:{PUERTO}  ·  " + (f"reenvía a {REAL}" if REAL else "respuestas simuladas"))
     print("Su API debe usar:  set EXTERNO_URL=http://127.0.0.1:%d   ·   Ctrl+C para terminar" % PUERTO)
     try:
         srv.serve_forever()

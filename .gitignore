@@ -50,3 +50,9 @@ apps/backend/prisma/migrations/20261104104346_comment_unique_user_item_text/
 # Tests
 /apps/backend/src/services/cinemeta.test.ts
 /apps/backend/src/services/comments.test.ts
+
+
+/clase-s5
+/clase-s6
+# Bytecode de Python (probar_api.py importa simulador.py)
+__pycache__/
