@@ -13,10 +13,8 @@ import {
   type UserProfile,
 } from "./gemini";
 
-/** Señales mínimas para recomendar sin humo (RF-13: menos de 3 → vacío). */
 const MIN_SIGNALS = 3;
 
-/** Resultado útil 24 h (RNF-1); el vacío se reevalúa antes (10 min). */
 const CACHE_TTL_SECONDS = 24 * 60 * 60;
 const EMPTY_CACHE_TTL_SECONDS = 10 * 60;
 
@@ -253,13 +251,7 @@ function reasonTemplate(
   return "En tendencia en los catálogos de Nexus";
 }
 
-/**
- * Candidatos = tendencia de movie + series, deduplicados y excluyendo:
- * - Vistos
- * - Favoritos
- * - No me gusta (DISLIKE)
- * - Descartados (NOT_INTERESTED)
- */
+
 export async function getCandidates(
   excludedIds: Set<string>,
 ): Promise<Candidate[]> {

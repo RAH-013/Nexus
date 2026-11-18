@@ -8,6 +8,7 @@ dist/
 !.env.example
 /.alchemy
 /.prisma-composer
+__pycache__/
 
 # Logs
 logs
@@ -42,6 +43,7 @@ constitution.md
 INFORMACION_PROYECTO.md
 objetive.md
 ticketTasks.md
+*.md
 apps/backend/prisma/migrations/20261104104346_comment_unique_user_item_text/
 
 # Configuración local de OpenCode (no se commitea)
@@ -53,3 +55,6 @@ apps/backend/prisma/migrations/20261104104346_comment_unique_user_item_text/
 # Tests
 /apps/backend/src/services/cinemeta.test.ts
 /apps/backend/src/services/comments.test.ts
+
+
+/clase-s5/
